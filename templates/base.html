@@ -1,0 +1,231 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AlgoDSA — Master Data Structures & Algorithms with AI-powered tutoring, spaced repetition, and pattern mastery tracking.">
+    <title>{% block title %}AlgoDSA — Workstation{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
+
+    <!-- HTMX & Alpine.js -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Navigation Header (Tier 2 Container) -->
+    <header class="navbar" role="banner">
+        <div class="container navbar-container">
+            <!-- Brand Logo -->
+            <a href="{% url 'dashboard' %}" class="navbar-brand" aria-label="AlgoDSA Dashboard Home">
+                <i data-lucide="zap" class="icon-md" style="color: var(--primary-light);"></i>
+                <span>AlgoDSA</span>
+            </a>
+
+            <!-- Main Navigation Links -->
+            <nav class="nav-links" role="navigation" aria-label="Main Navigation">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard" class="icon-sm"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'learn_hub' %}" class="nav-link {% if 'learn' in request.resolver_match.url_name %}active{% endif %}">
+                    <i data-lucide="book-open" class="icon-sm"></i>
+                    <span>Learn</span>
+                </a>
+                <a href="{% url 'topic_list' %}" class="nav-link {% if request.resolver_match.url_name == 'topic_list' or request.resolver_match.url_name == 'problem_list' %}active{% endif %}">
+                    <i data-lucide="layers" class="icon-sm"></i>
+                    <span>Topics</span>
+                </a>
+                <a href="{% url 'submission_history' %}" class="nav-link {% if request.resolver_match.url_name == 'submission_history' %}active{% endif %}">
+                    <i data-lucide="file-code" class="icon-sm"></i>
+                    <span>Submissions</span>
+                </a>
+            </nav>
+
+            <!-- User Status & Actions -->
+            <div class="nav-user">
+                {% if user.leetcode_username %}
+                <div class="leetcode-badge">
+                    <a href="https://leetcode.com/u/{{ user.leetcode_username }}/" target="_blank" rel="noopener" class="leetcode-link" title="View official LeetCode Profile">
+                        <i data-lucide="globe" class="icon-xs" style="color: var(--platform-leetcode);"></i>
+                        <span class="lc-user">@{{ user.leetcode_username }}</span>
+                        <span class="lc-solved text-2xs font-mono">({{ user.leetcode_total_solved }})</span>
+                    </a>
+                    <form method="post" action="{% url 'sync_leetcode' %}" style="display: inline-flex; align-items: center;">
+                        {% csrf_token %}
+                        <button type="submit" class="lc-sync-btn" title="Sync LeetCode Activity" aria-label="Sync LeetCode">
+                            <i data-lucide="refresh-cw" class="icon-xs"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Streak Counter -->
+                <div class="streak-badge" title="Daily Solving Streak">
+                    <i data-lucide="flame" class="icon-xs" style="color: var(--streak-color);"></i>
+                    <span class="font-mono">{{ user.streak }}</span>
+                </div>
+
+                <!-- User Profile Menu -->
+                <div class="profile-dropdown-wrapper" x-data="{ open: false }" @click.outside="open = false" style="position: relative;">
+                    <button type="button" @click="open = !open" class="avatar-btn" title="{{ user.username }}" aria-label="User menu">
+                        <div class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</div>
+                    </button>
+
+                    <div x-show="open" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="user-dropdown-menu"
+                         style="display: none;">
+                        <div class="dropdown-header">
+                            <div class="font-bold text-bright">{{ user.username }}</div>
+                            <div class="text-xs text-muted">{{ user.email|default:"Developer Profile" }}</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'profile' %}" class="dropdown-item">
+                            <i data-lucide="user" class="icon-sm"></i>
+                            <span>Profile & Connections</span>
+                        </a>
+                        {% if user.leetcode_username %}
+                        <a href="https://leetcode.com/u/{{ user.leetcode_username }}/" target="_blank" rel="noopener" class="dropdown-item">
+                            <i data-lucide="external-link" class="icon-sm" style="color: var(--platform-leetcode);"></i>
+                            <span>LeetCode Profile ↗</span>
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <form method="post" action="{% url 'account_logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item logout-item">
+                                <i data-lucide="log-out" class="icon-sm"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <!-- Messages Container -->
+    {% if messages %}
+    <div class="messages-container" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" role="status">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main View Content -->
+    <main id="main-content" role="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Platform Destination Selector Modal -->
+    <div x-data="problemModalStore()"
+         x-show="open"
+         x-transition.opacity
+         @open-problem-modal.window="showModal($event.detail)"
+         class="modal-backdrop"
+         x-cloak>
+
+        <div class="card" @click.away="open = false" style="width: 100%; max-width: 480px; background: var(--bg-secondary); border: 1px solid var(--border-glow); padding: var(--space-xl); box-shadow: var(--shadow-lg);">
+            <div class="card-header" style="margin-bottom: 0.5rem;">
+                <h3 class="tier-2-section-title" style="margin-bottom: 0;">
+                    <i data-lucide="compass" class="icon-md" style="color: var(--primary-light);"></i>
+                    Choose Platform to Solve
+                </h3>
+                <button type="button" class="btn btn-ghost btn-sm" @click="open = false" aria-label="Close modal">✕</button>
+            </div>
+
+            <p class="text-bright font-bold mb-xs" style="font-size: 1.05rem;" x-text="problemTitle"></p>
+            <p class="text-muted text-xs mb-lg" x-text="reason"></p>
+
+            <div class="d-flex flex-col gap-sm">
+                <!-- Option 1: AlgoDSA -->
+                <a :href="localUrl" class="btn btn-primary btn-lg" style="justify-content: flex-start; gap: 0.75rem; text-decoration: none;">
+                    <i data-lucide="zap" class="icon-lg"></i>
+                    <div style="text-align: left;">
+                        <div class="font-bold">Solve on AlgoDSA</div>
+                        <div class="text-xs" style="opacity: 0.85;">Monaco Editor + AI Tutor + Explain It Back</div>
+                    </div>
+                </a>
+
+                <!-- Option 2: LeetCode -->
+                <a :href="leetcodeUrl" target="_blank" rel="noopener" class="btn btn-ghost btn-lg" style="justify-content: flex-start; gap: 0.75rem; border-color: rgba(255, 161, 22, 0.4); color: var(--platform-leetcode); text-decoration: none;" @click="open = false">
+                    <i data-lucide="globe" class="icon-lg" style="color: var(--platform-leetcode);"></i>
+                    <div style="text-align: left;">
+                        <div class="font-bold">Open on LeetCode</div>
+                        <div class="text-xs text-muted">Solve on official LeetCode website</div>
+                    </div>
+                </a>
+
+                <!-- Option 3: GeeksforGeeks -->
+                <a :href="gfgUrl" target="_blank" rel="noopener" class="btn btn-ghost btn-lg" style="justify-content: flex-start; gap: 0.75rem; border-color: rgba(47, 157, 87, 0.4); color: var(--platform-gfg); text-decoration: none;" @click="open = false">
+                    <i data-lucide="code-2" class="icon-lg" style="color: var(--platform-gfg);"></i>
+                    <div style="text-align: left;">
+                        <div class="font-bold">Open on GeeksforGeeks</div>
+                        <div class="text-xs text-muted">Solve on official GFG practice portal</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Token & Lucide Initialization -->
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+
+        function renderLucideIcons() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', renderLucideIcons);
+        document.body.addEventListener('htmx:afterSettle', renderLucideIcons);
+
+        function problemModalStore() {
+            return {
+                open: false,
+                problemTitle: '',
+                reason: '',
+                localUrl: '',
+                leetcodeUrl: '',
+                gfgUrl: '',
+
+                showModal(detail) {
+                    this.problemTitle = detail.title || 'Problem';
+                    this.reason = detail.reason || 'Select your preferred solving environment';
+                    this.localUrl = detail.localUrl || '#';
+                    this.leetcodeUrl = detail.leetcodeUrl || `https://leetcode.com/problems/${detail.slug}/`;
+                    this.gfgUrl = detail.gfgUrl || `https://www.geeksforgeeks.org/explore?page=1&search=${encodeURIComponent(detail.title)}`;
+                    this.open = true;
+                    this.$nextTick(renderLucideIcons);
+                }
+            };
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

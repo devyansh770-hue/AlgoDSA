@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}DSA Learning Hub — AlgoDSA Workstation{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 1.5rem; padding-bottom: 3.5rem;"
+     x-data="{
+        search: '',
+        statusFilter: '',
+        masteryFilter: '',
+        sortBy: 'default',
+        resetFilters() {
+            this.search = '';
+            this.statusFilter = '';
+            this.masteryFilter = '';
+            this.sortBy = 'default';
+        }
+     }">
+
+    <!-- =======================================================
+         PAGE HERO SECTION — DSA LEARNING HUB
+         ======================================================= -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl" style="padding-top: 0.5rem;">
+        <div>
+            <div class="d-flex align-center gap-xs mb-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="compass" class="icon-xs"></i>
+                    LEARNING ECOSYSTEM
+                </span>
+                <span class="text-xs text-muted font-mono">Pattern-Based Mastery • Multi-Platform Synced</span>
+            </div>
+            <h1 class="tier-1-title d-flex align-center gap-xs" style="margin-bottom: 0.25rem;">
+                <i data-lucide="book-open" class="icon-md text-primary"></i>
+                <span>DSA Learning Hub</span>
+            </h1>
+            <p class="text-secondary text-sm" style="max-width: 620px; line-height: 1.6;">
+                Master Data Structures & Algorithms through structured learning paths, pattern-based practice, AI-powered recommendations, and spaced repetition mastery tracking.
+            </p>
+        </div>
+
+        <!-- Right Side Header Stats Summary -->
+        <div class="d-flex align-center gap-sm flex-wrap">
+            <!-- Overall Progress Pill Card -->
+            <div class="card p-sm" style="background: rgba(18, 18, 23, 0.7); border-color: rgba(99, 102, 241, 0.3); min-width: 150px;">
+                <div class="d-flex justify-between text-xs mb-2xs">
+                    <span class="text-muted text-2xs font-bold">OVERALL PROGRESS</span>
+                    <span class="font-mono font-bold text-primary">{{ overall_progress_pct }}%</span>
+                </div>
+                <div class="progress-bar" style="height: 5px; margin-top: 0;">
+                    <div class="progress-bar-fill" style="width: {{ overall_progress_pct }}%; background: var(--stat-primary);"></div>
+                </div>
+            </div>
+
+            <!-- Topics Completed Badge -->
+            <div class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--success); padding: 8px 14px; font-size: var(--text-xs); border: 1px solid rgba(16, 185, 129, 0.3);">
+                <i data-lucide="check-circle-2" class="icon-xs"></i>
+                <span>Topics: <strong>{{ topics_completed_count }} / {{ total_topics_count }}</strong></span>
+            </div>
+
+            <!-- Total Solved Badge -->
+            <div class="badge" style="background: rgba(6, 182, 212, 0.12); color: var(--accent); padding: 8px 14px; font-size: var(--text-xs); border: 1px solid rgba(6, 182, 212, 0.3);">
+                <i data-lucide="code" class="icon-xs"></i>
+                <span>Solved: <strong>{{ total_solved_count }}</strong></span>
+            </div>
+
+            <!-- Streak Badge -->
+            <div class="badge" style="background: rgba(255, 107, 0, 0.12); color: var(--streak-color); padding: 8px 14px; font-size: var(--text-xs); border: 1px solid rgba(255, 107, 0, 0.3);">
+                <i data-lucide="flame" class="icon-xs"></i>
+                <span>Streak: <strong>{{ user_streak }} Days</strong></span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         FEATURED: CONTINUE LEARNING BANNER
+         ======================================================= -->
+    {% if current_topic_item %}
+    <div class="card p-md mb-xl" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(18, 18, 23, 0.9)); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 16px;">
+        <div class="d-flex align-center justify-between flex-wrap gap-md">
+            <div>
+                <div class="d-flex align-center gap-xs mb-xs">
+                    <span class="badge badge-pattern text-2xs">
+                        <i data-lucide="zap" class="icon-xs"></i>
+                        CONTINUE LEARNING
+                    </span>
+                    <span class="badge badge-medium text-2xs">{{ current_topic_item.mastery_level }}</span>
+                </div>
+                <h2 class="tier-1-title" style="font-size: 1.25rem; margin-bottom: 0.25rem;">
+                    Current Focus: {{ current_topic_item.topic.name }}
+                </h2>
+                <p class="text-secondary text-xs mb-sm">
+                    {{ current_topic_item.topic.description }}
+                </p>
+                <div class="d-flex align-center gap-md text-xs text-muted font-mono flex-wrap">
+                    <span><i data-lucide="clock" class="icon-xs" style="vertical-align: middle;"></i> Est. Time: 25 mins</span>
+                    <span><i data-lucide="target" class="icon-xs" style="vertical-align: middle;"></i> Remaining: {{ current_topic_item.remaining }} problems</span>
+                    <span><i data-lucide="sparkles" class="icon-xs" style="color: var(--primary-light); vertical-align: middle;"></i> AI Rec: Complete {{ current_topic_item.remaining }} more problems to advance!</span>
+                </div>
+            </div>
+
+            <div class="d-flex flex-col align-end gap-sm" style="min-width: 220px;">
+                <div class="w-full">
+                    <div class="d-flex justify-between text-xs mb-2xs">
+                        <span class="text-muted text-2xs font-bold">TOPIC PROGRESS</span>
+                        <span class="font-mono font-bold text-primary">{{ current_topic_item.progress }}%</span>
+                    </div>
+                    <div class="progress-bar" style="height: 6px; margin-top: 0; width: 100%;">
+                        <div class="progress-bar-fill" style="width: {{ current_topic_item.progress }}%; background: var(--primary-light);"></div>
+                    </div>
+                </div>
+
+                <a href="{% url 'problem_list' current_topic_item.topic.slug %}" class="btn btn-primary btn-sm w-full" style="justify-content: center;">
+                    <i data-lucide="play" class="icon-xs"></i>
+                    <span>Resume {{ current_topic_item.topic.name }} →</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- =======================================================
+         HORIZONTAL LEARNING ROADMAP
+         ======================================================= -->
+    <div class="mb-xl">
+        <div class="d-flex align-center justify-between mb-xs">
+            <h3 class="tier-2-section-title d-flex align-center gap-xs" style="font-size: 1.05rem;">
+                <i data-lucide="map" class="icon-sm text-primary"></i>
+                <span>Canonical Learning Roadmap</span>
+            </h3>
+            <span class="text-2xs text-muted font-mono">Recommended Order</span>
+        </div>
+
+        <div class="roadmap-scroll-container">
+            {% for item in topic_data %}
+            <a href="{% url 'problem_list' item.topic.slug %}" 
+               class="roadmap-step-pill {% if item.progress == 100 %}completed{% elif item.progress > 0 %}active{% endif %}">
+                {% if item.progress == 100 %}
+                    <i data-lucide="check-circle-2" class="icon-xs" style="color: #10b981;"></i>
+                {% elif item.progress > 0 %}
+                    <i data-lucide="play-circle" class="icon-xs" style="color: var(--primary-light);"></i>
+                {% else %}
+                    <i data-lucide="{{ item.lucide_icon }}" class="icon-xs"></i>
+                {% endif %}
+                <span>{{ item.topic.name }}</span>
+                <span class="font-mono text-2xs" style="opacity: 0.8;">({{ item.progress }}%)</span>
+            </a>
+
+            {% if not forloop.last %}
+            <span class="roadmap-arrow">→</span>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         QUICK STATS ANALYTICS BAR (6 CARDS)
+         ======================================================= -->
+    <div class="submission-stats-grid mb-xl" aria-label="Learning Analytics Bar">
+        <!-- 1. Topics Completed -->
+        <div class="sub-stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">TOPICS DONE</span>
+                <i data-lucide="check-circle-2" class="icon-xs" style="color: var(--success);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--success);">{{ topics_completed_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">of {{ total_topics_count }} masteries</div>
+        </div>
+
+        <!-- 2. Problems Solved -->
+        <div class="sub-stat-card" style="border-color: rgba(99, 102, 241, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">TOTAL SOLVED</span>
+                <i data-lucide="code" class="icon-xs" style="color: var(--stat-primary);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--stat-primary);">{{ total_solved_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">of {{ total_problems_count }} curated</div>
+        </div>
+
+        <!-- 3. Overall Accuracy -->
+        <div class="sub-stat-card" style="border-color: rgba(6, 182, 212, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">ACCURACY</span>
+                <i data-lucide="target" class="icon-xs" style="color: var(--accent);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--accent);">{{ overall_progress_pct }}%</div>
+            <div class="text-2xs text-muted mt-2xs">Curated completion</div>
+        </div>
+
+        <!-- 4. Active Streak -->
+        <div class="sub-stat-card" style="border-color: rgba(255, 107, 0, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">DAY STREAK</span>
+                <i data-lucide="flame" class="icon-xs" style="color: var(--streak-color);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--streak-color);">{{ user_streak }}</div>
+            <div class="text-2xs text-muted mt-2xs">Daily practice streak</div>
+        </div>
+
+        <!-- 5. Weakest Pattern -->
+        <div class="sub-stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">WEAK PATTERN</span>
+                <i data-lucide="alert-triangle" class="icon-xs" style="color: var(--mastery-weak);"></i>
+            </div>
+            <div class="sub-stat-val text-truncate text-xs" style="color: var(--mastery-weak); font-size: 1.1rem; padding-top: 4px;">
+                {% if weakest %}{{ weakest.pattern_display }}{% else %}Hash Maps{% endif %}
+            </div>
+            <div class="text-2xs text-muted mt-2xs">Focus area needed</div>
+        </div>
+
+        <!-- 6. Revision Target -->
+        <div class="sub-stat-card" style="border-color: rgba(234, 179, 8, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">REVISION DUE</span>
+                <i data-lucide="rotate-ccw" class="icon-xs" style="color: #eab308;"></i>
+            </div>
+            <div class="sub-stat-val" style="color: #eab308;">SM-2</div>
+            <div class="text-2xs text-muted mt-2xs">Spaced repetition queue</div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         STICKY SEARCH & FILTER TOOLBAR
+         ======================================================= -->
+    <div class="sticky-filter-bar">
+        <div class="filter-toolbar-grid">
+            <!-- Left: Search Box -->
+            <div class="search-input-wrapper">
+                <i data-lucide="search" class="icon-sm search-icon"></i>
+                <input type="text" 
+                       x-model="search" 
+                       placeholder="Search topics or concepts (e.g. Arrays, Trees, Sorting)..." 
+                       class="search-input-field"
+                       aria-label="Search topics or concepts">
+            </div>
+
+            <!-- Right: Filter Controls -->
+            <div class="filter-controls-group">
+                <!-- Status Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="statusFilter" class="custom-select-field" aria-label="Filter by completion status">
+                        <option value="">Status: All</option>
+                        <option value="completed">Completed (100%)</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="unstarted">Unstarted (0%)</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Mastery Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="masteryFilter" class="custom-select-field" aria-label="Filter by mastery level">
+                        <option value="">Mastery: All</option>
+                        <option value="Mastered">Mastered</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Unstarted">Unstarted</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Sort Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="sortBy" class="custom-select-field" aria-label="Sort topics">
+                        <option value="default">Sort: Default Order</option>
+                        <option value="most_solved">Sort: Most Solved</option>
+                        <option value="highest_progress">Sort: Highest Progress</option>
+                        <option value="least_progress">Sort: Least Progress</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Reset Filters Button -->
+                <button type="button" @click="resetFilters()" class="btn btn-ghost btn-sm" style="padding: 0.55rem 0.85rem; border: 1px solid rgba(255,255,255,0.16); background: #18181b;" title="Reset all filters">
+                    <i data-lucide="rotate-ccw" class="icon-xs"></i>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         3-COLUMN RESPONSIVE TOPIC GRID
+         ======================================================= -->
+    <div class="topic-hub-grid mb-xl" id="topicGrid">
+        {% for item in topic_data %}
+        <div class="topic-card-hub"
+             data-name="{{ item.topic.name|lower }}"
+             data-desc="{{ item.topic.description|lower }}"
+             data-progress="{{ item.progress }}"
+             data-solved="{{ item.solved }}"
+             data-mastery="{{ item.mastery_level }}"
+             x-show="
+                (search === '' || $el.dataset.name.includes(search.toLowerCase()) || $el.dataset.desc.includes(search.toLowerCase())) &&
+                (statusFilter === '' || (statusFilter === 'completed' && $el.dataset.progress == 100) || (statusFilter === 'in_progress' && $el.dataset.progress > 0 && $el.dataset.progress < 100) || (statusFilter === 'unstarted' && $el.dataset.progress == 0)) &&
+                (masteryFilter === '' || $el.dataset.mastery === masteryFilter)
+             ">
+
+            <!-- Card Header: Icon, Title, Mastery Badge -->
+            <div>
+                <div class="d-flex align-center justify-between mb-sm">
+                    <div class="d-flex align-center gap-xs">
+                        <div class="p-xs d-flex align-center justify-center" style="background: rgba(99, 102, 241, 0.12); border-radius: var(--radius-sm); color: var(--primary-light);">
+                            <i data-lucide="{{ item.lucide_icon }}" class="icon-md"></i>
+                        </div>
+                        <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.1rem;">{{ item.topic.name }}</h3>
+                    </div>
+
+                    <span class="badge {{ item.mastery_badge }}" style="font-size: var(--text-2xs);">
+                        {{ item.mastery_level }}
+                    </span>
+                </div>
+
+                <!-- Description Text -->
+                <p class="text-secondary text-xs mb-md" style="line-height: 1.6; min-height: 2.8rem;">
+                    {{ item.topic.description }}
+                </p>
+            </div>
+
+            <!-- Card Footer: Stats, Progress, Badges, CTA -->
+            <div>
+                <!-- Difficulty Distribution Pills -->
+                <div class="d-flex align-center gap-2xs mb-sm flex-wrap">
+                    <span class="badge badge-easy text-2xs">{{ item.easy_cnt }} Easy</span>
+                    <span class="badge badge-medium text-2xs">{{ item.med_cnt }} Med</span>
+                    <span class="badge badge-hard text-2xs">{{ item.hard_cnt }} Hard</span>
+                    <span class="text-2xs text-muted font-mono" style="margin-left: auto;">{{ item.patterns_count }} Patterns</span>
+                </div>
+
+                <!-- Progress Bar Section -->
+                <div class="mb-md">
+                    <div class="d-flex justify-between text-xs mb-2xs">
+                        <span class="text-muted text-2xs">SOLVED: <strong class="text-bright font-mono">{{ item.solved }} / {{ item.total }}</strong></span>
+                        <span class="font-mono font-bold" style="color: {{ item.bar_color }};">{{ item.progress }}%</span>
+                    </div>
+                    <div class="progress-bar" style="height: 6px; margin-top: 0;">
+                        <div class="progress-bar-fill" style="width: {{ item.progress }}%; background: {{ item.bar_color }};"></div>
+                    </div>
+                </div>
+
+                <!-- Target Company Tags -->
+                <div class="d-flex align-center gap-2xs mb-md flex-wrap">
+                    <span class="text-2xs text-muted" style="margin-right: 4px;">Target:</span>
+                    <span class="badge text-2xs" style="background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid var(--border-subtle);">Amazon</span>
+                    <span class="badge text-2xs" style="background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid var(--border-subtle);">Google</span>
+                    <span class="badge text-2xs" style="background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid var(--border-subtle);">Microsoft</span>
+                </div>
+
+                <!-- AI Insights Quote -->
+                <div class="p-xs mb-md text-2xs text-muted" style="background: rgba(99, 102, 241, 0.04); border: 1px dashed rgba(99, 102, 241, 0.2); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="sparkles" class="icon-xs" style="color: var(--primary-light); flex-shrink: 0;"></i>
+                    <span>AI Note: Focus on pattern edge cases & boundary conditions for technical interviews.</span>
+                </div>
+
+                <!-- CTA Button -->
+                <a href="{% url 'problem_list' item.topic.slug %}" class="btn btn-ghost btn-sm w-full" style="justify-content: center; border-color: var(--border-color);">
+                    <span>Practice {{ item.topic.name }} →</span>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty State -->
+        <div class="empty-state card" style="grid-column: 1 / -1; padding: 3rem 1.5rem;">
+            <i data-lucide="book-open" class="icon-xl mb-md text-muted"></i>
+            <h3 class="tier-2-section-title mb-xs">No Topics Found</h3>
+            <p class="text-muted text-sm mb-lg" style="max-width: 420px; margin-left: auto; margin-right: auto;">
+                No topic categories match your current search filters. Try clearing your filters or search term!
+            </p>
+            <button type="button" @click="resetFilters()" class="btn btn-primary btn-sm">
+                <i data-lucide="rotate-ccw" class="icon-xs"></i>
+                <span>Reset All Filters</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+
+    <!-- =======================================================
+         WEAKEST PATTERN FOCUS BANNER
+         ======================================================= -->
+    {% if weakest %}
+    <div class="card p-md" style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 16px;">
+        <div class="d-flex align-center justify-between flex-wrap gap-md">
+            <div class="d-flex align-center gap-md">
+                <div class="p-sm d-flex align-center justify-center" style="background: rgba(239, 68, 68, 0.15); border-radius: var(--radius-md); color: var(--mastery-weak);">
+                    <i data-lucide="target" class="icon-md"></i>
+                </div>
+                <div>
+                    <span class="badge badge-medium text-2xs mb-xs" style="background: rgba(239, 68, 68, 0.15); color: var(--mastery-weak); border-color: rgba(239, 68, 68, 0.3);">
+                        RECOMMENDED FOCUS AREA
+                    </span>
+                    <h3 class="tier-2-section-title" style="margin-bottom: 0.15rem;">Weakest Pattern: {{ weakest.pattern_display }}</h3>
+                    <p class="text-muted text-xs mb-0">Mastery score is currently {{ weakest.mastery_score|floatformat:0 }}%. Solve targeted review problems to improve retention.</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-center gap-md flex-wrap">
+                <div class="font-mono font-bold" style="color: var(--mastery-weak); font-size: 1.25rem;">
+                    {{ weakest.mastery_score|floatformat:0 }}%
+                </div>
+                <a href="{% url 'topic_list' %}" class="btn btn-primary btn-sm">
+                    <i data-lucide="zap" class="icon-xs"></i>
+                    <span>Solve Weak Pattern Now →</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}Dashboard — AlgoDSA Workstation{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+    .sync-feedback {
+        margin-top: 0.5rem;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        font-weight: 500;
+        display: none;
+        animation: fadeIn 0.2s ease;
+    }
+    .sync-feedback.success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        display: block;
+    }
+    .sync-feedback.error {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--error);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: block;
+    }
+    .sync-feedback.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        display: block;
+    }
+    .btn-syncing {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 1.5rem; padding-bottom: 3rem;">
+    
+    <!-- =======================================================
+         TIER 1 — ACTION CENTER HERO (STREAMLINED & UNCLUTTERED)
+         ======================================================= -->
+    <section class="tier-1-hero mb-xl" aria-label="Action Center">
+        <div class="d-flex align-center justify-between flex-wrap gap-md">
+            <div>
+                <div class="d-flex align-center gap-xs mb-xs">
+                    <span class="badge badge-pattern text-2xs">
+                        <i data-lucide="zap" class="icon-xs"></i>
+                        ACTION CENTER
+                    </span>
+                    <span class="text-xs text-muted font-mono">Streak Active • Day {{ user.streak }}</span>
+                </div>
+                <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">Welcome back, {{ user.username }}</h1>
+                <p class="text-secondary text-sm">
+                    Focus on retention & pattern mastery. Here are your highest-priority tasks today.
+                </p>
+            </div>
+
+            <div class="d-flex align-center gap-sm flex-wrap">
+                {% if weakest %}
+                <a href="{% url 'topic_list' %}" class="btn btn-primary btn-sm">
+                    <i data-lucide="target" class="icon-sm"></i>
+                    <span>Solve Weak Pattern: {{ weakest.pattern_display }} →</span>
+                </a>
+                {% else %}
+                <a href="{% url 'topic_list' %}" class="btn btn-primary btn-sm">
+                    <i data-lucide="layers" class="icon-sm"></i>
+                    <span>Browse All Topics →</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Streamlined AI Coach Standup Banner -->
+        <div class="mt-md p-xs d-flex align-center justify-between flex-wrap gap-sm" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md);">
+            <div class="d-flex align-center gap-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="sparkles" class="icon-2xs"></i>
+                    AI STANDUP
+                </span>
+                <span class="text-xs text-bright">
+                    {{ morning_standup.greeting }} 🔥 <strong>{{ user.streak }}-Day Streak</strong> • Target: <strong class="text-primary">{{ morning_standup.recommended_topic }}</strong>
+                </span>
+            </div>
+            <a href="{% url 'topic_list' %}" class="btn btn-ghost btn-xs text-2xs text-primary" style="padding: 2px 8px;">
+                Resume Target →
+            </a>
+        </div>
+
+        {% if weakest %}
+        <!-- Weak Pattern Alert Banner -->
+        <div class="mt-sm p-sm" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md);">
+            <div class="d-flex align-center justify-between flex-wrap gap-sm">
+                <div class="d-flex align-center gap-sm">
+                    <i data-lucide="alert-triangle" class="icon-md" style="color: var(--mastery-weak);"></i>
+                    <div>
+                        <strong class="text-bright text-xs">Focus Area: {{ weakest.pattern_display }}</strong>
+                        <div class="text-xs text-muted">Mastery score is currently {{ weakest.mastery_score|floatformat:0 }}%. Strengthening weak patterns yields the highest retention improvement.</div>
+                    </div>
+                </div>
+                <div class="d-flex align-center gap-sm" style="min-width: 140px;">
+                    <div class="progress-bar" style="margin-top: 0; width: 90px; height: 6px;">
+                        <div class="progress-bar-fill" style="width: {{ weakest.mastery_score }}%; background: var(--mastery-weak);"></div>
+                    </div>
+                    <span class="text-xs font-mono font-bold" style="color: var(--mastery-weak);">{{ weakest.mastery_score|floatformat:0 }}%</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+
+    <!-- =======================================================
+         STREAMLINED 2-COLUMN DASHBOARD CONTENT GRID
+         ======================================================= -->
+    <div class="dashboard-content mb-xl">
+        <!-- LEFT COLUMN: Primary Workstation Tasks & Metrics -->
+        <div>
+            <!-- 1. Recommended Problems Queue -->
+            <section class="card-tier-2 mb-lg" aria-label="Recommended Problems">
+                <div class="d-flex align-center justify-between mb-md">
+                    <div>
+                        <h2 class="tier-2-section-title">
+                            <i data-lucide="target" class="icon-md" style="color: var(--primary-light);"></i>
+                            <span>Recommended for Today</span>
+                        </h2>
+                        <p class="text-muted text-xs">Curated based on your weakest patterns and SuperMemo SM-2 review dates.</p>
+                    </div>
+                </div>
+
+                {% if recommended %}
+                <div class="d-flex flex-col gap-sm">
+                    {% for rec in recommended %}
+                    <div class="card-interactive p-sm" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-md);"
+                         onclick="window.location='{% url 'problem_detail' rec.problem.topic.slug rec.problem.slug %}'">
+                        <div class="d-flex align-center justify-between flex-wrap gap-sm">
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="d-flex align-center gap-xs mb-2xs">
+                                    <span class="list-item-title font-bold text-bright">{{ rec.problem.title }}</span>
+                                    <span class="badge badge-{{ rec.problem.difficulty }}">{{ rec.problem.get_difficulty_display }}</span>
+                                    <span class="badge badge-pattern text-2xs">{{ rec.problem.get_pattern_display }}</span>
+                                </div>
+                                <div class="text-xs text-muted truncate">{{ rec.reason }}</div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm">
+                                Solve →
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 1.5rem;">
+                    <p class="text-muted text-sm">Solve problems to generate your daily recommendation queue!</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- 2. FAANG Interview Readiness Overview (Compact) -->
+            <section class="card-tier-2 mb-lg">
+                <div class="d-flex align-center justify-between mb-sm">
+                    <div>
+                        <h2 class="tier-2-section-title" style="font-size: 1.05rem;">
+                            <i data-lucide="radar" class="icon-sm" style="color: var(--primary-light);"></i>
+                            <span>FAANG Interview Readiness Overview</span>
+                        </h2>
+                        <p class="text-muted text-2xs">Estimated competency across core topic categories.</p>
+                    </div>
+                    <span class="badge badge-pattern text-2xs">AI Evaluated</span>
+                </div>
+
+                <div class="overview-card-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.65rem;">
+                    {% for r in readiness_scores %}
+                    <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <div class="d-flex justify-between text-2xs mb-2xs">
+                            <span class="font-bold text-bright">{{ r.name }}</span>
+                            <span class="font-mono font-bold" style="color: {{ r.color }};">{{ r.score }}%</span>
+                        </div>
+                        <div class="progress-bar" style="height: 5px; margin-top: 0;">
+                            <div class="progress-bar-fill" style="width: {{ r.score }}%; background: {{ r.color }};"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <!-- RIGHT COLUMN: Sidebar Widgets (Micro-Drills, Recent Activity, Navigation) -->
+        <div>
+            <!-- 1. Daily 30-Second Micro-Drill Quiz -->
+            <section class="card-tier-2 mb-lg" x-data="{ selectedOpt: '', drillDone: false, drillMsg: '' }">
+                <div class="d-flex align-center justify-between mb-xs">
+                    <span class="badge badge-pattern text-2xs">
+                        <i data-lucide="zap" class="icon-2xs"></i>
+                        30-SEC MICRO-DRILL
+                    </span>
+                    <span class="badge badge-easy text-2xs">+15 XP Reward</span>
+                </div>
+
+                <h3 class="tier-3-card-title mb-2xs" style="font-size: 0.95rem;">
+                    {{ micro_drill.title }}
+                </h3>
+                <p class="text-secondary text-xs mb-sm" style="line-height: 1.4;">
+                    {{ micro_drill.question }}
+                </p>
+
+                <div class="d-flex flex-col gap-2xs mb-sm" x-show="!drillDone">
+                    {% for opt in micro_drill.options %}
+                    <label class="d-flex align-center gap-xs p-xs text-xs" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;">
+                        <input type="radio" name="micro_drill_opt" value="{{ opt.key }}" x-model="selectedOpt">
+                        <span class="text-bright">{{ opt.text }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div x-show="!drillDone">
+                    <button type="button" class="btn btn-primary btn-xs w-full" :disabled="!selectedOpt"
+                            @click="
+                                fetch('/tutor/api/micro-drill/', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                                    body: JSON.stringify({option: selectedOpt})
+                                }).then(r=>r.json()).then(d=>{
+                                    drillDone = true;
+                                    drillMsg = d.message;
+                                });
+                            " style="justify-content: center;">
+                        Submit Answer →
+                    </button>
+                </div>
+
+                <div x-show="drillDone" x-transition class="p-xs text-xs text-success text-center font-bold" style="background: rgba(16, 185, 129, 0.12); border-radius: var(--radius-sm);" x-text="drillMsg">
+                </div>
+            </section>
+
+            <!-- 2. Recent Submissions Activity Timeline -->
+            <section class="card-tier-2 mb-lg" aria-label="Recent Activity">
+                <div class="d-flex align-center justify-between mb-sm">
+                    <h3 class="tier-3-card-title">
+                        <i data-lucide="history" class="icon-sm" style="color: var(--text-muted);"></i>
+                        <span>Recent Activity</span>
+                    </h3>
+                    <a href="{% url 'submission_history' %}" class="btn btn-ghost btn-xs text-2xs text-primary">View All →</a>
+                </div>
+
+                {% if recent_activity %}
+                <div class="d-flex flex-col gap-xs">
+                    {% for item in recent_activity %}
+                    <a href="{% url 'problem_detail' item.problem.topic.slug item.problem.slug %}" 
+                       class="d-flex align-center justify-between p-xs text-xs" 
+                       style="background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-decoration: none;">
+                        <div class="d-flex align-center gap-xs truncate">
+                            {% if item.solved %}
+                            <i data-lucide="check-circle-2" class="icon-xs" style="color: var(--success);"></i>
+                            {% else %}
+                            <i data-lucide="x-circle" class="icon-xs" style="color: var(--error);"></i>
+                            {% endif %}
+                            <span class="text-bright font-medium truncate">{{ item.problem.title }}</span>
+                        </div>
+                        <span class="text-muted font-mono text-2xs flex-shrink-0" style="margin-left: 8px;">{{ item.summary }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 1rem;">
+                    <p class="text-muted text-xs">No recent attempts. Pick a problem to get started!</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         TIER 2 — PERFORMANCE ANALYTICS & METRICS
+         ======================================================= -->
+    <section aria-label="Performance Analytics & Metrics">
+        <div class="mb-md">
+            <h2 class="tier-2-section-title" style="font-size: 1.15rem;">
+                <i data-lucide="bar-chart-3" class="icon-md" style="color: var(--primary-light);"></i>
+                <span>Performance Analytics & Metrics</span>
+            </h2>
+            <p class="text-muted text-xs">Deduplicated multi-platform metrics derived across AlgoDSA, LeetCode, and GeeksforGeeks.</p>
+        </div>
+
+        <!-- 4-Card Metric Grid -->
+        <div class="dashboard-stat-grid mb-xl">
+            <!-- Card 1: Total Solved -->
+            <div class="card stat-card" style="border-color: rgba(99, 102, 241, 0.3);">
+                <div class="stat-header">
+                    <span class="stat-label">TOTAL SOLVED</span>
+                    <i data-lucide="code-2" class="icon-xs" style="color: var(--stat-primary);"></i>
+                </div>
+                <div class="stat-value" style="color: var(--stat-primary);">
+                    {{ analytics.total_solved }}
+                    <span class="stat-unit">problems</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="text-muted text-2xs">Combined multi-platform</span>
+                </div>
+            </div>
+
+            <!-- Card 2: AlgoDSA Curated Progress -->
+            <div class="card stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+                <div class="stat-header">
+                    <span class="stat-label">ALGODSA PROGRESS</span>
+                    <i data-lucide="target" class="icon-xs" style="color: var(--stat-success);"></i>
+                </div>
+                <div class="stat-value" style="color: var(--stat-success);">
+                    {{ completion_pct }}%
+                    <span class="stat-unit">({{ accepted_count }}/{{ total_problems }})</span>
+                </div>
+                <div class="stat-footer d-flex align-center gap-xs">
+                    <div class="progress-bar" style="margin-top: 0; width: 60px; height: 4px;">
+                        <div class="progress-bar-fill" style="width: {{ completion_pct }}%; background: var(--stat-success);"></div>
+                    </div>
+                    <span class="text-muted text-2xs">{{ remaining_count }} remaining</span>
+                </div>
+            </div>
+
+            <!-- Card 3: LeetCode Synced -->
+            <div class="card stat-card" style="border-color: rgba(255, 161, 22, 0.3);">
+                <div class="stat-header">
+                    <span class="stat-label">LEETCODE SYNCED</span>
+                    <i data-lucide="refresh-cw" class="icon-xs" style="color: var(--platform-leetcode);"></i>
+                </div>
+                <div class="stat-value" style="color: var(--platform-leetcode);">
+                    {{ analytics.leetcode_solved }}
+                    <span class="stat-unit">problems</span>
+                </div>
+                <div class="stat-footer">
+                    {% if user.leetcode_username %}
+                    <span class="text-muted text-2xs">@{{ user.leetcode_username }}</span>
+                    {% else %}
+                    <a href="{% url 'profile' %}" class="text-2xs text-primary">Connect Account →</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card 4: GeeksforGeeks Synced -->
+            <div class="card stat-card" style="border-color: rgba(47, 157, 87, 0.3);">
+                <div class="stat-header">
+                    <span class="stat-label">GEEKSFORGEEKS SYNCED</span>
+                    <i data-lucide="book-open" class="icon-xs" style="color: var(--platform-gfg);"></i>
+                </div>
+                <div class="stat-value" style="color: var(--platform-gfg);">
+                    {{ analytics.gfg_solved }}
+                    <span class="stat-unit">problems</span>
+                </div>
+                <div class="stat-footer">
+                    {% if user.gfg_username %}
+                    <span class="text-muted text-2xs">@{{ user.gfg_username }}</span>
+                    {% else %}
+                    <a href="{% url 'profile' %}" class="text-2xs text-primary">Connect Account →</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2-Column Analytics Charts Row -->
+        <div class="dashboard-grid mb-xl" style="grid-template-columns: 1fr 1fr;">
+            <!-- Left: Difficulty Distribution Donut Chart -->
+            <div class="card p-md" style="background: rgba(18, 18, 23, 0.75); border: 1px solid var(--border-color); border-radius: 16px;">
+                <div class="d-flex align-center justify-between mb-sm">
+                    <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.05rem;">
+                        <i data-lucide="pie-chart" class="icon-sm" style="color: var(--primary-light);"></i>
+                        <span>Difficulty Distribution</span>
+                    </h3>
+                    <span class="badge badge-pattern text-2xs">Combined Breakdown</span>
+                </div>
+
+                <div class="d-flex align-center justify-center" style="position: relative; height: 210px;">
+                    <canvas id="difficultyChart"></canvas>
+                    <div style="position: absolute; text-align: center; pointer-events: none;">
+                        <div class="font-mono font-bold text-bright" style="font-size: 1.35rem; line-height: 1;">
+                            {{ analytics.total_solved }}
+                        </div>
+                        <div class="text-2xs text-muted mt-2xs" style="letter-spacing: 0.5px;">TOTAL SOLVED</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-around text-xs mt-sm pt-xs" style="border-top: 1px solid var(--border-subtle);">
+                    <div class="text-center">
+                        <span class="d-block font-mono font-bold" style="color: var(--difficulty-easy);">{{ easy_solved }}</span>
+                        <span class="text-2xs text-muted">Easy</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="d-block font-mono font-bold" style="color: var(--difficulty-medium);">{{ medium_solved }}</span>
+                        <span class="text-2xs text-muted">Medium</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="d-block font-mono font-bold" style="color: var(--difficulty-hard);">{{ hard_solved }}</span>
+                        <span class="text-2xs text-muted">Hard</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Solved Breakdown by Topic Matrix -->
+            <div class="card p-md" style="background: rgba(18, 18, 23, 0.75); border: 1px solid var(--border-color); border-radius: 16px;">
+                <div class="d-flex align-center justify-between mb-sm">
+                    <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.05rem;">
+                        <i data-lucide="table" class="icon-sm" style="color: var(--primary-light);"></i>
+                        <span>Topic Mastery Breakdown</span>
+                    </h3>
+                    <a href="{% url 'topic_list' %}" class="btn btn-ghost btn-xs text-2xs text-primary">View Hub →</a>
+                </div>
+
+                <div style="overflow-x: auto; max-height: 240px;">
+                    <table class="problem-table text-xs">
+                        <thead>
+                            <tr>
+                                <th>Topic</th>
+                                <th style="text-align: center;">AlgoDSA</th>
+                                <th style="text-align: center;">LC</th>
+                                <th style="text-align: center;">GFG</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tp in topic_progresses %}
+                            <tr>
+                                <td class="font-medium text-bright d-flex align-center gap-xs">
+                                    <span>{{ tp.topic.icon }}</span>
+                                    <span>{{ tp.topic.name }}</span>
+                                </td>
+                                <td style="text-align: center;" class="font-mono text-muted">{{ tp.solved_count|default:"0" }}</td>
+                                <td style="text-align: center;" class="font-mono text-muted">0</td>
+                                <td style="text-align: center;" class="font-mono text-muted">0</td>
+                                <td style="text-align: right;" class="font-mono font-bold text-primary">{{ tp.solved_count|default:"0" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-sm">No topic progress data yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Lucide Icons
+        if (window.lucide) lucide.createIcons();
+
+        // Render Difficulty Distribution Donut Chart
+        const ctx = document.getElementById('difficultyChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Easy', 'Medium', 'Hard'],
+                    datasets: [{
+                        data: [{{ easy_solved }}, {{ medium_solved }}, {{ hard_solved }}],
+                        backgroundColor: ['#10b981', '#eab308', '#f43f5e'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    cutout: '76%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw} problems`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

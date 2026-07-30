@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Learn DSA & Concept Notes — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <!-- Header Banner -->
+    <div class="page-header" style="padding-top: 0;">
+        <div class="d-flex align-center gap-md" style="justify-content: space-between; flex-wrap: wrap;">
+            <div>
+                <h1 class="page-title">📖 Learn DSA & Concept Notes</h1>
+                <p class="page-subtitle">Master Data Structures & Algorithms patterns, complexity cheat sheets, real-world analogies, and custom study notes.</p>
+            </div>
+            {% if user.leetcode_username %}
+            <a href="https://leetcode.com/u/{{ user.leetcode_username }}/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="border-color: #f59e0b; color: #f59e0b;">
+                🟠 Connected: @{{ user.leetcode_username }} ({{ user.leetcode_total_solved }} Solved) ↗
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Time & Space Complexity Quick Cheat Sheet -->
+    <div class="card mb-xl" style="border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.03);">
+        <h2 class="section-title">⚡ Big-O Time & Space Complexity Cheat Sheet</h2>
+        <div style="overflow-x: auto;">
+            <table class="problem-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Data Structure / Pattern</th>
+                        <th style="text-align: center;">Access</th>
+                        <th style="text-align: center;">Search</th>
+                        <th style="text-align: center;">Insertion</th>
+                        <th style="text-align: center;">Deletion</th>
+                        <th style="text-align: center;">Space Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="problem-title-cell">📊 Array / Vector</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(N)</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(N)</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(N)</td>
+                        <td style="text-align: center; font-family: var(--font-mono);">O(N)</td>
+                    </tr>
+                    <tr>
+                        <td class="problem-title-cell">🔗 Singly Linked List</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(N)</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(N)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; font-family: var(--font-mono);">O(N)</td>
+                    </tr>
+                    <tr>
+                        <td class="problem-title-cell">⚡ Hash Map / Dictionary</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; font-family: var(--font-mono);">O(N)</td>
+                    </tr>
+                    <tr>
+                        <td class="problem-title-cell">🌳 Binary Search Tree (Balanced)</td>
+                        <td style="text-align: center; color: var(--accent); font-family: var(--font-mono);">O(log N)</td>
+                        <td style="text-align: center; color: var(--accent); font-family: var(--font-mono);">O(log N)</td>
+                        <td style="text-align: center; color: var(--accent); font-family: var(--font-mono);">O(log N)</td>
+                        <td style="text-align: center; color: var(--accent); font-family: var(--font-mono);">O(log N)</td>
+                        <td style="text-align: center; font-family: var(--font-mono);">O(N)</td>
+                    </tr>
+                    <tr>
+                        <td class="problem-title-cell">🕸️ Graph (BFS / DFS)</td>
+                        <td style="text-align: center; color: var(--text-muted); font-family: var(--font-mono);">-</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(V + E)</td>
+                        <td style="text-align: center; color: var(--success); font-family: var(--font-mono);">O(1)</td>
+                        <td style="text-align: center; color: var(--warning); font-family: var(--font-mono);">O(V + E)</td>
+                        <td style="text-align: center; font-family: var(--font-mono);">O(V + E)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Topics Study Cards Grid -->
+    <h2 class="section-title mb-md">🎯 Choose a Topic to Study & Read Notes</h2>
+    <div class="topic-grid">
+        {% for item in topic_data %}
+        <a href="{% url 'learn_topic' item.topic.slug %}" style="text-decoration: none; color: inherit;">
+            <div class="card topic-card">
+                <div class="d-flex align-center gap-sm mb-sm" style="justify-content: space-between;">
+                    <span class="topic-icon" style="font-size: 2rem;">{{ item.topic.icon }}</span>
+                    <span class="badge badge-pattern">📖 {{ item.total_patterns }} Patterns</span>
+                </div>
+                <div class="topic-name" style="font-size: 1.2rem; font-weight: 700;">{{ item.topic.name }}</div>
+                <div class="topic-desc" style="font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ item.topic.description|truncatewords:15 }}
+                </div>
+                {% if item.topic.real_world_analogy %}
+                <div class="mt-sm text-xs text-muted" style="background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: var(--radius-sm); border-left: 3px solid {{ item.topic.color }};">
+                    💡 <em>{{ item.topic.real_world_analogy|truncatewords:10 }}</em>
+                </div>
+                {% endif %}
+                <div class="d-flex align-center gap-sm mt-md text-xs text-primary font-bold">
+                    <span>Read Concept Notes & Templates →</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Custom Notes Container -->
+    <div class="card mt-xl">
+        <div class="card-header">
+            <h2 class="section-title" style="margin-bottom: 0;">📝 Custom Study Notes & Reminders</h2>
+        </div>
+        <p class="text-muted text-sm mb-md">
+            This section renders study notes, custom algorithms, and revision key points. You can add notes for any topic!
+        </p>
+        <div style="background: var(--bg-tertiary); padding: 1.25rem; border-radius: var(--radius-md); border: 1px dashed var(--border-glow);">
+            <div class="font-bold text-bright mb-xs">📌 Master Solving Workflow:</div>
+            <ol class="text-sm text-muted" style="margin-left: 1.25rem; line-height: 1.8;">
+                <li><strong>Understand Constraints:</strong> If $N \le 10^5$, aim for $O(N)$ or $O(N \log N)$ algorithm. Avoid $O(N^2)$.</li>
+                <li><strong>Identify Pattern:</strong> Sorted array? Try <em>Binary Search</em> or <em>Two Pointers</em>. Subarray bounds? Try <em>Sliding Window</em>. Hierarchy / Folders? Try <em>Tree DFS / BFS</em>. Shortest path? Try <em>Graph BFS / Dijkstra</em>.</li>
+                <li><strong>Write Pseudocode / Explain It Back:</strong> Explain the logic before writing code.</li>
+                <li><strong>Edge Cases:</strong> Check empty array, 1 element, all duplicates, negative numbers, overflow.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

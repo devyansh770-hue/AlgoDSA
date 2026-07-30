@@ -1,0 +1,914 @@
+{% extends 'base.html' %}
+{% block title %}{{ problem.title }} — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="split-pane" x-data="problemPage()">
+    <!-- Left Panel: Problem Description -->
+    <div class="split-left">
+        <div class="problem-header">
+            <div class="d-flex align-center gap-sm mb-md" style="justify-content: space-between; flex-wrap: wrap;">
+                <a href="{% url 'problem_list' topic.slug %}" class="btn btn-ghost btn-sm">← {{ topic.name }}</a>
+                <div class="d-flex gap-xs">
+                    <a href="{{ problem.leetcode_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #f59e0b;" title="Solve on LeetCode">
+                        🟠 Open on LeetCode ↗
+                    </a>
+                    <a href="{{ problem.gfg_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(16, 185, 129, 0.4); color: #10b981;" title="Solve on GeeksforGeeks">
+                        🟢 Open on GFG ↗
+                    </a>
+                </div>
+            </div>
+            <h1 class="problem-title">{{ problem.title }}</h1>
+            <div class="problem-meta">
+                <span class="badge badge-{{ problem.difficulty }}">{{ problem.get_difficulty_display }}</span>
+                <span class="badge badge-pattern">{{ problem.get_pattern_display }}</span>
+                {% if is_solved %}
+                <span class="badge badge-solved">✅ Solved</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="problem-description">
+            {{ problem.description|linebreaksbr }}
+
+            {% if problem.examples %}
+            <h3>Examples</h3>
+            <pre>{{ problem.examples }}</pre>
+            {% endif %}
+
+            {% if problem.constraints %}
+            <h3>Constraints</h3>
+            <pre>{{ problem.constraints }}</pre>
+            {% endif %}
+        </div>
+
+        <!-- Sample Test Cases -->
+        {% if sample_cases %}
+        <div class="mt-xl">
+            <h3 class="section-title">🧪 Sample Test Cases</h3>
+            {% for tc in sample_cases %}
+            <div class="test-case-result" style="margin-bottom: 0.5rem;">
+                <div><strong>Input:</strong> <code>{{ tc.input_data }}</code></div>
+                <div><strong>Output:</strong> <code>{{ tc.expected_output }}</code></div>
+                {% if tc.explanation %}
+                <div class="mt-sm text-muted text-sm">{{ tc.explanation }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- AI Hints (LeetCode Accordion Style) -->
+        <div class="hints-panel">
+            <h3 class="section-title">🤖 AI Hints</h3>
+            <div class="hints-accordion d-flex" style="flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                <template x-for="hint in hints" :key="hint.id">
+                    <div class="hint-accordion-item"
+                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-card); transition: all 0.2s ease;"
+                         :style="hint.isOpen ? 'border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.04);' : ''">
+                        <!-- Accordion Header -->
+                        <button type="button"
+                                class="hint-accordion-header"
+                                @click="toggleHint(hint.level)"
+                                :disabled="hint.loading"
+                                style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: transparent; border: none; color: var(--text-bright); font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s ease;">
+                            <div class="d-flex align-center gap-xs">
+                                <span style="display: inline-block; font-size: 0.7rem; transition: transform 0.2s ease; opacity: 0.7; width: 14px; text-align: center;"
+                                      :style="hint.isOpen ? 'transform: rotate(90deg); color: var(--primary-light); opacity: 1;' : ''">▶</span>
+                                <span><span x-text="hint.icon"></span> <strong x-text="hint.title"></strong> <span class="text-xs text-muted" x-text="'(' + hint.subtitle + ')'"></span></span>
+                            </div>
+                            <div class="d-flex align-center gap-xs">
+                                <template x-if="hint.loading">
+                                    <span class="text-xs text-muted">⏳ Loading...</span>
+                                </template>
+                                <template x-if="!hint.loading && hint.isLoaded">
+                                    <span class="badge" :class="hint.isOpen ? 'badge-pattern' : ''" style="font-size: 0.7rem; padding: 2px 8px;" x-text="hint.isOpen ? 'Expanded' : 'Collapsed'"></span>
+                                </template>
+                            </div>
+                        </button>
+
+                        <!-- Accordion Body (Collapsible Content) -->
+                        <div class="hint-accordion-body"
+                             x-show="hint.isOpen"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 transform -translate-y-1"
+                             x-transition:enter-end="opacity-100 transform translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 transform translate-y-0"
+                             x-transition:leave-end="opacity-0 transform -translate-y-1"
+                             style="padding: 12px 14px 14px 34px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.88rem; line-height: 1.6; color: var(--text-primary); background: rgba(0,0,0,0.2);">
+                            <div x-text="hint.content"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Explain It Back -->
+        <div class="explain-section">
+            <h3>📝 Explain It Back</h3>
+            <p class="text-muted text-sm mb-md">
+                Explain the solution approach in your own words to unlock the editorial.
+            </p>
+            <textarea class="explain-textarea" x-model="explanation"
+                placeholder="This problem uses... because... The time complexity is... because..."></textarea>
+            <div class="d-flex gap-sm mt-md">
+                <button class="btn btn-primary" @click="submitExplanation()" :disabled="explanationLoading || !explanation.trim()">
+                    <span x-text="explanationLoading ? '⏳ Checking...' : '🧠 Submit Explanation'"></span>
+                </button>
+            </div>
+
+            <template x-if="explanationFeedback">
+                <div class="ai-feedback" :class="explanationApproved ? 'approved' : 'rejected'">
+                    <div x-text="explanationFeedback"></div>
+                    <div class="mt-sm text-sm" x-show="explanationScore > 0">
+                        Score: <strong x-text="explanationScore + '%'"></strong>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Editorial -->
+        <div class="editorial-section mt-xl">
+            <h3 class="section-title">📖 Editorial</h3>
+            {% if editorial_unlocked %}
+            <div class="problem-description">
+                {{ problem.editorial|linebreaksbr }}
+            </div>
+            {% else %}
+            <div class="editorial-locked" x-show="!editorialContent">
+                <div class="lock-icon">🔒</div>
+                <p>Submit a valid explanation above to unlock the editorial.</p>
+            </div>
+            <template x-if="editorialContent">
+                <div class="problem-description" x-text="editorialContent"></div>
+            </template>
+            {% endif %}
+        </div>
+
+        <!-- Recent Submissions for this Problem (LeetCode Style) -->
+        <div class="mt-xl" id="submissions-history-section">
+            <div class="d-flex align-center justify-between mb-sm">
+                <h3 class="section-title" style="margin-bottom: 0;">📋 Your Submissions</h3>
+                <span class="text-xs text-muted font-mono" x-show="userSubmissions.length > 0" x-text="userSubmissions.length + ' total'"></span>
+            </div>
+            
+            <div class="submission-list" x-show="userSubmissions.length > 0">
+                <template x-for="sub in userSubmissions" :key="sub.id">
+                    <div class="submission-item clickable-submission-row"
+                         @click="openSubmissionModal(sub.id)"
+                         style="grid-template-columns: auto 1fr auto auto; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease;">
+                        <span><span x-text="sub.status_icon"></span></span>
+                        <div class="d-flex align-center gap-xs">
+                            <span class="text-sm font-bold" :style="'color: ' + sub.status_color" x-text="sub.status_display"></span>
+                            <span class="badge badge-pattern" style="font-size: 0.65rem; padding: 1px 6px;" x-text="sub.language_display"></span>
+                        </div>
+                        <span class="text-muted text-sm font-mono" x-text="sub.runtime_ms !== null && sub.runtime_ms !== undefined ? sub.runtime_ms.toFixed(0) + 'ms' : ''"></span>
+                        <div class="d-flex align-center gap-xs">
+                            <span class="text-muted text-xs" x-text="sub.created_at_relative"></span>
+                            <span style="color: var(--primary-light); font-size: 0.75rem; font-weight: 600; opacity: 0.85;">🔍 View</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="userSubmissions.length === 0" class="empty-state" style="padding: 1.5rem; text-align: center; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
+                <p class="text-muted text-xs" style="margin: 0;">No submissions yet. Write your code and click Submit!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Code Editor -->
+    <div class="split-right">
+        <!-- Editor Toolbar -->
+        <div class="editor-toolbar">
+            <div class="editor-toolbar-left">
+                <select class="form-select" style="width: auto; padding: 4px 28px 4px 8px; font-size: 0.8rem;"
+                        x-model="language" @change="changeLanguage()">
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="cpp">C++</option>
+                    <option value="java">Java</option>
+                </select>
+            </div>
+            <div class="editor-toolbar-right">
+                <button class="btn btn-ghost btn-sm" @click="showApproachModal = true" style="border-color: rgba(99,102,241,0.3); color: var(--primary-light);">💡 Strategy Check</button>
+                <button class="btn btn-ghost btn-sm" @click="resetCode()">↺ Reset</button>
+                <button class="btn btn-success btn-sm" @click="submitCode()" :disabled="submitting">
+                    <span x-text="submitting ? '⏳ Running...' : '▶ Submit'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Monaco Editor -->
+        <div class="editor-container" id="editor-container"></div>
+
+        <!-- Results Panel -->
+        <div class="results-panel" x-show="showResults" x-transition>
+            <div class="results-header">
+                <div class="d-flex align-center gap-sm">
+                    <span x-text="resultIcon"></span>
+                    <strong x-text="resultStatus" :style="'color: ' + resultColor"></strong>
+                </div>
+                <div class="d-flex gap-md text-sm text-muted">
+                    <span x-show="resultRuntime">⏱ <span x-text="resultRuntime + 'ms'"></span></span>
+                    <span x-show="resultMemory">💾 <span x-text="resultMemory + 'KB'"></span></span>
+                    <span x-text="testsPassed + '/' + testsTotal + ' passed'"></span>
+                </div>
+            </div>
+
+            <!-- Feature 2: Socratic AI Debugging Helper Card -->
+            <template x-if="socraticQuestion">
+                <div class="mt-md p-sm" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md);">
+                    <div class="d-flex align-center gap-xs mb-2xs">
+                        <i data-lucide="help-circle" class="icon-xs" style="color: var(--mastery-weak);"></i>
+                        <strong class="text-xs text-bright">AI Mentor Socratic Debugger</strong>
+                    </div>
+                    <p class="text-xs text-bright mb-xs" style="line-height: 1.5;" x-text="socraticQuestion"></p>
+                    <div class="text-2xs text-muted font-mono" x-text="socraticHint"></div>
+                </div>
+            </template>
+
+            <!-- Test Case Results -->
+            <template x-if="testResults.length > 0">
+                <div class="mt-md">
+                    <template x-for="(test, i) in testResults" :key="i">
+                        <div class="test-case-result mb-sm" :class="test.passed ? 'passed' : 'failed'">
+                            <div class="d-flex align-center gap-sm mb-xs">
+                                <span><span x-text="test.passed ? '✅' : '❌'"></span> Case <span x-text="i + 1"></span></span>
+                            </div>
+                            <div class="text-xs"><strong>Input:</strong> <code x-text="test.input"></code></div>
+                            <div class="text-xs"><strong>Expected:</strong> <code x-text="test.expected"></code></div>
+                            <div class="text-xs"><strong>Output:</strong> <code x-text="test.actual"></code></div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Feature 3, 5, 6: Comprehensive AI Review, SM-2 Reflection & Teach the AI -->
+            <template x-if="aiReviewData">
+                <div class="mt-md p-md" style="background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md);">
+                    <div class="d-flex align-center justify-between mb-sm">
+                        <div class="d-flex align-center gap-xs">
+                            <i data-lucide="sparkles" class="icon-sm" style="color: var(--primary-light);"></i>
+                            <h4 class="tier-2-section-title" style="margin: 0; font-size: 1rem;">AI Code Review & Performance Report</h4>
+                        </div>
+                        <span class="badge badge-easy" x-text="'Overall Score: ' + aiReviewData.scores.overall + ' / 10'">9.3 / 10</span>
+                    </div>
+
+                    <!-- 4-Quadrant Review Breakdown -->
+                    <div class="grid-2 gap-sm mb-md">
+                        <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                            <strong class="text-2xs text-success d-block mb-2xs">🌟 WHAT YOU DID WELL</strong>
+                            <ul class="text-2xs text-secondary pl-sm mb-0" style="padding-left: 1rem;">
+                                <template x-for="item in aiReviewData.what_went_well">
+                                    <li x-text="item"></li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                            <strong class="text-2xs text-warning d-block mb-2xs">⚠️ POTENTIAL IMPROVEMENTS</strong>
+                            <ul class="text-2xs text-secondary pl-sm mb-0" style="padding-left: 1rem;">
+                                <template x-for="item in aiReviewData.potential_improvements">
+                                    <li x-text="item"></li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Feature 5: Post-Solve SM-2 Reflection -->
+                    <div class="p-xs mb-md text-center" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);" x-show="!reflectionDone">
+                        <span class="text-2xs text-muted d-block mb-xs">How did this problem feel? (Updates Spaced Repetition Schedule)</span>
+                        <div class="d-flex justify-center gap-xs">
+                            <button type="button" class="btn btn-outline btn-xs" style="border-color: #10b981; color: #10b981;" @click="submitReflection('easy')">🟢 Easy / First Try</button>
+                            <button type="button" class="btn btn-outline btn-xs" style="border-color: #f59e0b; color: #f59e0b;" @click="submitReflection('medium')">🟡 Needed a Hint</button>
+                            <button type="button" class="btn btn-outline btn-xs" style="border-color: #ef4444; color: #ef4444;" @click="submitReflection('hard')">🔴 Very Difficult</button>
+                        </div>
+                    </div>
+
+                    <!-- Feature 6: Teach the AI (Feynman Technique) -->
+                    <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                        <strong class="text-2xs text-primary d-block mb-2xs">🎓 Teach the AI (+15 XP Bonus)</strong>
+                        <p class="text-2xs text-muted mb-xs">Explain your solution in 2-3 bullet points as if teaching a junior developer:</p>
+                        <textarea class="search-input-field text-xs mb-xs" style="width: 100%; height: 55px;" x-model="teachExplanation" placeholder="1. I initialized pointers at bounds... 2. Swapped values until pointers met..."></textarea>
+                        <button type="button" class="btn btn-primary btn-xs" @click="submitTeachAi()" :disabled="teachLoading">Submit Explanation for +15 XP →</button>
+                        <div x-show="teachFeedback" class="mt-xs text-2xs font-bold text-success" x-text="teachFeedback ? teachFeedback.feedback : ''"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<!-- Submission Details Modal (LeetCode Style) -->
+<div x-show="showSubmissionModal"
+     x-transition.opacity
+     style="position: fixed; inset: 0; z-index: 1900; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);"
+     x-cloak>
+    <div class="card" @click.outside="showSubmissionModal = false" style="width: 95%; max-width: 920px; max-height: 92vh; display: flex; flex-direction: column; background: #111118; border: 1px solid var(--border-glow); border-radius: var(--radius-xl); padding: 0; box-shadow: var(--shadow-lg); overflow: hidden;">
+        
+        <!-- Modal Header & Navigation Bar -->
+        <div style="padding: 14px 20px; background: #161622; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+                <div class="d-flex align-center gap-sm">
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-bright);">
+                        <span x-text="activeSub.status_icon"></span>
+                        <span x-text="activeSub.problem_title"></span>
+                        <span class="text-muted text-xs font-mono" x-text="'#' + activeSub.id"></span>
+                    </h3>
+                </div>
+                <div class="d-flex align-center gap-sm mt-xs text-xs">
+                    <span class="badge" :style="'background: ' + activeSub.status_color + '20; color: ' + activeSub.status_color + '; font-weight: 700;'" x-text="activeSub.status_display"></span>
+                    <span class="badge badge-pattern" x-text="activeSub.language_display"></span>
+                    <span class="text-muted" x-text="activeSub.created_at_relative"></span>
+                </div>
+            </div>
+
+            <!-- Prev / Next Navigation Buttons -->
+            <div class="d-flex align-center gap-xs">
+                <button type="button" class="btn btn-ghost btn-sm" @click="openSubmissionModal(activeSub.prev_id)" :disabled="!activeSub.prev_id">
+                    ← Prev
+                </button>
+                <span class="text-xs text-muted font-mono" style="padding: 0 4px;" x-text="'Submission ' + activeSub.submission_number + ' of ' + activeSub.total_submissions"></span>
+                <button type="button" class="btn btn-ghost btn-sm" @click="openSubmissionModal(activeSub.next_id)" :disabled="!activeSub.next_id">
+                    Next →
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" @click="showSubmissionModal = false" style="margin-left: 8px; font-weight: 700;">✕</button>
+            </div>
+        </div>
+
+        <!-- Modal Body Content (Scrollable) -->
+        <div style="padding: 20px; overflow-y: auto; flex: 1;">
+            <!-- Performance Banner -->
+            <div class="d-flex gap-md mb-md flex-wrap" style="background: rgba(255,255,255,0.02); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div style="flex: 1; min-width: 120px;">
+                    <div class="text-xs text-muted">Runtime</div>
+                    <div class="font-mono font-bold text-bright" style="font-size: 1.1rem;" x-text="activeSub.runtime_ms !== null && activeSub.runtime_ms !== undefined ? activeSub.runtime_ms.toFixed(1) + ' ms' : 'N/A'"></div>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <div class="text-xs text-muted">Memory</div>
+                    <div class="font-mono font-bold text-bright" style="font-size: 1.1rem;" x-text="activeSub.memory_kb !== null && activeSub.memory_kb !== undefined ? (activeSub.memory_kb).toFixed(0) + ' KB' : 'N/A'"></div>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <div class="text-xs text-muted">Test Cases Passed</div>
+                    <div class="font-mono font-bold text-success" style="font-size: 1.1rem;" x-text="activeSub.test_cases_passed + ' / ' + activeSub.test_cases_total + ' passed'"></div>
+                </div>
+            </div>
+
+            <!-- Saved Code Monaco Container -->
+            <div class="code-container-wrapper mb-md" id="modal-code-wrapper" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: #0d0d12;">
+                <div class="code-toolbar" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #161622; border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex align-center gap-sm">
+                        <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-bright);">💻 Saved Code Snapshot</span>
+                        <span class="badge badge-pattern" style="font-size: 0.7rem;" x-text="activeSub.language_display"></span>
+                    </div>
+                    <div class="d-flex align-center gap-xs">
+                        <button type="button" class="btn btn-ghost btn-sm" @click="copyModalCode()">
+                            📋 Copy Code
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" @click="downloadModalCode()">
+                            💾 Download
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" id="btn-modal-fullscreen" @click="toggleModalFullscreen()">
+                            ⛶ Fullscreen
+                        </button>
+                    </div>
+                </div>
+
+                <div id="monaco-modal-editor" style="height: 340px; width: 100%;"></div>
+            </div>
+
+            <!-- Stderr / Error Output if present -->
+            <template x-if="activeSub.stderr">
+                <div class="card mb-md" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.03); padding: 12px 16px;">
+                    <h4 class="section-title text-sm" style="color: var(--error); margin-bottom: 0.5rem;">❌ Error Output (stderr)</h4>
+                    <pre style="background: rgba(239, 68, 68, 0.08); padding: 10px; border-radius: var(--radius-md); color: var(--error); font-family: var(--font-mono); font-size: 0.82rem; margin: 0; max-height: 180px; overflow-y: auto;" x-text="activeSub.stderr"></pre>
+                </div>
+            </template>
+
+            <!-- Stdout if present -->
+            <template x-if="activeSub.stdout">
+                <div class="card mb-md" style="padding: 12px 16px;">
+                    <h4 class="section-title text-sm" style="margin-bottom: 0.5rem;">📤 Standard Output (stdout)</h4>
+                    <pre style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.82rem; margin: 0; max-height: 150px; overflow-y: auto;" x-text="activeSub.stdout"></pre>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<div class="submission-toast" x-show="showToastMessage" x-text="toastMsg" x-cloak></div>
+
+<!-- Feature 1: Before You Code Approach Check Modal Overlay -->
+<div x-show="showApproachModal"
+     x-transition.opacity
+     style="position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);"
+     x-cloak>
+    <div class="card p-md" style="width: 90%; max-width: 580px; background: #121217; border: 1px solid var(--border-glow); border-radius: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+        <div class="d-flex align-center gap-xs mb-xs">
+            <span class="badge badge-pattern text-2xs">
+                <i data-lucide="compass" class="icon-2xs"></i>
+                PRE-CODE MENTOR CHECK
+            </span>
+            <span class="badge badge-medium text-2xs">Pattern Strategy</span>
+        </div>
+        
+        <h2 class="tier-1-title" style="font-size: 1.25rem; margin-bottom: 0.25rem;">Before You Code...</h2>
+        <p class="text-secondary text-xs mb-md" style="line-height: 1.5;">
+            Explain your algorithmic approach in 1-2 sentences. How are you planning to solve <strong>{{ problem.title }}</strong>?
+        </p>
+
+        <!-- Strategy Options Radio Grid -->
+        <div class="overview-card-grid mb-md" style="grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+            <label class="d-flex align-center gap-xs p-xs text-xs" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;">
+                <input type="radio" name="approach_strategy" value="hash_map" x-model="selectedApproach">
+                <span class="text-bright">🗂 Hash Map</span>
+            </label>
+            <label class="d-flex align-center gap-xs p-xs text-xs" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;">
+                <input type="radio" name="approach_strategy" value="two_pointers" x-model="selectedApproach">
+                <span class="text-bright">👉👈 Two Pointers</span>
+            </label>
+            <label class="d-flex align-center gap-xs p-xs text-xs" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;">
+                <input type="radio" name="approach_strategy" value="sliding_window" x-model="selectedApproach">
+                <span class="text-bright">🪟 Sliding Window</span>
+            </label>
+            <label class="d-flex align-center gap-xs p-xs text-xs" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;">
+                <input type="radio" name="approach_strategy" value="dynamic_programming" x-model="selectedApproach">
+                <span class="text-bright">🧩 Dynamic Programming</span>
+            </label>
+        </div>
+
+        <div class="mb-md">
+            <span class="text-2xs font-bold text-muted d-block mb-2xs">BRIEF EXPLANATION (OPTIONAL)</span>
+            <input type="text" class="search-input-field text-xs" style="width: 100%;" x-model="approachExplanation" placeholder="e.g. Using a hash map to store complements in single pass O(N)...">
+        </div>
+
+        <!-- AI Validation Result Toast -->
+        <template x-if="approachFeedback">
+            <div class="p-xs mb-md text-xs font-bold" :class="approachFeedback.status === 'approved' ? 'text-success' : 'text-warning'" style="background: rgba(255,255,255,0.04); border-radius: var(--radius-sm);">
+                <span x-text="approachFeedback.title"></span>: <span x-text="approachFeedback.message"></span>
+            </div>
+        </template>
+
+        <div class="d-flex align-center justify-between gap-sm">
+            <button type="button" class="btn btn-ghost btn-xs text-muted" @click="showApproachModal = false">Skip to Editor</button>
+            <button type="button" class="btn btn-primary btn-sm" @click="validateApproach()" :disabled="approachLoading">
+                Submit Strategy & Code →
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Monaco Editor -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script>
+    // Monaco Editor Language Map
+    const MONACO_LANGUAGES = {
+        'python': 'python',
+        'javascript': 'javascript',
+        'cpp': 'cpp',
+        'java': 'java',
+    };
+
+    // Starter codes per language from Django
+    const STARTER_CODES = {
+        'python': "{{ problem.starter_code_python|escapejs }}",
+        'javascript': "{{ problem.starter_code_javascript|escapejs }}",
+        'cpp': "{{ problem.starter_code_cpp|escapejs }}",
+        'java': "{{ problem.starter_code_java|escapejs }}",
+    };
+
+    let monacoEditor = null;
+
+    // Initialize Monaco
+    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+        // Define dark theme
+        monaco.editor.defineTheme('algodsa-dark', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [
+                { token: 'comment', foreground: '6a737d', fontStyle: 'italic' },
+                { token: 'keyword', foreground: '818cf8' },
+                { token: 'string', foreground: '06b6d4' },
+                { token: 'number', foreground: 'f59e0b' },
+                { token: 'type', foreground: '10b981' },
+            ],
+            colors: {
+                'editor.background': '#111118',
+                'editor.foreground': '#e2e8f0',
+                'editor.lineHighlightBackground': '#1a1a24',
+                'editor.selectionBackground': '#6366f140',
+                'editorCursor.foreground': '#6366f1',
+                'editorLineNumber.foreground': '#4a5568',
+                'editorLineNumber.activeForeground': '#94a3b8',
+            }
+        });
+
+        const initialLang = '{{ language }}';
+        monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
+            value: STARTER_CODES[initialLang] || '# Write your solution here\n',
+            language: MONACO_LANGUAGES[initialLang] || 'python',
+            theme: 'algodsa-dark',
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: 'on',
+            renderLineHighlight: 'line',
+            automaticLayout: true,
+            tabSize: 4,
+            wordWrap: 'on',
+            padding: { top: 16 },
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: true,
+        });
+    });
+
+    function problemPage() {
+        return {
+            language: '{{ language }}',
+            submitting: false,
+            showResults: false,
+            resultStatus: '',
+            resultColor: '',
+            resultIcon: '',
+            resultRuntime: '',
+            resultMemory: '',
+            testsPassed: 0,
+            testsTotal: 0,
+            testResults: [],
+            hints: [
+                { id: 1, level: 1, title: 'Hint 1', subtitle: 'Direction', icon: '💡', content: '', isLoaded: false, isOpen: false, loading: false },
+                { id: 2, level: 2, title: 'Hint 2', subtitle: 'Pattern', icon: '🔍', content: '', isLoaded: false, isOpen: false, loading: false },
+                { id: 3, level: 3, title: 'Hint 3', subtitle: 'Pseudocode', icon: '📝', content: '', isLoaded: false, isOpen: false, loading: false },
+            ],
+            explanation: '',
+            explanationLoading: false,
+            explanationFeedback: '',
+            explanationApproved: false,
+            explanationScore: 0,
+            editorialContent: '',
+            userSubmissions: [],
+            showSubmissionModal: false,
+            activeSub: {},
+            modalEditorInstance: null,
+            toastMsg: '',
+            showToastMessage: false,
+
+            // Feature 1: Pre-Code Approach Check (Non-Blocking)
+            showApproachModal: false,
+            selectedApproach: 'hash_map',
+            approachExplanation: '',
+            approachValidated: false,
+            approachFeedback: null,
+            approachLoading: false,
+
+            // Feature 2: Socratic Debugging
+            socraticQuestion: '',
+            socraticHint: '',
+
+            // Feature 3 & 5 & 6: Post-Solve AI Review & Reflection
+            aiReviewData: null,
+            teachExplanation: '',
+            teachFeedback: null,
+            teachLoading: false,
+            reflectionDone: false,
+
+            init() {
+                this.loadSubmissions();
+            },
+
+            async validateApproach() {
+                if (this.approachLoading) return;
+                this.approachLoading = true;
+                try {
+                    const res = await fetch('/tutor/api/validate-approach/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({
+                            problem_id: {{ problem.id }},
+                            approach_type: this.selectedApproach,
+                            explanation: this.approachExplanation
+                        })
+                    });
+                    const data = await res.json();
+                    this.approachFeedback = data;
+                    this.approachValidated = true;
+                    setTimeout(() => { this.showApproachModal = false; }, 1800);
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.approachLoading = false;
+                }
+            },
+
+            async fetchSocraticDebug(code, errorLog) {
+                try {
+                    const res = await fetch('/tutor/api/socratic-debug/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({ problem_id: {{ problem.id }}, code: code, error_log: errorLog })
+                    });
+                    const data = await res.json();
+                    this.socraticQuestion = data.socratic_question;
+                    this.socraticHint = data.pattern_hint;
+                } catch(e) {
+                    console.error(e);
+                }
+            },
+
+            async fetchPostSolveReview(code, runtimeMs, memoryKb) {
+                try {
+                    const res = await fetch('/tutor/api/post-solve-review/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({ problem_id: {{ problem.id }}, code: code, runtime_ms: runtimeMs, memory_kb: memoryKb })
+                    });
+                    const data = await res.json();
+                    this.aiReviewData = data;
+                } catch(e) {
+                    console.error(e);
+                }
+            },
+
+            async submitReflection(rating) {
+                try {
+                    await fetch('/tutor/api/post-solve-reflection/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({ problem_id: {{ problem.id }}, rating: rating })
+                    });
+                    this.reflectionDone = true;
+                    this.triggerToast('✅ SM-2 Spaced Repetition schedule updated!');
+                } catch(e) {
+                    console.error(e);
+                }
+            },
+
+            async submitTeachAi() {
+                if (!this.teachExplanation.trim() || this.teachLoading) return;
+                this.teachLoading = true;
+                try {
+                    const res = await fetch('/tutor/api/teach-ai/', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({ problem_id: {{ problem.id }}, explanation: this.teachExplanation })
+                    });
+                    const data = await res.json();
+                    this.teachFeedback = data;
+                    if (data.approved) {
+                        this.triggerToast('🎉 Earned +15 Teaching XP!');
+                    }
+                } catch(e) {
+                    console.error(e);
+                } finally {
+                    this.teachLoading = false;
+                }
+            },
+
+            async loadSubmissions() {
+                try {
+                    const res = await fetch("{% url 'get_problem_submissions_api' problem.id %}");
+                    const data = await res.json();
+                    this.userSubmissions = data.submissions || [];
+                } catch (e) {
+                    console.error('Failed to load submissions:', e);
+                }
+            },
+
+            async openSubmissionModal(submissionId) {
+                if (!submissionId) return;
+                try {
+                    const url = "{% url 'get_submission_detail_api' 0 %}".replace('/0/', `/${submissionId}/`);
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    this.activeSub = data;
+                    this.showSubmissionModal = true;
+
+                    this.$nextTick(() => {
+                        this.initOrUpdateModalEditor(data.code, data.language);
+                    });
+                } catch (e) {
+                    console.error('Failed to load submission detail:', e);
+                }
+            },
+
+            initOrUpdateModalEditor(code, language) {
+                const monacoLang = MONACO_LANGUAGES[language] || 'python';
+                const container = document.getElementById('monaco-modal-editor');
+                if (!container) return;
+
+                if (!this.modalEditorInstance) {
+                    require(['vs/editor/editor.main'], () => {
+                        this.modalEditorInstance = monaco.editor.create(container, {
+                            value: code,
+                            language: monacoLang,
+                            theme: 'algodsa-dark',
+                            readOnly: true,
+                            fontSize: 13,
+                            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            lineNumbers: 'on',
+                            automaticLayout: true,
+                            padding: { top: 10 },
+                            domReadOnly: true,
+                        });
+                    });
+                } else {
+                    this.modalEditorInstance.setValue(code);
+                    monaco.editor.setModelLanguage(this.modalEditorInstance.getModel(), monacoLang);
+                }
+            },
+
+            copyModalCode() {
+                if (!this.activeSub.code) return;
+                navigator.clipboard.writeText(this.activeSub.code).then(() => {
+                    this.triggerToast('✅ Saved submission code copied!');
+                }).catch(() => {
+                    this.triggerToast('Failed to copy code.');
+                });
+            },
+
+            downloadModalCode() {
+                if (!this.activeSub.code) return;
+                const ext = { 'python': '.py', 'javascript': '.js', 'cpp': '.cpp', 'java': '.java' }[this.activeSub.language] || '.txt';
+                const filename = `submission_${this.activeSub.id}_${this.activeSub.problem_slug}${ext}`;
+                const blob = new Blob([this.activeSub.code], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.triggerToast(`💾 Downloaded ${filename}`);
+            },
+
+            toggleModalFullscreen() {
+                const wrapper = document.getElementById('modal-code-wrapper');
+                const btn = document.getElementById('btn-modal-fullscreen');
+                if (!wrapper) return;
+                if (wrapper.classList.contains('fullscreen-modal')) {
+                    wrapper.classList.remove('fullscreen-modal');
+                    if (btn) btn.innerHTML = '⛶ Fullscreen';
+                    document.getElementById('monaco-modal-editor').style.height = '340px';
+                } else {
+                    wrapper.classList.add('fullscreen-modal');
+                    if (btn) btn.innerHTML = '✕ Exit Fullscreen';
+                    document.getElementById('monaco-modal-editor').style.height = 'calc(100vh - 46px)';
+                }
+                if (this.modalEditorInstance) this.modalEditorInstance.layout();
+            },
+
+            triggerToast(msg) {
+                this.toastMsg = msg;
+                this.showToastMessage = true;
+                setTimeout(() => { this.showToastMessage = false; }, 3000);
+            },
+
+            changeLanguage() {
+                if (monacoEditor) {
+                    const code = STARTER_CODES[this.language] || '';
+                    monacoEditor.setValue(code);
+                    monaco.editor.setModelLanguage(
+                        monacoEditor.getModel(),
+                        MONACO_LANGUAGES[this.language] || 'python'
+                    );
+                }
+            },
+
+            resetCode() {
+                if (monacoEditor) {
+                    const code = STARTER_CODES[this.language] || '';
+                    monacoEditor.setValue(code);
+                }
+            },
+
+            async submitCode() {
+                if (!monacoEditor || this.submitting) return;
+                this.submitting = true;
+                this.showResults = false;
+
+                const code = monacoEditor.getValue();
+
+                try {
+                    const response = await fetch('{% url "submit_code" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: JSON.stringify({
+                            problem_id: {{ problem.id }},
+                            code: code,
+                            language: this.language,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    this.resultStatus = data.status_display;
+                    this.resultColor = data.status_color;
+                    this.resultIcon = data.status_icon;
+                    this.resultRuntime = data.runtime_ms;
+                    this.resultMemory = Math.round(data.memory_kb);
+                    this.testsPassed = data.test_cases_passed;
+                    this.testsTotal = data.test_cases_total;
+                    this.testResults = data.results || [];
+                    this.showResults = true;
+
+                    if (data.status === 'accepted') {
+                        await this.fetchPostSolveReview(code, data.runtime_ms, data.memory_kb);
+                    } else {
+                        await this.fetchSocraticDebug(code, data.failure_reason || 'Testcase failed');
+                    }
+
+                    await this.loadSubmissions();
+
+                } catch (error) {
+                    this.resultStatus = 'Error';
+                    this.resultColor = '#ef4444';
+                    this.resultIcon = '💥';
+                    this.testResults = [];
+                    this.showResults = true;
+                }
+
+                this.submitting = false;
+            },
+
+            async toggleHint(level) {
+                const hint = this.hints.find(h => Number(h.level) === Number(level));
+                if (!hint) return;
+
+                if (!hint.isLoaded) {
+                    if (hint.loading) return;
+                    hint.loading = true;
+                    const code = monacoEditor ? monacoEditor.getValue() : '';
+
+                    try {
+                        const response = await fetch('{% url "get_hint" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}',
+                            },
+                            body: JSON.stringify({
+                                problem_id: {{ problem.id }},
+                                level: level,
+                                code: code,
+                            }),
+                        });
+
+                        const data = await response.json();
+                        hint.content = data.hint || data.text || '';
+                        hint.isLoaded = true;
+                        hint.isOpen = true;
+
+                    } catch (error) {
+                        console.error('Hint fetch error:', error);
+                    } finally {
+                        hint.loading = false;
+                    }
+                } else {
+                    hint.isOpen = !hint.isOpen;
+                }
+            },
+
+            async submitExplanation() {
+                if (!this.explanation.trim() || this.explanationLoading) return;
+                this.explanationLoading = true;
+
+                try {
+                    const response = await fetch('{% url "submit_explanation" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: JSON.stringify({
+                            problem_id: {{ problem.id }},
+                            explanation: this.explanation,
+                        }),
+                    });
+
+                    const data = await response.json();
+                    this.explanationFeedback = data.feedback;
+                    this.explanationApproved = data.approved;
+                    this.explanationScore = data.score;
+
+                    if (data.editorial) {
+                        this.editorialContent = data.editorial;
+                    }
+
+                } catch (error) {
+                    this.explanationFeedback = 'Error submitting explanation. Please try again.';
+                }
+
+                this.explanationLoading = false;
+            },
+        };
+    }
+</script>
+{% endblock %}

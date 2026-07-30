@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ topic.name }} Problems — AlgoDSA Workstation{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 1.5rem; padding-bottom: 3.5rem;"
+     x-data="{ 
+        search: '', 
+        diffFilter: '', 
+        statusFilter: '{{ filter_type }}', 
+        modalOpen: false,
+        modalData: {
+            title: '',
+            difficulty: 'easy',
+            pattern: '',
+            accRate: '70%',
+            estTime: '15 mins',
+            xp: 20,
+            description: '',
+            leetcodeUrl: '',
+            gfgUrl: '',
+            detailUrl: '',
+            nextTitle: ''
+        },
+        openLaunchModal(data) {
+            this.modalData = data;
+            this.modalOpen = true;
+        },
+        closeLaunchModal() {
+            this.modalOpen = false;
+        }
+     }">
+
+    <!-- =======================================================
+         PAGE HEADER
+         ======================================================= -->
+    <div class="page-header" style="padding-top: 0;">
+        <div class="d-flex align-center justify-between flex-wrap gap-md">
+            <div class="d-flex align-center gap-md">
+                <a href="{% url 'topic_list' %}" class="btn btn-ghost btn-sm" style="border: 1px solid var(--border-color);">
+                    ← Back to Learning Hub
+                </a>
+                <div>
+                    <h1 class="tier-1-title d-flex align-center gap-xs" style="margin-bottom: 0.25rem;">
+                        <span style="font-size: 1.4rem;">{{ topic.icon }}</span>
+                        <span>{{ topic.name }} Practice Path</span>
+                    </h1>
+                    <p class="text-secondary text-sm" style="margin-bottom: 0;">
+                        {{ topic.description }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sync Button Quick Link -->
+            {% if user.leetcode_username %}
+            <form method="post" action="{% url 'sync_leetcode' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm">
+                    🔄 Sync LeetCode (@{{ user.leetcode_username }})
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Real-World Intuition Banner -->
+    {% if topic.real_world_analogy %}
+    <div class="card mb-xl p-md" style="border-color: rgba(99, 102, 241, 0.35); background: rgba(99, 102, 241, 0.05); border-radius: 16px;">
+        <div class="d-flex align-center gap-md">
+            <div class="p-xs d-flex align-center justify-center" style="background: rgba(99, 102, 241, 0.15); border-radius: var(--radius-md); color: var(--primary-light); font-size: 1.25rem;">
+                💡
+            </div>
+            <div>
+                <strong class="text-bright text-xs d-block mb-2xs" style="color: var(--primary-light);">Real-World Intuition & Mental Model:</strong>
+                <p class="text-secondary text-xs mb-0" style="line-height: 1.6;">
+                    {{ topic.real_world_analogy }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- =======================================================
+         TOPIC DIFFICULTY BREAKDOWN CARDS (4 CARDS)
+         ======================================================= -->
+    <div class="submission-stats-grid mb-xl" aria-label="Topic Difficulty Progress">
+        <!-- 1. Easy Questions -->
+        <div class="sub-stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">EASY PROBLEMS</span>
+                <i data-lucide="check-circle-2" class="icon-xs" style="color: var(--easy);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--easy);">
+                {{ easy_solved }} <span class="text-xs text-muted font-normal">/ {{ easy_total }}</span>
+            </div>
+            <div class="progress-bar mt-xs" style="height: 4px;">
+                <div class="progress-bar-fill" style="width: {{ easy_pct }}%; background: var(--easy);"></div>
+            </div>
+        </div>
+
+        <!-- 2. Medium Questions -->
+        <div class="sub-stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">MEDIUM PROBLEMS</span>
+                <i data-lucide="zap" class="icon-xs" style="color: var(--medium);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--medium);">
+                {{ medium_solved }} <span class="text-xs text-muted font-normal">/ {{ medium_total }}</span>
+            </div>
+            <div class="progress-bar mt-xs" style="height: 4px;">
+                <div class="progress-bar-fill" style="width: {{ medium_pct }}%; background: var(--medium);"></div>
+            </div>
+        </div>
+
+        <!-- 3. Hard Questions -->
+        <div class="sub-stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">HARD PROBLEMS</span>
+                <i data-lucide="flame" class="icon-xs" style="color: var(--hard);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--hard);">
+                {{ hard_solved }} <span class="text-xs text-muted font-normal">/ {{ hard_total }}</span>
+            </div>
+            <div class="progress-bar mt-xs" style="height: 4px;">
+                <div class="progress-bar-fill" style="width: {{ hard_pct }}%; background: var(--hard);"></div>
+            </div>
+        </div>
+
+        <!-- 4. Overall Topic Completion -->
+        <div class="sub-stat-card" style="border-color: rgba(99, 102, 241, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">TOPIC PROGRESS</span>
+                <i data-lucide="target" class="icon-xs" style="color: var(--stat-primary);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--stat-primary);">
+                {{ topic_progress_pct }}%
+            </div>
+            <div class="progress-bar mt-xs" style="height: 4px;">
+                <div class="progress-bar-fill" style="width: {{ topic_progress_pct }}%; background: var(--stat-primary);"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         STICKY FILTER TOOLBAR & QUICK TABS
+         ======================================================= -->
+    <div class="sticky-filter-bar">
+        <div class="filter-toolbar-grid">
+            <!-- Left: Instant Search -->
+            <div class="search-input-wrapper">
+                <i data-lucide="search" class="icon-sm search-icon"></i>
+                <input type="text" 
+                       x-model="search" 
+                       placeholder="Search problems by title, pattern or company..." 
+                       class="search-input-field"
+                       aria-label="Search problems in topic">
+            </div>
+
+            <!-- Right: Filter Dropdowns & Quick Tabs -->
+            <div class="filter-controls-group">
+                <!-- Status Filter Pills -->
+                <div class="d-flex align-center gap-2xs">
+                    <a href="?filter=all" class="btn {% if filter_type == 'all' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="padding: 0.55rem 0.75rem;">
+                        All ({{ total_count }})
+                    </a>
+                    <a href="?filter=solved" class="btn {% if filter_type == 'solved' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="padding: 0.55rem 0.75rem;">
+                        Solved ({{ solved_count }})
+                    </a>
+                    <a href="?filter=remaining" class="btn {% if filter_type == 'remaining' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="padding: 0.55rem 0.75rem;">
+                        Remaining ({{ remaining_count }})
+                    </a>
+                </div>
+
+                <!-- Difficulty Filter Dropdown -->
+                <div class="custom-select-wrapper" style="width: 150px;">
+                    <select x-model="diffFilter" class="custom-select-field" aria-label="Filter by difficulty">
+                        <option value="">Difficulty: All</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         2-COLUMN INTERACTIVE PROBLEM CARDS GRID
+         ======================================================= -->
+    <div class="problem-cards-grid mb-xl" id="problemGrid">
+        {% for item in problem_data %}
+        <div class="problem-card-item {{ item.status_card_class }}"
+             data-title="{{ item.problem.title|lower }}"
+             data-difficulty="{{ item.problem.difficulty }}"
+             data-pattern="{{ item.problem.get_pattern_display|lower }}"
+             data-solved="{% if item.solved %}true{% else %}false{% endif %}"
+             x-show="
+                (search === '' || $el.dataset.title.includes(search.toLowerCase()) || $el.dataset.pattern.includes(search.toLowerCase())) &&
+                (diffFilter === '' || $el.dataset.difficulty === diffFilter)
+             "
+             @click="openLaunchModal({
+                title: '{{ item.problem.title|escapejs }}',
+                difficulty: '{{ item.problem.difficulty }}',
+                difficultyDisplay: '{{ item.problem.get_difficulty_display }}',
+                pattern: '{{ item.problem.get_pattern_display }}',
+                accRate: '{{ item.acc_rate }}',
+                estTime: '{{ item.est_time }}',
+                xp: {{ item.xp_reward }},
+                description: '{{ item.problem.description|truncatewords:25|escapejs }}',
+                leetcodeUrl: '{{ item.problem.leetcode_url }}',
+                gfgUrl: '{{ item.problem.gfg_url }}',
+                detailUrl: '{% url 'problem_detail' topic.slug item.problem.slug %}',
+                nextTitle: '{{ item.next_problem.title|default:''|escapejs }}'
+             })">
+
+            <!-- Card Header: Title & Badges -->
+            <div>
+                <div class="d-flex align-center justify-between mb-xs">
+                    <div class="d-flex align-center gap-xs">
+                        {% if item.solved %}
+                        <span class="status-pill accepted text-2xs">✅ Solved</span>
+                        {% else %}
+                        <span class="status-pill text-2xs" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">○ Not Started</span>
+                        {% endif %}
+                        <span class="badge badge-{{ item.problem.difficulty }} text-2xs">{{ item.problem.get_difficulty_display }}</span>
+                    </div>
+
+                    <span class="badge badge-pattern text-2xs">+{{ item.xp_reward }} XP</span>
+                </div>
+
+                <h3 class="tier-2-section-title" style="margin-bottom: 0.35rem; font-size: 1.05rem;">
+                    {{ item.problem.title }}
+                </h3>
+                <p class="text-secondary text-xs mb-sm" style="line-height: 1.5; min-height: 2.4rem;">
+                    {{ item.problem.description|truncatewords:16 }}
+                </p>
+            </div>
+
+            <!-- Card Footer: Metadata & CTA -->
+            <div>
+                <div class="d-flex align-center justify-between text-2xs text-muted mb-sm flex-wrap gap-xs">
+                    <span class="d-flex align-center gap-2xs">
+                        <i data-lucide="layers" class="icon-xs text-primary"></i>
+                        <span>{{ item.problem.get_pattern_display }}</span>
+                    </span>
+                    <span>Acceptance: <strong class="text-bright font-mono">{{ item.acc_rate }}</strong></span>
+                    <span>Est. Time: <strong class="text-bright font-mono">{{ item.est_time }}</strong></span>
+                </div>
+
+                <!-- Target Companies & CTA -->
+                <div class="d-flex align-center justify-between pt-xs" style="border-top: 1px solid var(--border-subtle);">
+                    <div class="d-flex align-center gap-2xs">
+                        <span class="badge text-2xs" style="background: rgba(255,255,255,0.04); color: var(--text-muted);">Amazon</span>
+                        <span class="badge text-2xs" style="background: rgba(255,255,255,0.04); color: var(--text-muted);">Google</span>
+                    </div>
+
+                    <button type="button" class="btn btn-ghost btn-xs text-2xs text-primary">
+                        {% if item.solved %}Review Solution →{% else %}Solve Problem →{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state card" style="grid-column: 1 / -1; padding: 3rem 1.5rem;">
+            <i data-lucide="file-search" class="icon-xl mb-md text-muted"></i>
+            <h3 class="tier-2-section-title mb-xs">No Problems Found</h3>
+            <p class="text-muted text-sm mb-lg" style="max-width: 420px; margin-left: auto; margin-right: auto;">
+                No problems match your current search and filter criteria.
+            </p>
+            <a href="?filter=all" class="btn btn-primary btn-sm">Reset Filters</a>
+        </div>
+        {% endfor %}
+    </div>
+
+
+    <!-- =======================================================
+         PROBLEM LAUNCH & PLATFORM SELECTOR MODAL
+         ======================================================= -->
+    <div class="drawer-backdrop" x-show="modalOpen" @click="closeLaunchModal()" x-transition.opacity></div>
+
+    <div class="problem-launch-modal" :class="{ 'active': modalOpen }">
+        <!-- Modal Sticky Header -->
+        <div class="p-md d-flex align-center justify-between" style="background: rgba(18, 18, 23, 0.95); border-bottom: 1px solid var(--border-color);">
+            <div>
+                <div class="d-flex align-center gap-xs mb-2xs">
+                    <span class="badge" :class="'badge-' + modalData.difficulty" x-text="modalData.difficultyDisplay">Easy</span>
+                    <span class="badge badge-pattern text-2xs" x-text="modalData.pattern">Two Pointers</span>
+                    <span class="badge text-2xs" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);" x-text="'+' + modalData.xp + ' XP'">+20 XP</span>
+                </div>
+                <h2 class="tier-1-title" style="font-size: 1.2rem; margin: 0;" x-text="modalData.title">
+                    Problem Title
+                </h2>
+            </div>
+            <button type="button" class="btn btn-ghost btn-xs text-2xs text-muted" @click="closeLaunchModal()">
+                <i data-lucide="x" class="icon-xs"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div class="p-md" style="flex: 1; overflow-y: auto;">
+            
+            <!-- Connected Account Status Banner -->
+            <div class="p-xs mb-md d-flex align-center justify-between text-2xs" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm);">
+                <div class="d-flex align-center gap-xs">
+                    <i data-lucide="user-check" class="icon-xs text-success"></i>
+                    <span>
+                        {% if user.leetcode_username %}
+                        Connected LeetCode Account: <strong class="text-bright">@{{ user.leetcode_username }}</strong>
+                        {% else %}
+                        Account Status: <span class="text-muted">Not Synced (Progress sync available anytime)</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <span class="text-muted font-mono">Est. Time: <strong class="text-bright" x-text="modalData.estTime">15 mins</strong></span>
+            </div>
+
+            <!-- Problem Statement Overview -->
+            <div class="mb-md">
+                <span class="text-2xs font-bold text-muted d-block mb-2xs">PROBLEM OVERVIEW</span>
+                <p class="text-secondary text-xs" style="line-height: 1.6;" x-text="modalData.description">
+                    Problem overview description...
+                </p>
+            </div>
+
+            <!-- Platform Choice Cards -->
+            <div class="mb-md">
+                <span class="text-2xs font-bold text-muted d-block mb-xs">CHOOSE CODING PLATFORM</span>
+                <div class="d-flex flex-col gap-xs">
+                    
+                    <!-- LeetCode Platform Card -->
+                    <a :href="modalData.leetcodeUrl" target="_blank" class="platform-card-choice">
+                        <div class="d-flex align-center gap-sm">
+                            <div class="p-xs d-flex align-center justify-center" style="background: rgba(245, 158, 11, 0.15); border-radius: var(--radius-sm); color: #f59e0b; font-size: 1.25rem;">
+                                🟠
+                            </div>
+                            <div>
+                                <strong class="text-bright text-xs d-block">Solve on LeetCode</strong>
+                                <span class="text-2xs text-muted">Official Judge • Global Submissions • Discussion Community</span>
+                            </div>
+                        </div>
+                        <span class="btn btn-outline btn-xs text-2xs" style="border-color: #f59e0b; color: #f59e0b;">
+                            Open LeetCode ↗
+                        </span>
+                    </a>
+
+                    <!-- GeeksforGeeks Platform Card -->
+                    <a :href="modalData.gfgUrl" target="_blank" class="platform-card-choice">
+                        <div class="d-flex align-center gap-sm">
+                            <div class="p-xs d-flex align-center justify-center" style="background: rgba(47, 157, 87, 0.15); border-radius: var(--radius-sm); color: #2f9d57; font-size: 1.25rem;">
+                                🟢
+                            </div>
+                            <div>
+                                <strong class="text-bright text-xs d-block">Solve on GeeksforGeeks</strong>
+                                <span class="text-2xs text-muted">Detailed Editorial • Step-by-Step Theory • Visual Practice</span>
+                            </div>
+                        </div>
+                        <span class="btn btn-outline btn-xs text-2xs" style="border-color: #2f9d57; color: #2f9d57;">
+                            Open GFG ↗
+                        </span>
+                    </a>
+
+                    <!-- AlgoDSA IDE Workspace -->
+                    <a :href="modalData.detailUrl" class="platform-card-choice" style="border-color: rgba(99, 102, 241, 0.35); background: rgba(99, 102, 241, 0.08);">
+                        <div class="d-flex align-center gap-sm">
+                            <div class="p-xs d-flex align-center justify-center" style="background: rgba(99, 102, 241, 0.2); border-radius: var(--radius-sm); color: var(--primary-light); font-size: 1.25rem;">
+                                ⚡
+                            </div>
+                            <div>
+                                <strong class="text-bright text-xs d-block" style="color: var(--primary-light);">AlgoDSA IDE Workspace</strong>
+                                <span class="text-2xs text-muted">Monaco Editor • Judge0 Docker • Built-in AI Tutor</span>
+                            </div>
+                        </div>
+                        <span class="btn btn-primary btn-xs text-2xs">
+                            Launch IDE →
+                        </span>
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Learning Objectives & AI Recommendation -->
+            <div class="card p-sm" style="background: rgba(18, 18, 23, 0.6); border-color: var(--border-color);">
+                <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                    <span class="d-flex align-center gap-xs font-bold text-bright">
+                        <i data-lucide="sparkles" class="icon-xs text-primary"></i>
+                        <span>Learning Objectives & AI Target</span>
+                    </span>
+                    <span class="text-success font-mono">+8% Mastery Gain</span>
+                </div>
+                <p class="text-2xs text-secondary mb-0" style="line-height: 1.5;">
+                    By solving this question, you will master pointer manipulation, boundary checks, and memory references for <strong>{{ topic.name }}</strong> interviews.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

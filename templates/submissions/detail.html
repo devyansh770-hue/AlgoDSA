@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Submission #{{ submission.id }} — {{ submission.problem.title }} — AlgoDSA{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<style>
+    .submission-detail-container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+    .code-container-wrapper.fullscreen {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 2000 !important;
+        border-radius: 0 !important;
+        height: 100vh !important;
+        width: 100vw !important;
+    }
+    .code-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: #161622;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .toast-msg {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 3000;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        animation: fadeIn 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submission-detail-container">
+    <div class="d-flex align-center justify-between mb-lg" style="flex-wrap: wrap; gap: 0.5rem;">
+        <a href="{% url 'submission_history' %}" class="btn btn-ghost btn-sm">← Back to History</a>
+        
+        <!-- Submission Navigation -->
+        <div class="d-flex align-center gap-xs">
+            {% if prev_id %}
+            <a href="{% url 'submission_detail' prev_id %}" class="btn btn-ghost btn-sm">← Previous Submission</a>
+            {% else %}
+            <button class="btn btn-ghost btn-sm" disabled style="opacity: 0.4;">← Previous Submission</button>
+            {% endif %}
+
+            <span class="text-xs text-muted font-mono" style="padding: 0 6px;">Submission {{ submission_number }} of {{ total_submissions }}</span>
+
+            {% if next_id %}
+            <a href="{% url 'submission_detail' next_id %}" class="btn btn-ghost btn-sm">Next Submission →</a>
+            {% else %}
+            <button class="btn btn-ghost btn-sm" disabled style="opacity: 0.4;">Next Submission →</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Header Card -->
+    <div class="card mb-lg" style="border-color: {{ submission.status_color }}40; background: {{ submission.status_color }}08;">
+        <div class="card-header" style="margin-bottom: 0;">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem; margin-bottom: 0.5rem;">
+                    {{ submission.status_icon }} {{ submission.problem.title }}
+                </h1>
+                <div class="d-flex gap-sm align-center flex-wrap">
+                    <span class="badge" style="background: {{ submission.status_color }}25; color: {{ submission.status_color }}; padding: 4px 12px; font-weight: 700;">
+                        {{ submission.get_status_display }}
+                    </span>
+                    <span class="badge badge-{{ submission.problem.difficulty }}">{{ submission.problem.get_difficulty_display }}</span>
+                    <span class="badge badge-pattern">{{ submission.get_language_display }}</span>
+                    <span class="text-muted text-xs">ID: #{{ submission.id }}</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-muted text-xs mb-xs" title="{{ submission.created_at }}">{{ submission.created_at|timesince }} ago</div>
+                <div class="d-flex gap-md align-center justify-end text-sm" style="font-family: var(--font-mono);">
+                    {% if submission.runtime_ms != None %}
+                    <span class="text-muted" title="Runtime">⏱ {{ submission.runtime_ms|floatformat:1 }}ms</span>
+                    {% endif %}
+                    {% if submission.memory_kb != None %}
+                    <span class="text-muted" title="Memory">💾 {{ submission.memory_kb|floatformat:0 }}KB</span>
+                    {% endif %}
+                    <span class="text-success" title="Passed Test Cases">✅ {{ submission.test_cases_passed }}/{{ submission.test_cases_total }} passed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Section with Monaco Editor & Actions -->
+    <div class="card mb-lg code-container-wrapper" style="padding: 0; overflow: hidden;" id="code-wrapper-card">
+        <div class="code-toolbar">
+            <div class="d-flex align-center gap-sm">
+                <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-bright);">💻 Submitted Code</span>
+                <span class="badge badge-pattern" style="font-size: 0.7rem;">{{ submission.get_language_display }}</span>
+            </div>
+            <div class="d-flex align-center gap-xs">
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-copy-code" onclick="copyCode()">
+                    📋 Copy Code
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="downloadCode()">
+                    💾 Download
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-fullscreen" onclick="toggleFullscreen()">
+                    ⛶ Fullscreen
+                </button>
+            </div>
+        </div>
+
+        <div id="monaco-submission-editor" style="height: 400px; width: 100%;"></div>
+    </div>
+
+    {% if submission.stdout %}
+    <div class="card mb-lg">
+        <h2 class="section-title">📤 Standard Output (stdout)</h2>
+        <pre style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary); max-height: 200px; overflow-y: auto;">{{ submission.stdout }}</pre>
+    </div>
+    {% endif %}
+
+    {% if submission.stderr %}
+    <div class="card mb-lg" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.03);">
+        <h2 class="section-title" style="color: var(--error);">❌ Error Output (stderr)</h2>
+        <pre style="background: rgba(239, 68, 68, 0.08); padding: 1rem; border-radius: var(--radius-md); color: var(--error); font-family: var(--font-mono); font-size: 0.85rem; max-height: 250px; overflow-y: auto;">{{ submission.stderr }}</pre>
+    </div>
+    {% endif %}
+
+    {% if submission.ai_review %}
+    <div class="card mb-lg">
+        <h2 class="section-title">🤖 AI Code Review</h2>
+        <div class="text-sm text-secondary" style="line-height: 1.6;">{{ submission.ai_review|linebreaksbr }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="toast" class="toast-msg" style="display: none;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="source-code-data" type="application/json">{{ submission.code|json_script:"source-code-json" }}</script>
+<script>
+    const rawElement = document.getElementById('source-code-json');
+    const codeContent = rawElement ? JSON.parse(rawElement.textContent) : `{{ submission.code|escapejs }}`;
+    const lang = '{{ submission.language }}';
+    
+    const MONACO_LANG = {
+        'python': 'python',
+        'javascript': 'javascript',
+        'cpp': 'cpp',
+        'java': 'java',
+    }[lang] || 'python';
+
+    const EXT = {
+        'python': '.py',
+        'javascript': '.js',
+        'cpp': '.cpp',
+        'java': '.java',
+    }[lang] || '.txt';
+
+    let editorInstance = null;
+
+    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+        editorInstance = monaco.editor.create(document.getElementById('monaco-submission-editor'), {
+            value: codeContent,
+            language: MONACO_LANG,
+            theme: 'vs-dark',
+            readOnly: true,
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: 'on',
+            automaticLayout: true,
+            padding: { top: 12 },
+            renderLineHighlight: 'all',
+            domReadOnly: true,
+        });
+    });
+
+    function copyCode() {
+        navigator.clipboard.writeText(codeContent).then(() => {
+            showToast('✅ Code copied to clipboard!');
+        }).catch(() => {
+            showToast('Failed to copy code.');
+        });
+    }
+
+    function downloadCode() {
+        const filename = `submission_{{ submission.id }}_${'{{ submission.problem.slug }}'}${EXT}`;
+        const blob = new Blob([codeContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`💾 Downloaded ${filename}`);
+    }
+
+    function toggleFullscreen() {
+        const wrapper = document.getElementById('code-wrapper-card');
+        const btn = document.getElementById('btn-fullscreen');
+        if (wrapper.classList.contains('fullscreen')) {
+            wrapper.classList.remove('fullscreen');
+            btn.innerHTML = '⛶ Fullscreen';
+            document.getElementById('monaco-submission-editor').style.height = '400px';
+        } else {
+            wrapper.classList.add('fullscreen');
+            btn.innerHTML = '✕ Exit Fullscreen';
+            document.getElementById('monaco-submission-editor').style.height = 'calc(100vh - 46px)';
+        }
+        if (editorInstance) editorInstance.layout();
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+</script>
+{% endblock %}

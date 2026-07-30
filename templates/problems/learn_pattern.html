@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+{% block title %}{{ pattern.name }} — {{ topic.name }} Pattern Guide{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Accordion Styles */
+.accordion-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+    overflow: hidden;
+    transition: border-color var(--transition-fast);
+}
+
+.accordion-item:hover {
+    border-color: var(--border-glow);
+}
+
+.accordion-header {
+    padding: var(--space-md) var(--space-lg);
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    color: var(--text-bright);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.accordion-icon {
+    transition: transform 0.3s ease;
+    color: var(--primary-light);
+}
+.accordion-header[aria-expanded="true"] .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+/* Visualization Player */
+.viz-container {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.viz-array {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--space-md);
+    justify-content: center;
+}
+
+.viz-cell {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    position: relative;
+}
+
+.viz-cell.highlighted {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+.viz-pointer {
+    position: absolute;
+    bottom: -20px;
+    font-size: 0.75rem;
+    color: var(--warning);
+}
+
+/* Sidebar TOC */
+.toc-sidebar {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.toc-link {
+    display: block;
+    padding: 6px 12px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.toc-link:hover, .toc-link.active {
+    color: var(--primary-light);
+    border-left-color: var(--primary);
+    background: var(--bg-glass);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <!-- Breadcrumbs -->
+    <div class="text-sm text-muted mb-md">
+        <a href="{% url 'learn_hub' %}" class="text-muted">Learn</a> &gt; 
+        <a href="{% url 'learn_topic' topic.slug %}" class="text-muted">{{ topic.name }}</a> &gt; 
+        <span class="text-bright">{{ pattern.name }}</span>
+    </div>
+
+    <div class="page-header" style="padding-top: 0; padding-bottom: 1rem;">
+        <h1 class="page-title">{{ pattern.icon }} {{ pattern.name }} Pattern</h1>
+        <p class="page-subtitle">{{ pattern.description }}</p>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Main Content Area -->
+        <div class="main-content">
+            
+            <!-- 1. Introduction & Analogy (Always open) -->
+            <div class="card mb-md" id="section-intro">
+                <h2 class="section-title">🟢 Introduction</h2>
+                <p>{{ data.introduction }}</p>
+                
+                <div class="mt-md p-md" style="background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 1rem;">
+                    <h3 class="font-bold text-warning text-sm mb-xs">💡 Real Life Analogy</h3>
+                    <p class="text-sm mb-0">{{ data.real_life_analogy }}</p>
+                </div>
+            </div>
+
+            <!-- 2. Core Idea -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-core">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>🧠 Core Idea & Intuition</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <p>{{ data.core_idea }}</p>
+                </div>
+            </div>
+
+            <!-- 3. When to Use / Not to Use -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-when">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>✅ When to Use this Pattern</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: rgba(16, 185, 129, 0.05); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <h4 class="text-success text-sm font-bold mb-sm">Use When:</h4>
+                            <ul class="text-sm" style="padding-left: 1.2rem;">
+                                {% for item in data.when_to_use %}
+                                <li class="mb-xs">{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.05); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <h4 class="text-error text-sm font-bold mb-sm">Do NOT Use When:</h4>
+                            <ul class="text-sm" style="padding-left: 1.2rem;">
+                                {% for item in data.when_not_to_use %}
+                                <li class="mb-xs">{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Visualization -->
+            {% if data.visualization %}
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-viz">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>🎬 Interactive Visualization</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div class="viz-container" x-data="{ 
+                        step: 0, 
+                        steps: {{ data.visualization.steps|safe }},
+                        data: {{ data.visualization.data|safe }}
+                    }">
+                        <div class="d-flex justify-content-between mb-sm align-center">
+                            <span class="text-xs text-primary font-bold">Step <span x-text="step + 1"></span> of <span x-text="steps.length"></span></span>
+                            <div class="d-flex gap-sm">
+                                <button class="btn btn-sm btn-ghost" @click="step = Math.max(0, step - 1)" :disabled="step === 0">Prev</button>
+                                <button class="btn btn-sm btn-primary" @click="step = Math.min(steps.length - 1, step + 1)" :disabled="step === steps.length - 1">Next Step</button>
+                            </div>
+                        </div>
+
+                        <div class="viz-array mt-lg pb-md">
+                            <template x-for="(val, index) in data" :key="index">
+                                <div class="viz-cell" :class="{ 'highlighted': steps[step].highlight.includes(index) }">
+                                    <span x-text="val"></span>
+                                    <template x-if="steps[step].pointers">
+                                        <template x-for="(pIdx, pName) in steps[step].pointers">
+                                            <div class="viz-pointer" x-show="pIdx === index" x-text="pName"></div>
+                                        </template>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="text-center text-sm text-bright mt-sm" style="min-height: 40px;" x-text="steps[step].desc"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 5. Algorithm & Code -->
+            <div x-data="{ expanded: false, lang: 'python' }" class="accordion-item" id="section-code">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>💻 Code Implementation & Algorithm</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <h4 class="text-sm font-bold text-primary mb-sm">Algorithm Steps:</h4>
+                    <ol class="text-sm mb-md" style="padding-left: 1.2rem;">
+                        {% for step in data.algorithm %}
+                        <li class="mb-xs">{{ step }}</li>
+                        {% endfor %}
+                    </ol>
+
+                    <div class="d-flex gap-xs mb-sm">
+                        <button class="btn btn-sm" :class="lang === 'python' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'python'">Python</button>
+                        <button class="btn btn-sm" :class="lang === 'cpp' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'cpp'">C++</button>
+                        <button class="btn btn-sm" :class="lang === 'javascript' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'javascript'">JavaScript</button>
+                        <button class="btn btn-sm" :class="lang === 'java' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'java'">Java</button>
+                    </div>
+                    
+                    <pre style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: var(--text-bright); overflow-x: auto;">
+<code x-show="lang === 'python'" x-text="`{{ data.code.python|escapejs }}`"></code>
+<code x-show="lang === 'cpp'" x-text="`{{ data.code.cpp|escapejs }}`"></code>
+<code x-show="lang === 'javascript'" x-text="`{{ data.code.javascript|escapejs }}`"></code>
+<code x-show="lang === 'java'" x-text="`{{ data.code.java|escapejs }}`"></code>
+                    </pre>
+                </div>
+            </div>
+
+            <!-- 6. Dry Run Table -->
+            {% if data.dry_run %}
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-dryrun">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>🔍 Step-by-Step Dry Run</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div style="overflow-x: auto;">
+                        <table class="problem-table text-sm">
+                            <thead>
+                                <tr>
+                                    {% for key, val in data.dry_run.0.items %}
+                                    <th style="text-transform: capitalize;">{{ key }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data.dry_run %}
+                                <tr class="problem-row text-xs">
+                                    {% for key, val in row.items %}
+                                    <td>{{ val }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 7. Complexity Analysis -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-complexity">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>⏱️ Time & Space Complexity</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div class="d-flex flex-column gap-md">
+                        <div>
+                            <span class="badge badge-pattern mb-xs">Time: {{ data.complexity.time }}</span>
+                            <p class="text-sm mb-0">{{ data.complexity.time_reasoning }}</p>
+                        </div>
+                        <div>
+                            <span class="badge badge-pattern mb-xs">Space: {{ data.complexity.space }}</span>
+                            <p class="text-sm mb-0">{{ data.complexity.space_reasoning }}</p>
+                        </div>
+                        
+                        <table class="problem-table text-sm mt-sm" style="max-width: 400px;">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Complexity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in data.complexity.matrix %}
+                                <tr>
+                                    <td class="font-bold text-secondary">{{ item.operation }}</td>
+                                    <td class="font-mono text-primary">{{ item.value }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Edge Cases & Mistakes -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-edge">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>⚠️ Common Mistakes & Edge Cases</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <h4 class="text-sm font-bold text-warning mb-sm">Common Student Mistakes:</h4>
+                    <ul class="text-sm mb-md" style="padding-left: 1.2rem; color: var(--text-secondary);">
+                        {% for mistake in data.common_mistakes %}
+                        <li class="mb-xs">{{ mistake }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <h4 class="text-sm font-bold text-accent mb-sm">Edge Cases to Consider:</h4>
+                    <ul class="text-sm" style="padding-left: 1.2rem; color: var(--text-secondary);">
+                        {% for edge in data.edge_cases %}
+                        <li class="mb-xs">{{ edge }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 9. Cheat Sheet & Interview Tips -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-cheat">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>📄 Cheat Sheet & Interview Tips</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div style="background: rgba(99, 102, 241, 0.05); border-left: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem;">
+                        <h4 class="text-sm font-bold text-primary mb-xs">Cheat Sheet / Summary</h4>
+                        <p class="text-sm mb-0 font-mono text-secondary" style="white-space: pre-line;">{{ data.cheat_sheet }}</p>
+                    </div>
+
+                    <h4 class="text-sm font-bold text-bright mb-sm">Interview Tips:</h4>
+                    <ul class="text-sm mb-md" style="padding-left: 1.2rem; color: var(--text-secondary);">
+                        {% for tip in data.interview_tips %}
+                        <li class="mb-xs">{{ tip }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <p class="text-sm"><strong>Comparison:</strong> {{ data.comparison }}</p>
+                </div>
+            </div>
+
+            <!-- 10. Interactive Quiz -->
+            {% if data.quiz %}
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-quiz">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded">
+                    <span>❓ Interactive Quiz</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content">
+                    <div x-data="{ 
+                        questions: {{ data.quiz|safe|escapejs|default:'[]' }},
+                        current: 0,
+                        selected: null,
+                        showFeedback: false,
+                        score: 0
+                    }">
+                        <!-- Just render plain questions without alpine logic for safety in django templates if needed, or implement simple alpine quiz -->
+                        <div x-show="current < questions.length">
+                            <div class="text-xs text-muted mb-sm">Question <span x-text="current + 1"></span> of <span x-text="questions.length"></span></div>
+                            <h4 class="text-md text-bright mb-md" x-text="questions[current].question"></h4>
+                            
+                            <div class="d-flex flex-column gap-sm mb-md">
+                                <template x-for="(opt, idx) in questions[current].options">
+                                    <button class="btn" 
+                                            :class="{
+                                                'btn-ghost': selected !== idx && (!showFeedback || idx !== questions[current].answer),
+                                                'btn-primary': selected === idx && !showFeedback,
+                                                'btn-success': showFeedback && idx === questions[current].answer,
+                                                'btn-outline text-error': showFeedback && selected === idx && idx !== questions[current].answer
+                                            }"
+                                            style="justify-content: flex-start; text-align: left; white-space: normal;"
+                                            @click="if(!showFeedback) selected = idx"
+                                            x-text="opt">
+                                    </button>
+                                </template>
+                            </div>
+
+                            <div x-show="showFeedback" class="p-sm mb-md text-sm" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);" x-text="questions[current].explanation"></div>
+
+                            <button class="btn btn-primary" x-show="selected !== null && !showFeedback" @click="showFeedback = true; if(selected === questions[current].answer) score++">Submit Answer</button>
+                            <button class="btn btn-primary" x-show="showFeedback" @click="current++; selected = null; showFeedback = false">Next</button>
+                        </div>
+                        
+                        <div x-show="current >= questions.length && questions.length > 0" class="text-center p-lg">
+                            <h3 class="text-xl text-bright mb-sm">Quiz Complete! 🎉</h3>
+                            <p class="text-md">You scored <span x-text="score" class="font-bold text-success"></span> out of <span x-text="questions.length"></span>.</p>
+                            <button class="btn btn-outline mt-sm" @click="current = 0; score = 0; selected = null; showFeedback = false">Retake Quiz</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 11. Practice Questions (Collapsed Initially) -->
+            <div x-data="{ expanded: false }" class="accordion-item" id="section-practice">
+                <button @click="expanded = !expanded" class="accordion-header" :aria-expanded="expanded" style="background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid var(--border-color);">
+                    <span>💻 Practice Problems</span>
+                    <span class="accordion-icon">▼</span>
+                </button>
+                <div x-show="expanded" x-collapse class="accordion-content mt-md">
+                    <p class="text-sm text-muted mb-md">Apply the <strong>{{ pattern.name }}</strong> pattern to these curated problems.</p>
+                    
+                    {% if problems %}
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        {% for p in problems %}
+                        <!-- We would typically filter this loop by pattern, but for demo we just show a few -->
+                        {% if forloop.counter <= 3 %}
+                        <a href="{% url 'problem_detail' topic.slug p.slug %}" class="recommendation-card" style="text-decoration: none; color: inherit;">
+                            <div style="flex: 1;">
+                                <div class="font-bold text-sm" style="color: var(--text-bright);">{{ p.title }}</div>
+                                <div class="text-xs text-muted">Solve with {{ pattern.name }}</div>
+                            </div>
+                            <span class="badge badge-{{ p.difficulty }}">{{ p.get_difficulty_display }}</span>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state p-md">
+                        <p class="text-sm text-muted">Practice problems coming soon.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar TOC -->
+        <div class="sidebar">
+            <div class="card toc-sidebar">
+                <h3 class="text-sm font-bold text-bright mb-sm text-uppercase" style="letter-spacing: 0.5px;">Table of Contents</h3>
+                <div class="d-flex flex-column" x-data="{ active: 'intro' }" @scroll.window="
+                    // Simple scroll spy logic
+                    let sections = ['intro', 'core', 'when', 'viz', 'code', 'dryrun', 'complexity', 'edge', 'cheat', 'quiz', 'practice'];
+                    for(let s of sections) {
+                        let el = document.getElementById('section-' + s);
+                        if(el && el.getBoundingClientRect().top < 150) {
+                            active = s;
+                        }
+                    }
+                ">
+                    <a href="#section-intro" class="toc-link" :class="{ 'active': active === 'intro' }">Introduction</a>
+                    <a href="#section-core" class="toc-link" :class="{ 'active': active === 'core' }">Core Idea</a>
+                    <a href="#section-when" class="toc-link" :class="{ 'active': active === 'when' }">When to Use</a>
+                    {% if data.visualization %}<a href="#section-viz" class="toc-link" :class="{ 'active': active === 'viz' }">Visualization</a>{% endif %}
+                    <a href="#section-code" class="toc-link" :class="{ 'active': active === 'code' }">Code Implementation</a>
+                    {% if data.dry_run %}<a href="#section-dryrun" class="toc-link" :class="{ 'active': active === 'dryrun' }">Dry Run Table</a>{% endif %}
+                    <a href="#section-complexity" class="toc-link" :class="{ 'active': active === 'complexity' }">Time & Space Complexity</a>
+                    <a href="#section-edge" class="toc-link" :class="{ 'active': active === 'edge' }">Edge Cases</a>
+                    <a href="#section-cheat" class="toc-link" :class="{ 'active': active === 'cheat' }">Cheat Sheet</a>
+                    {% if data.quiz %}<a href="#section-quiz" class="toc-link" :class="{ 'active': active === 'quiz' }">Interactive Quiz</a>{% endif %}
+                    <a href="#section-practice" class="toc-link" :class="{ 'active': active === 'practice' }">Practice Problems</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

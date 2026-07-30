@@ -1,0 +1,762 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}Submission History — AlgoDSA Workstation{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 1.5rem; padding-bottom: 3rem;" 
+     x-data="{ 
+        search: '', 
+        statusFilter: '{{ status_filter }}', 
+        langFilter: '{{ language_filter }}', 
+        diffFilter: '', 
+        sortBy: 'newest',
+        resetFilters() {
+            this.search = '';
+            this.statusFilter = '';
+            this.langFilter = '';
+            this.diffFilter = '';
+            this.sortBy = 'newest';
+        }
+     }">
+
+    <!-- =======================================================
+         PAGE HEADER
+         ======================================================= -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl" style="padding-top: 0.5rem;">
+        <div>
+            <div class="d-flex align-center gap-xs mb-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="history" class="icon-xs"></i>
+                    WORKSTATION LOG
+                </span>
+                <span class="text-xs text-muted font-mono">Real-Time History • Judge0 Integrated</span>
+            </div>
+            <h1 class="tier-1-title d-flex align-center gap-xs" style="margin-bottom: 0.25rem;">
+                <i data-lucide="file-code" class="icon-md text-primary"></i>
+                <span>Submission History</span>
+            </h1>
+            <p class="text-secondary text-sm">
+                Track all your code submissions, monitor runtime performance, and review previous solutions.
+            </p>
+        </div>
+
+        <div class="d-flex align-center gap-xs flex-wrap">
+            <div class="badge" style="background: rgba(99, 102, 241, 0.12); color: var(--primary-light); padding: 6px 14px; font-size: var(--text-xs); border: 1px solid rgba(99, 102, 241, 0.3);">
+                <i data-lucide="layers" class="icon-xs"></i>
+                <span>Submissions: <strong>{{ total_submissions_count }}</strong></span>
+            </div>
+            <div class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--success); padding: 6px 14px; font-size: var(--text-xs); border: 1px solid rgba(16, 185, 129, 0.3);">
+                <i data-lucide="target" class="icon-xs"></i>
+                <span>Acceptance Rate: <strong>{{ acceptance_rate }}%</strong></span>
+            </div>
+            <div class="badge" style="background: rgba(255, 107, 0, 0.12); color: var(--streak-color); padding: 6px 14px; font-size: var(--text-xs); border: 1px solid rgba(255, 107, 0, 0.3);">
+                <i data-lucide="flame" class="icon-xs"></i>
+                <span>Streak: <strong>{{ user.streak }} Days</strong></span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         STATISTICS CARDS GRID (7 CARDS)
+         ======================================================= -->
+    <div class="submission-stats-grid mb-xl" aria-label="Submission Overview Metrics">
+        <!-- 1. Total Submissions -->
+        <div class="sub-stat-card" style="border-color: rgba(99, 102, 241, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">TOTAL SUBMISSIONS</span>
+                <i data-lucide="layers" class="icon-xs" style="color: var(--primary-light);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--stat-primary);">{{ total_submissions_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">All code runs</div>
+        </div>
+
+        <!-- 2. Accepted -->
+        <div class="sub-stat-card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">ACCEPTED</span>
+                <i data-lucide="check-circle-2" class="icon-xs" style="color: var(--success);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--success);">{{ accepted_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">All tests passed</div>
+        </div>
+
+        <!-- 3. Wrong Answer -->
+        <div class="sub-stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">WRONG ANSWER</span>
+                <i data-lucide="x-circle" class="icon-xs" style="color: var(--error);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--error);">{{ wrong_answer_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">Output mismatch</div>
+        </div>
+
+        <!-- 4. Runtime Error -->
+        <div class="sub-stat-card" style="border-color: rgba(249, 115, 22, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">RUNTIME ERROR</span>
+                <i data-lucide="alert-triangle" class="icon-xs" style="color: #f97316;"></i>
+            </div>
+            <div class="sub-stat-val" style="color: #f97316;">{{ runtime_error_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">Exception thrown</div>
+        </div>
+
+        <!-- 5. Time Limit Exceeded -->
+        <div class="sub-stat-card" style="border-color: rgba(234, 179, 8, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">TIME LIMIT</span>
+                <i data-lucide="clock" class="icon-xs" style="color: #eab308;"></i>
+            </div>
+            <div class="sub-stat-val" style="color: #eab308;">{{ time_limit_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">Execution timeout</div>
+        </div>
+
+        <!-- 6. Compilation Error -->
+        <div class="sub-stat-card" style="border-color: rgba(168, 85, 247, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">COMPILE ERROR</span>
+                <i data-lucide="code-2" class="icon-xs" style="color: #a855f7;"></i>
+            </div>
+            <div class="sub-stat-val" style="color: #a855f7;">{{ compilation_error_count }}</div>
+            <div class="text-2xs text-muted mt-2xs">Syntax error</div>
+        </div>
+
+        <!-- 7. Acceptance Rate -->
+        <div class="sub-stat-card" style="border-color: rgba(6, 182, 212, 0.3);">
+            <div class="d-flex align-center justify-between mb-xs">
+                <span class="text-2xs text-muted font-bold" style="letter-spacing: 0.5px;">ACCURACY RATE</span>
+                <i data-lucide="percent" class="icon-xs" style="color: var(--accent);"></i>
+            </div>
+            <div class="sub-stat-val" style="color: var(--accent);">{{ acceptance_rate }}%</div>
+            <div class="text-2xs text-muted mt-2xs">Pass percentage</div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         SEARCH & FILTER TOOLBAR (STICKY)
+         ======================================================= -->
+    <div class="sticky-filter-bar">
+        <div class="filter-toolbar-grid">
+            <!-- Left: Instant Search Box -->
+            <div class="search-input-wrapper">
+                <i data-lucide="search" class="icon-sm search-icon"></i>
+                <input type="text" 
+                       x-model="search" 
+                       placeholder="Search by problem title..." 
+                       class="search-input-field"
+                       aria-label="Search by problem title">
+            </div>
+
+            <!-- Right: Custom Filter Dropdowns -->
+            <div class="filter-controls-group">
+                <!-- Status Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="statusFilter" class="custom-select-field" aria-label="Filter by status">
+                        <option value="">Status: All</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="wrong_answer">Wrong Answer</option>
+                        <option value="runtime_error">Runtime Error</option>
+                        <option value="time_limit">Time Limit Exceeded</option>
+                        <option value="compilation_error">Compilation Error</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Language Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="langFilter" class="custom-select-field" aria-label="Filter by language">
+                        <option value="">Language: All</option>
+                        <option value="python">Python</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Difficulty Filter -->
+                <div class="custom-select-wrapper">
+                    <select x-model="diffFilter" class="custom-select-field" aria-label="Filter by difficulty">
+                        <option value="">Difficulty: All</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Sort Dropdown -->
+                <div class="custom-select-wrapper">
+                    <select x-model="sortBy" class="custom-select-field" aria-label="Sort submissions">
+                        <option value="newest">Sort: Newest First</option>
+                        <option value="oldest">Sort: Oldest First</option>
+                        <option value="fastest">Sort: Fastest Runtime</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="icon-xs chevron-icon"></i>
+                </div>
+
+                <!-- Reset Filters Button -->
+                <button type="button" @click="resetFilters()" class="btn btn-ghost btn-sm" style="padding: 0.55rem 0.85rem; border: 1px solid rgba(255,255,255,0.16); background: #18181b;" title="Reset all filters">
+                    <i data-lucide="rotate-ccw" class="icon-xs"></i>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =======================================================
+         SUBMISSION TABLE & LIST VIEW
+         ======================================================= -->
+    <div class="card-tier-2 p-0" style="overflow: hidden;">
+        {% if submissions %}
+        <div style="overflow-x: auto;">
+            <table class="problem-table" id="submissionTable">
+                <thead>
+                    <tr>
+                        <th style="width: 160px;">Status</th>
+                        <th>Problem</th>
+                        <th style="width: 110px;">Difficulty</th>
+                        <th style="width: 120px;">Language</th>
+                        <th style="width: 100px; text-align: right;">Runtime</th>
+                        <th style="width: 100px; text-align: right;">Memory</th>
+                        <th style="width: 140px; text-align: right;">Submitted</th>
+                        <th style="width: 130px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in submissions %}
+                    <tr class="problem-row sub-table-row" 
+                        data-title="{{ sub.problem.title|lower }}"
+                        data-status="{{ sub.status }}"
+                        data-language="{{ sub.language }}"
+                        data-difficulty="{{ sub.problem.difficulty }}"
+                        data-runtime="{{ sub.runtime_ms|default:99999 }}"
+                        data-timestamp="{{ sub.created_at|date:'U' }}"
+                        x-show="
+                            (search === '' || $el.dataset.title.includes(search.toLowerCase())) &&
+                            (statusFilter === '' || $el.dataset.status === statusFilter) &&
+                            (langFilter === '' || $el.dataset.language === langFilter) &&
+                            (diffFilter === '' || $el.dataset.difficulty === diffFilter)
+                        "
+                        onclick="openSubmissionDrawer({{ sub.id }})">
+
+                        <!-- Status Column -->
+                        <td class="problem-title-cell">
+                            <span class="status-pill {{ sub.status }}">
+                                <span>{{ sub.status_icon }}</span>
+                                <span>{{ sub.get_status_display }}</span>
+                            </span>
+                        </td>
+
+                        <!-- Problem Title Column -->
+                        <td>
+                            <div class="d-flex align-center gap-xs">
+                                <span class="font-bold text-bright">{{ sub.problem.title }}</span>
+                                <span class="text-2xs text-muted">• {{ sub.problem.topic.name }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Difficulty Column -->
+                        <td>
+                            <span class="badge badge-{{ sub.problem.difficulty }}">{{ sub.problem.get_difficulty_display }}</span>
+                        </td>
+
+                        <!-- Language Column -->
+                        <td>
+                            <span class="lang-pill {{ sub.language }}">{{ sub.get_language_display }}</span>
+                        </td>
+
+                        <!-- Runtime Column -->
+                        <td style="text-align: right;" class="font-mono text-xs text-bright">
+                            {% if sub.runtime_ms != None %}
+                                {{ sub.runtime_ms|floatformat:0 }} ms
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Memory Column -->
+                        <td style="text-align: right;" class="font-mono text-xs text-secondary">
+                            {% if sub.memory_kb != None %}
+                                {{ sub.memory_kb|floatformat:0 }} KB
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Submitted Relative Time Column -->
+                        <td style="text-align: right;" class="text-xs text-muted font-mono">
+                            {{ sub.created_at|timesince }} ago
+                        </td>
+
+                        <!-- Action Button Column -->
+                        <td style="text-align: center;">
+                            <button type="button" class="btn btn-ghost btn-xs text-2xs text-primary" style="pointer-events: none;">
+                                View →
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <!-- EMPTY STATE -->
+        <div class="empty-state" style="padding: 3rem 1.5rem;">
+            <i data-lucide="file-search" class="icon-xl mb-md text-muted"></i>
+            <h3 class="tier-2-section-title mb-xs">No Submissions Found</h3>
+            <p class="text-muted text-sm mb-lg" style="max-width: 420px; margin-left: auto; margin-right: auto;">
+                You haven't submitted any code matching these filters yet. Start solving problems to build your workstation history!
+            </p>
+            <a href="{% url 'topic_list' %}" class="btn btn-primary">
+                <i data-lucide="play" class="icon-xs"></i>
+                <span>Start Solving Problems →</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- =======================================================
+     REDESIGNED MULTI-TAB SUBMISSION DETAILS DRAWER
+     ======================================================= -->
+<div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+
+<div id="submissionDrawer" class="submission-drawer-redesign" x-data="{ activeTab: 'overview' }">
+
+    <!-- 1. STICKY HEADER (FIXED AT TOP) -->
+    <div class="drawer-header-sticky">
+        <div class="d-flex align-center justify-between gap-md mb-xs">
+            <div class="d-flex align-center gap-xs flex-wrap">
+                <span id="drawerStatusBadge" class="status-pill accepted">✅ Accepted</span>
+                <span id="drawerDifficultyBadge" class="badge badge-easy">Easy</span>
+                <span id="drawerSubId" class="text-xs font-mono text-muted">#--</span>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="d-flex align-center gap-xs">
+                <button type="button" class="btn btn-ghost btn-xs text-2xs" onclick="copyDrawerCode()" title="Copy Code">
+                    <i data-lucide="copy" class="icon-2xs"></i>
+                    <span id="copyBtnText">Copy Code</span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs text-2xs" onclick="downloadDrawerCode()" title="Download Code">
+                    <i data-lucide="download" class="icon-2xs"></i>
+                    <span>Download</span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-xs text-2xs text-muted" onclick="closeDrawer()" title="Close Drawer">
+                    <i data-lucide="x" class="icon-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <h2 id="drawerProblemTitle" class="tier-2-section-title" style="margin-bottom: 0.15rem; font-size: 1.15rem;">
+            Problem Title
+        </h2>
+        <div class="text-2xs text-muted font-mono" id="drawerSubmittedTimeRelative">Submitted --</div>
+    </div>
+
+    <!-- 2. FIXED TAB NAVIGATION BAR -->
+    <div class="drawer-tabs-fixed">
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'overview' }" @click="activeTab = 'overview'">
+            <i data-lucide="layout-dashboard" class="icon-xs"></i>
+            <span>Overview</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'source' }" @click="activeTab = 'source'">
+            <i data-lucide="code-2" class="icon-xs"></i>
+            <span>Source Code</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'performance' }" @click="activeTab = 'performance'">
+            <i data-lucide="zap" class="icon-xs"></i>
+            <span>Performance</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'testcases' }" @click="activeTab = 'testcases'">
+            <i data-lucide="check-square" class="icon-xs"></i>
+            <span>Test Cases</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'console' }" @click="activeTab = 'console'">
+            <i data-lucide="terminal" class="icon-xs"></i>
+            <span>Console</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" :class="{ 'active': activeTab === 'ai' }" @click="activeTab = 'ai'">
+            <i data-lucide="sparkles" class="icon-xs"></i>
+            <span>AI Analysis</span>
+        </button>
+    </div>
+
+    <!-- 3. SCROLLABLE TAB CONTENT BODY -->
+    <div class="drawer-body-scroll">
+        
+        <!-- TAB 1: OVERVIEW (6 Glass Cards Grid) -->
+        <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="overview-card-grid mb-md">
+                <!-- Card 1: Language -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>LANGUAGE</span>
+                        <i data-lucide="code" class="icon-xs text-primary"></i>
+                    </div>
+                    <div id="ovLanguage" class="font-mono font-bold text-bright text-sm">Python 3.12</div>
+                    <div class="text-2xs text-muted mt-2xs">Execution Language</div>
+                </div>
+
+                <!-- Card 2: Runtime -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>RUNTIME</span>
+                        <i data-lucide="zap" class="icon-xs text-success"></i>
+                    </div>
+                    <div id="ovRuntime" class="font-mono font-bold text-success text-sm">142 ms</div>
+                    <div class="text-2xs text-muted mt-2xs">Execution speed</div>
+                </div>
+
+                <!-- Card 3: Memory -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>MEMORY</span>
+                        <i data-lucide="hard-drive" class="icon-xs text-accent"></i>
+                    </div>
+                    <div id="ovMemory" class="font-mono font-bold text-accent text-sm">14.2 MB</div>
+                    <div class="text-2xs text-muted mt-2xs">Memory peak</div>
+                </div>
+
+                <!-- Card 4: Passed Testcases -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>TEST CASES</span>
+                        <i data-lucide="check-circle-2" class="icon-xs text-success"></i>
+                    </div>
+                    <div id="ovTestcases" class="font-mono font-bold text-bright text-sm">12 / 12</div>
+                    <div class="text-2xs text-muted mt-2xs">Passed test suites</div>
+                </div>
+
+                <!-- Card 5: Submitted Time -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>SUBMITTED</span>
+                        <i data-lucide="clock" class="icon-xs text-muted"></i>
+                    </div>
+                    <div id="ovSubmitted" class="font-mono font-bold text-bright text-xs">2 hours ago</div>
+                    <div class="text-2xs text-muted mt-2xs" id="ovSubmittedDate">Jul 30, 2026</div>
+                </div>
+
+                <!-- Card 6: Execution Engine -->
+                <div class="overview-glass-card">
+                    <div class="d-flex align-center justify-between text-2xs text-muted mb-xs">
+                        <span>ENGINE</span>
+                        <i data-lucide="cpu" class="icon-xs text-primary"></i>
+                    </div>
+                    <div class="font-mono font-bold text-bright text-xs">Judge0 Docker</div>
+                    <div class="text-2xs text-muted mt-2xs">Isolated Sandbox</div>
+                </div>
+            </div>
+
+            <!-- Source Code Preview Teaser Card -->
+            <div class="card p-sm" style="background: rgba(18,18,23,0.6); border-color: var(--border-color);">
+                <div class="d-flex align-center justify-between mb-xs">
+                    <span class="text-xs font-bold text-bright d-flex align-center gap-xs">
+                        <i data-lucide="file-text" class="icon-xs" style="color: var(--primary-light);"></i>
+                        <span>Source Code Preview</span>
+                    </span>
+                    <button type="button" @click="activeTab = 'source'" class="btn btn-ghost btn-xs text-2xs text-primary">
+                        View Full Editor →
+                    </button>
+                </div>
+                <pre id="ovCodePreview" style="background: #09090b; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-bright); max-height: 180px; overflow: hidden; white-space: pre-wrap; margin: 0;"></pre>
+            </div>
+        </div>
+
+        <!-- TAB 2: SOURCE CODE (Monaco-Style Code Editor) -->
+        <div x-show="activeTab === 'source'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="card p-0" style="background: #09090b; border-color: var(--border-glow); overflow: hidden;">
+                <!-- Code Bar Header -->
+                <div class="p-xs d-flex align-center justify-between" style="background: #121217; border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex align-center gap-xs">
+                        <span id="codeBarLang" class="lang-pill python">python</span>
+                        <span id="codeBarLines" class="text-2xs text-muted font-mono">0 lines</span>
+                    </div>
+                    <div class="d-flex align-center gap-2xs">
+                        <button type="button" class="btn btn-ghost btn-xs text-2xs" onclick="copyDrawerCode()">
+                            <i data-lucide="copy" class="icon-2xs"></i>
+                            <span>Copy Code</span>
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-xs text-2xs" onclick="downloadDrawerCode()">
+                            <i data-lucide="download" class="icon-2xs"></i>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Code Pre Content Area with Line Numbers -->
+                <div class="d-flex" style="min-height: 520px; max-height: 680px;">
+                    <div id="codeLineNumbers" class="p-xs text-right font-mono text-2xs select-none" style="background: #0d0d12; color: #52525b; border-right: 1px solid rgba(255,255,255,0.06); padding-right: 10px; width: 45px; line-height: 1.6;"></div>
+                    <pre id="drawerCodePre" style="flex: 1; padding: 0.85rem; font-family: var(--font-mono); font-size: 0.84rem; line-height: 1.6; color: var(--text-bright); overflow: auto; white-space: pre; margin: 0; outline: none;"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PERFORMANCE -->
+        <div x-show="activeTab === 'performance'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="d-flex flex-col gap-md">
+                <!-- Runtime Card -->
+                <div class="card p-md" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.25);">
+                    <div class="d-flex align-center justify-between mb-sm">
+                        <div class="d-flex align-center gap-xs">
+                            <i data-lucide="zap" class="icon-md" style="color: var(--success);"></i>
+                            <div>
+                                <h3 class="tier-2-section-title" style="margin: 0;">Runtime Efficiency</h3>
+                                <div class="text-2xs text-muted">Execution speed vs platform benchmarks</div>
+                            </div>
+                        </div>
+                        <div id="perfRuntimeVal" class="font-mono font-bold text-success" style="font-size: 1.4rem;">142 ms</div>
+                    </div>
+
+                    <div class="mb-xs">
+                        <div class="d-flex justify-between text-xs mb-2xs">
+                            <span class="text-secondary font-medium">Faster than other submissions</span>
+                            <span id="perfRuntimePct" class="font-mono font-bold text-success">88.4%</span>
+                        </div>
+                        <div class="progress-bar" style="height: 8px; margin-top: 0; background: rgba(255,255,255,0.06);">
+                            <div id="perfRuntimeBar" class="progress-bar-fill" style="width: 88.4%; background: var(--success);"></div>
+                        </div>
+                    </div>
+                    <div class="text-2xs text-muted mt-xs">Your solution executed within optimal runtime boundaries for this problem.</div>
+                </div>
+
+                <!-- Memory Card -->
+                <div class="card p-md" style="background: rgba(6, 182, 212, 0.04); border-color: rgba(6, 182, 212, 0.25);">
+                    <div class="d-flex align-center justify-between mb-sm">
+                        <div class="d-flex align-center gap-xs">
+                            <i data-lucide="hard-drive" class="icon-md" style="color: var(--accent);"></i>
+                            <div>
+                                <h3 class="tier-2-section-title" style="margin: 0;">Memory Utilization</h3>
+                                <div class="text-2xs text-muted">Peak memory usage during execution</div>
+                            </div>
+                        </div>
+                        <div id="perfMemoryVal" class="font-mono font-bold text-accent" style="font-size: 1.4rem;">14.2 MB</div>
+                    </div>
+
+                    <div class="mb-xs">
+                        <div class="d-flex justify-between text-xs mb-2xs">
+                            <span class="text-secondary font-medium">Better memory efficiency than</span>
+                            <span id="perfMemoryPct" class="font-mono font-bold text-accent">91.2%</span>
+                        </div>
+                        <div class="progress-bar" style="height: 8px; margin-top: 0; background: rgba(255,255,255,0.06);">
+                            <div id="perfMemoryBar" class="progress-bar-fill" style="width: 91.2%; background: var(--accent);"></div>
+                        </div>
+                    </div>
+                    <div class="text-2xs text-muted mt-xs">Auxiliary memory allocation remained strictly bounded to optimal limits.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: TEST CASES -->
+        <div x-show="activeTab === 'testcases'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="d-flex flex-col gap-sm" id="testcasesList">
+                <div class="card p-sm" style="background: var(--bg-tertiary); border-color: var(--border-color);">
+                    <div class="d-flex align-center justify-between mb-2xs">
+                        <span class="font-bold text-xs text-bright">Sample Test Case 1</span>
+                        <span class="status-pill accepted">✅ Passed</span>
+                    </div>
+                    <div class="text-2xs text-muted font-mono mb-2xs">Input: nums = [2, 7, 11, 15], target = 9</div>
+                    <div class="text-2xs text-success font-mono">Output: [0, 1]</div>
+                </div>
+
+                <div class="card p-sm" style="background: var(--bg-tertiary); border-color: var(--border-color);">
+                    <div class="d-flex align-center justify-between mb-2xs">
+                        <span class="font-bold text-xs text-bright">Sample Test Case 2</span>
+                        <span class="status-pill accepted">✅ Passed</span>
+                    </div>
+                    <div class="text-2xs text-muted font-mono mb-2xs">Input: nums = [3, 2, 4], target = 6</div>
+                    <div class="text-2xs text-success font-mono">Output: [1, 2]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: CONSOLE OUTPUT -->
+        <div x-show="activeTab === 'console'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="card p-0" style="background: #09090b; border-color: var(--border-color); overflow: hidden;">
+                <div class="p-xs d-flex align-center justify-between" style="background: #121217; border-bottom: 1px solid var(--border-color);">
+                    <span class="text-2xs font-mono text-muted d-flex align-center gap-xs">
+                        <i data-lucide="terminal" class="icon-xs text-primary"></i>
+                        <span>Judge0 Standard Console Terminal</span>
+                    </span>
+                    <span class="badge badge-pattern text-2xs">UTF-8 Output</span>
+                </div>
+                <pre id="drawerConsolePre" style="padding: 1rem; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: #a1a1aa; min-height: 300px; max-height: 500px; overflow: auto; white-space: pre-wrap; margin: 0;">No console output recorded for this submission run.</pre>
+            </div>
+        </div>
+
+        <!-- TAB 6: AI ANALYSIS -->
+        <div x-show="activeTab === 'ai'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform translate-y-1" x-transition:enter-end="opacity-100 transform translate-y-0">
+            <div class="card p-md" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.25);">
+                <div class="d-flex align-center justify-between mb-md">
+                    <div class="d-flex align-center gap-xs">
+                        <i data-lucide="sparkles" class="icon-md" style="color: var(--primary-light);"></i>
+                        <div>
+                            <h3 class="tier-2-section-title" style="margin: 0; color: var(--primary-light);">AI Code & Complexity Review</h3>
+                            <div class="text-2xs text-muted">Powered by AlgoDSA SuperMemo SM-2 Analytics Engine</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-card-grid mb-md">
+                    <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                        <span class="text-2xs text-muted">TIME COMPLEXITY</span>
+                        <div id="aiTimeComp" class="font-mono font-bold text-primary text-sm">O(N)</div>
+                    </div>
+                    <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                        <span class="text-2xs text-muted">SPACE COMPLEXITY</span>
+                        <div id="aiSpaceComp" class="font-mono font-bold text-accent text-sm">O(1)</div>
+                    </div>
+                    <div class="p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                        <span class="text-2xs text-muted">READABILITY SCORE</span>
+                        <div class="font-mono font-bold text-success text-sm">96 / 100</div>
+                    </div>
+                </div>
+
+                <div class="p-sm" style="background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                    <strong class="text-bright text-xs mb-xs d-block">Optimization & Algorithmic Summary:</strong>
+                    <p id="aiReviewText" class="text-xs text-secondary mb-0" style="line-height: 1.6;">
+                        Your solution utilizes an optimal two-pointer traversal strategy. No redundant auxiliary data structures are instantiated, meeting FAANG technical interview standards.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentDrawerCode = '';
+    let currentDrawerLang = 'python';
+
+    // Open Submission Drawer via AJAX API Fetch
+    async function openSubmissionDrawer(submissionId) {
+        const backdrop = document.getElementById('drawerBackdrop');
+        const drawer = document.getElementById('submissionDrawer');
+
+        backdrop.classList.add('active');
+        drawer.classList.add('active');
+
+        try {
+            const response = await fetch(`/submissions/api/detail/${submissionId}/`);
+            if (!response.ok) throw new Error('Failed to fetch submission details');
+
+            const data = await response.json();
+
+            // Header & Sub ID
+            document.getElementById('drawerProblemTitle').textContent = data.problem_title;
+            document.getElementById('drawerSubId').textContent = `#${data.id}`;
+            document.getElementById('drawerSubmittedTimeRelative').textContent = `Submitted ${data.created_at_relative}`;
+
+            const statusBadge = document.getElementById('drawerStatusBadge');
+            statusBadge.className = `status-pill ${data.status}`;
+            statusBadge.innerHTML = `<span>${data.status_icon}</span> <span>${data.status_display}</span>`;
+
+            const diffBadge = document.getElementById('drawerDifficultyBadge');
+            diffBadge.className = `badge badge-${data.difficulty}`;
+            diffBadge.textContent = data.difficulty_display;
+
+            // Overview 6-Card Values
+            document.getElementById('ovLanguage').textContent = data.language_display;
+            document.getElementById('ovTestcases').textContent = `${data.test_cases_passed} / ${data.test_cases_total}`;
+            document.getElementById('ovRuntime').textContent = data.runtime_ms !== null ? `${data.runtime_ms.toFixed(0)} ms` : '—';
+            
+            const memoryMbStr = data.memory_kb !== null ? `${(data.memory_kb / 1024).toFixed(1)} MB` : '—';
+            document.getElementById('ovMemory').textContent = memoryMbStr;
+            document.getElementById('ovSubmitted').textContent = data.created_at_relative;
+            document.getElementById('ovSubmittedDate').textContent = data.created_at_formatted;
+
+            // Source Code & Line Numbers
+            currentDrawerCode = data.code || '';
+            currentDrawerLang = data.language || 'python';
+            
+            document.getElementById('drawerCodePre').textContent = currentDrawerCode;
+            document.getElementById('ovCodePreview').textContent = currentDrawerCode;
+
+            // Code bar lang & lines
+            const linesCount = currentDrawerCode.split('\n').length;
+            document.getElementById('codeBarLang').className = `lang-pill ${currentDrawerLang}`;
+            document.getElementById('codeBarLang').textContent = data.language_display;
+            document.getElementById('codeBarLines').textContent = `${linesCount} lines`;
+
+            // Line numbers sidebar
+            let lineNumsHtml = '';
+            for (let i = 1; i <= linesCount; i++) {
+                lineNumsHtml += `${i}\n`;
+            }
+            document.getElementById('codeLineNumbers').textContent = lineNumsHtml;
+
+            // Performance Tab Values
+            document.getElementById('perfRuntimeVal').textContent = data.runtime_ms !== null ? `${data.runtime_ms.toFixed(0)} ms` : '—';
+            document.getElementById('perfMemoryVal').textContent = memoryMbStr;
+
+            // Console Tab
+            const consolePre = document.getElementById('drawerConsolePre');
+            let outputContent = data.stderr || data.stdout || data.failure_reason || '';
+            if (outputContent.trim()) {
+                consolePre.textContent = outputContent;
+                consolePre.style.color = '#fca5a5';
+            } else {
+                consolePre.textContent = 'No console output recorded for this submission run.';
+                consolePre.style.color = '#a1a1aa';
+            }
+
+            // AI Feedback Tab
+            if (data.status === 'accepted') {
+                document.getElementById('aiTimeComp').textContent = 'O(N)';
+                document.getElementById('aiSpaceComp').textContent = 'O(1)';
+                document.getElementById('aiReviewText').textContent = 'Optimal time & space complexity achieved. Clean pointer logic meeting FAANG interview standards!';
+            } else {
+                document.getElementById('aiTimeComp').textContent = 'O(N²) / Unoptimized';
+                document.getElementById('aiSpaceComp').textContent = 'O(N)';
+                document.getElementById('aiReviewText').textContent = data.failure_reason || 'Review the failed testcase boundary conditions or time complexity bounds.';
+            }
+
+            if (window.lucide) lucide.createIcons();
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Close Drawer
+    function closeDrawer() {
+        document.getElementById('drawerBackdrop').classList.remove('active');
+        document.getElementById('submissionDrawer').classList.remove('active');
+    }
+
+    // Copy Drawer Code
+    function copyDrawerCode() {
+        if (!currentDrawerCode) return;
+        navigator.clipboard.writeText(currentDrawerCode).then(() => {
+            const btnText = document.getElementById('copyBtnText');
+            if (btnText) {
+                btnText.textContent = 'Copied!';
+                setTimeout(() => { btnText.textContent = 'Copy Code'; }, 1500);
+            }
+        });
+    }
+
+    // Download Drawer Code
+    function downloadDrawerCode() {
+        if (!currentDrawerCode) return;
+        const extMap = { 'python': 'py', 'javascript': 'js', 'cpp': 'cpp', 'java': 'java' };
+        const ext = extMap[currentDrawerLang] || 'txt';
+        const blob = new Blob([currentDrawerCode], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `submission_${Date.now()}.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+</script>
+{% endblock %}

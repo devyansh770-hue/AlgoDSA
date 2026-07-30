@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AlgoDSA — AI-Powered DSA Learning & Spaced Repetition Workstation for Software Engineers.">
+    <title>AlgoDSA — Developer-First DSA Learning Ecosystem</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    
+    <style>
+        .landing-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: var(--space-3xl) var(--space-lg);
+        }
+        .hero-title-main {
+            font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+            font-weight: 900;
+            color: var(--text-bright);
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: var(--space-md);
+        }
+        .hero-subtitle-main {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto var(--space-2xl);
+            line-height: 1.7;
+        }
+        .terminal-window {
+            background: #0d0d12;
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            text-align: left;
+            margin-top: var(--space-3xl);
+        }
+        .terminal-header {
+            background: #161622;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+    </style>
+</head>
+<body>
+    <!-- Top Nav for Landing -->
+    <header class="navbar" style="position: relative;">
+        <div class="container navbar-container">
+            <a href="{% url 'landing' %}" class="navbar-brand">
+                <span class="logo-icon">⚡</span>
+                <span>AlgoDSA</span>
+            </a>
+            <div class="d-flex align-center gap-sm">
+                <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Sign In</a>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started Free →</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="landing-container text-center">
+        <!-- Hero Tag -->
+        <div class="badge badge-pattern mb-md" style="padding: 6px 16px; font-size: 0.825rem;">
+            ⚡ AI-Powered DSA Learning & Spaced Repetition Workstation
+        </div>
+
+        <h1 class="hero-title-main">
+            Master Data Structures & Algorithms<br>
+            <span style="background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">For Retention, Not Memorization</span>
+        </h1>
+
+        <p class="hero-subtitle-main">
+            Sync LeetCode & GeeksforGeeks into a single dashboard. Master 20+ DSA patterns with SuperMemo SM-2 spaced repetition, Monaco Editor, and AI hints.
+        </p>
+
+        <div class="d-flex justify-center gap-md mb-2xl">
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                🚀 Start Practicing Free →
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-ghost btn-lg">
+                Sign In to Dashboard
+            </a>
+        </div>
+
+        <!-- Terminal Preview Mockup -->
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span class="text-xs font-mono text-muted" style="margin-left: 8px;">algodsa-workstation — retention-engine</span>
+            </div>
+            <div style="padding: var(--space-xl); font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.8;">
+                <div class="text-muted">$ algodsa sync --all</div>
+                <div class="text-success">✔ Synced LeetCode (@devyangjvx): 122 Solved</div>
+                <div class="text-success">✔ Synced GeeksforGeeks: 45 Solved</div>
+                <div class="text-primary mt-sm">$ algodsa review --due-today</div>
+                <div class="text-warning">⚠️ 2 patterns due for review: [Sliding Window (25% mastery), Binary Search (40%)]</div>
+                <div class="text-muted mt-sm">$ algodsa solve two-sum --mode=explain-it-back</div>
+                <div class="text-bright">🔒 Editorial locked until active recall explanation is verified by AI.</div>
+            </div>
+        </div>
+
+        <!-- Core Feature Cards -->
+        <div class="dashboard-grid mt-3xl" style="grid-template-columns: repeat(3, 1fr); text-align: left;">
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">🤖</div>
+                <h3 class="card-title text-base mb-xs">Progressive AI Tutor</h3>
+                <p class="text-muted text-xs">3-level hint accordion (Direction → Pattern → Pseudocode) that guides without spoiling problem logic.</p>
+            </div>
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">🔁</div>
+                <h3 class="card-title text-base mb-xs">SuperMemo SM-2 Repetition</h3>
+                <p class="text-muted text-xs">Anki-like interval scheduling automatically schedules pattern review cards before interviews.</p>
+            </div>
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">🌐</div>
+                <h3 class="card-title text-base mb-xs">Multi-Platform Aggregation</h3>
+                <p class="text-muted text-xs">Combines LeetCode GraphQL & GFG APIs with AlgoDSA native problems into one non-overlapping score.</p>
+            </div>
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">💻</div>
+                <h3 class="card-title text-base mb-xs">VS Code Monaco Workspace</h3>
+                <p class="text-muted text-xs">Multi-language execution via Judge0 with permanent submission code snapshots & read-only history.</p>
+            </div>
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">📝</div>
+                <h3 class="card-title text-base mb-xs">Explain It Back Checkpoint</h3>
+                <p class="text-muted text-xs">Requires explaining algorithm logic in your own words before unlocking official editorials.</p>
+            </div>
+            <div class="card card-interactive">
+                <div style="font-size: 2rem;" class="mb-sm">📊</div>
+                <h3 class="card-title text-base mb-xs">Pattern Mastery Matrix</h3>
+                <p class="text-muted text-xs">Visual topic matrix, difficulty distribution donut charts, and streak retention tracking.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

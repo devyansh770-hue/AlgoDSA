@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Profile — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="profile-header">
+        <div class="profile-avatar-large">{{ user.username|first|upper }}</div>
+        <div class="profile-info">
+            <h1>{{ user.username }}</h1>
+            <p>{{ user.bio|default:"No bio yet. Tell us about yourself!" }}</p>
+            <div class="d-flex gap-md mt-sm">
+                <span class="badge badge-pattern">🔥 {{ user.streak }} streak</span>
+                <span class="badge badge-solved">✅ {{ user.solved_count }} solved</span>
+                <span class="badge badge-easy">💻 {{ user.get_preferred_language_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div>
+            <div class="card mb-lg">
+                <h2 class="section-title">✏️ Edit Profile</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Bio</label>
+                        {{ form.bio }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preferred Language</label>
+                        {{ form.preferred_language }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LeetCode Username</label>
+                        {{ form.leetcode_username }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GeeksforGeeks Username / Handle</label>
+                        {{ form.gfg_username }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+
+            {% if recent_submissions %}
+            <div class="card">
+                <h2 class="section-title">📝 Recent Submissions</h2>
+                <div class="submission-list">
+                    {% for sub in recent_submissions %}
+                    <a href="{% url 'submission_detail' sub.id %}" class="submission-item" style="text-decoration: none; color: inherit;">
+                        <span>{{ sub.status_icon }}</span>
+                        <span class="problem-title-cell">{{ sub.problem.title }}</span>
+                        <span class="badge badge-{{ sub.problem.difficulty }}">{{ sub.problem.get_difficulty_display }}</span>
+                        <span class="text-muted text-sm font-mono">{{ sub.runtime_ms|floatformat:0 }}ms</span>
+                        <span class="text-muted text-sm">{{ sub.created_at|timesince }} ago</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            {% if masteries %}
+            <div class="card">
+                <h2 class="section-title">📈 Pattern Mastery</h2>
+                <div class="mastery-list">
+                    {% for m in masteries %}
+                    <div class="mastery-item">
+                        <span class="mastery-label">{{ m.pattern_display }}</span>
+                        <div class="mastery-bar-container">
+                            <div class="mastery-bar">
+                                <div class="mastery-bar-fill" style="width: {{ m.mastery_score }}%; background: {{ m.mastery_color }};"></div>
+                            </div>
+                            <span class="mastery-score" style="color: {{ m.mastery_color }};">{{ m.mastery_score|floatformat:0 }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

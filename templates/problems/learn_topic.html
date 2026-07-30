@@ -1,0 +1,517 @@
+{% extends 'base.html' %}
+{% block title %}Learn {{ topic.name }} — AlgoDSA Notes{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <!-- Navigation Back -->
+    <a href="{% url 'learn_hub' %}" class="btn btn-ghost btn-sm mb-md">← Back to Learn Hub</a>
+
+    <div class="page-header" style="padding-top: 0;">
+        <div class="d-flex align-center gap-md" style="justify-content: space-between; flex-wrap: wrap;">
+            <div>
+                <h1 class="page-title">{{ topic.icon }} Learn {{ topic.name }}</h1>
+                <p class="page-subtitle">{{ topic.description }}</p>
+            </div>
+            <a href="{% url 'problem_list' topic.slug %}" class="btn btn-primary btn-sm">
+                💻 Practice {{ topic.name }} Problems ({{ problems.count }}) →
+            </a>
+        </div>
+    </div>
+
+    <!-- Real-World Analogy Banner -->
+    {% if topic.real_world_analogy %}
+    <div class="card mb-lg" style="border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.05);">
+        <div class="d-flex align-center gap-md">
+            <span style="font-size: 2rem;">💡</span>
+            <div>
+                <h3 class="section-title" style="margin-bottom: 0.25rem; color: var(--primary-light);">Real-World / Daily Life Intuition</h3>
+                <p class="text-bright text-sm mb-0" style="line-height: 1.6;">
+                    {{ topic.real_world_analogy }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Concept Breakdown & Reusable Templates -->
+    <div class="dashboard-content mb-xl">
+        <div>
+            <!-- Topic Overview & Core Operations -->
+            <div class="card mb-lg">
+                <h2 class="section-title">⚡ Core Concept & Time Complexities</h2>
+                <div class="problem-description text-sm" style="line-height: 1.7;">
+                    {% if topic.slug == 'arrays' %}
+                    <p><strong>Array</strong> is a linear data structure containing contiguous memory blocks. Every element can be accessed in <strong>O(1)</strong> time using its index.</p>
+                    <ul>
+                        <li><strong>Access:</strong> O(1)</li>
+                        <li><strong>Search:</strong> O(N) linear search, O(log N) binary search on sorted array</li>
+                        <li><strong>Insertion / Deletion:</strong> O(N) due to element shifting</li>
+                    </ul>
+                    {% elif topic.slug == 'linked-lists' %}
+                    <p><strong>Linked List</strong> consists of nodes where each node contains a value and a pointer (reference) to the next node in memory.</p>
+                    <ul>
+                        <li><strong>Access / Search:</strong> O(N) (must traverse from head)</li>
+                        <li><strong>Insertion / Deletion:</strong> O(1) if pointer to node is already known</li>
+                        <li><strong>Types:</strong> Singly Linked List, Doubly Linked List, Circular Linked List</li>
+                    </ul>
+                    {% elif topic.slug == 'trees' %}
+                    <p><strong>Tree</strong> is a hierarchical data structure consisting of nodes connected by edges. A Binary Tree has at most 2 children per node.</p>
+                    <ul>
+                        <li><strong>BST Search:</strong> O(log N) average, O(N) worst case (unbalanced)</li>
+                        <li><strong>Traversals:</strong> Inorder (Left-Root-Right), Preorder (Root-Left-Right), Postorder (Left-Right-Root), Level-Order (BFS)</li>
+                    </ul>
+                    {% elif topic.slug == 'graphs' %}
+                    <p><strong>Graph</strong> consists of vertices (nodes) $V$ and edges $E$. Can be directed or undirected, weighted or unweighted.</p>
+                    <ul>
+                        <li><strong>BFS (Breadth-First Search):</strong> Shortest path in unweighted graphs using Queue — O(V + E)</li>
+                        <li><strong>DFS (Depth-First Search):</strong> Explore deep paths using Recursion/Stack — O(V + E)</li>
+                    </ul>
+                    {% elif topic.slug == 'dynamic-programming' %}
+                    <p><strong>Dynamic Programming (DP)</strong> solves complex optimization problems by breaking them into overlapping subproblems and memoizing results.</p>
+                    <ul>
+                        <li><strong>Top-Down:</strong> Recursion + Memoization (HashMap / Array)</li>
+                        <li><strong>Bottom-Up:</strong> Iterative Tabulation table</li>
+                    </ul>
+                    {% else %}
+                    <p>{{ topic.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Patterns Grid -->
+            {% if patterns %}
+            <div class="card mb-lg">
+                <h2 class="section-title">🧠 Pattern Study Guides</h2>
+                <div class="topic-grid">
+                    {% for pattern in patterns %}
+                    <a href="{% url 'learn_pattern' topic.slug pattern.slug %}" style="text-decoration: none; color: inherit;">
+                        <div class="card topic-card" style="padding: 1rem;">
+                            <div class="d-flex align-center gap-sm mb-sm" style="justify-content: space-between;">
+                                <span class="topic-icon" style="font-size: 1.5rem; margin-bottom: 0;">{{ pattern.icon }}</span>
+                            </div>
+                            <div class="topic-name" style="font-size: 1rem; font-weight: 700;">{{ pattern.name }}</div>
+                            <div class="topic-desc" style="font-size: 0.8rem; margin-top: 0.25rem;">
+                                {{ pattern.description|truncatewords:10 }}
+                            </div>
+                            <div class="d-flex align-center gap-sm mt-md text-xs text-primary font-bold">
+                                <span>Read Pattern Guide →</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Pattern Code Templates (Multi-Language) -->
+            <div class="card mb-lg" x-data="{ lang: 'python' }">
+                <div class="card-header">
+                    <h2 class="tier-2-section-title" style="margin-bottom: 0;">
+                        <i data-lucide="code" class="icon-md" style="color: var(--primary-light);"></i>
+                        <span>Standard Code Template</span>
+                    </h2>
+                    <div class="d-flex gap-xs">
+                        <button class="btn btn-sm" :class="lang === 'python' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'python'">Python</button>
+                        <button class="btn btn-sm" :class="lang === 'javascript' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'javascript'">JavaScript</button>
+                        <button class="btn btn-sm" :class="lang === 'cpp' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'cpp'">C++</button>
+                        <button class="btn btn-sm" :class="lang === 'java' ? 'btn-primary' : 'btn-ghost'" @click="lang = 'java'">Java</button>
+                    </div>
+                </div>
+
+                <!-- Python Template -->
+                <div x-show="lang === 'python'">
+                    <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: var(--text-bright); overflow-x: auto;">
+{% if topic.slug == 'strings' %}# String Two-Pointer & Palindrome Pattern
+def is_valid_palindrome(s: str) -> bool:
+    left, right = 0, len(s) - 1
+    while left < right:
+        while left < right and not s[left].isalnum():
+            left += 1
+        while left < right and not s[right].isalnum():
+            right -= 1
+        if s[left].lower() != s[right].lower():
+            return False
+        left, right = left + 1, right - 1
+    return True
+{% elif topic.slug == 'arrays' %}# Array Two-Pointer Pattern
+def two_sum_sorted(nums: list[int], target: int) -> list[int]:
+    left, right = 0, len(nums) - 1
+    while left < right:
+        curr = nums[left] + nums[right]
+        if curr == target:
+            return [left, right]
+        elif curr < target:
+            left += 1
+        else:
+            right -= 1
+    return []
+{% elif topic.slug == 'linked-lists' %}# Linked List Reversal Pattern
+def reverse_list(head):
+    prev, curr = None, head
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+    return prev
+{% elif topic.slug == 'trees' %}# Binary Tree Inorder DFS Traversal
+def inorder_traversal(root):
+    res = []
+    def dfs(node):
+        if not node: return
+        dfs(node.left)
+        res.append(node.val)
+        dfs(node.right)
+    dfs(root)
+    return res
+{% elif topic.slug == 'graphs' %}# Graph BFS Shortest Path
+from collections import deque
+
+def bfs(graph, start):
+    visited = {start}
+    queue = deque([start])
+    while queue:
+        node = queue.popleft()
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+{% elif topic.slug == 'dynamic-programming' %}# Dynamic Programming (Top-Down Memoization)
+def fib_dp(n: int, memo: dict = {}) -> int:
+    if n <= 1: return n
+    if n in memo: return memo[n]
+    memo[n] = fib_dp(n - 1, memo) + fib_dp(n - 2, memo)
+    return memo[n]
+{% else %}# Template coming soon for {{ topic.name }}
+# Check pattern study guides above for specific implementation code.
+{% endif %}</pre>
+                </div>
+
+                <!-- JavaScript Template -->
+                <div x-show="lang === 'javascript'">
+                    <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: var(--text-bright); overflow-x: auto;">
+{% if topic.slug == 'strings' %}// String Processing & Palindrome Pattern
+function isValidPalindrome(s) {
+    let left = 0, right = s.length - 1;
+    while (left < right) {
+        while (left < right && !/[a-zA-Z0-9]/.test(s[left])) left++;
+        while (left < right && !/[a-zA-Z0-9]/.test(s[right])) right--;
+        if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;
+        left++; right--;
+    }
+    return true;
+}
+{% elif topic.slug == 'arrays' %}// Array Two-Pointer Pattern
+function twoSumSorted(nums, target) {
+    let left = 0, right = nums.length - 1;
+    while (left < right) {
+        const sum = nums[left] + nums[right];
+        if (sum === target) return [left, right];
+        if (sum < target) left++;
+        else right--;
+    }
+    return [];
+}
+{% elif topic.slug == 'linked-lists' %}// Linked List Reversal Pattern
+function reverseList(head) {
+    let prev = null, curr = head;
+    while (curr !== null) {
+        let nxt = curr.next;
+        curr.next = prev;
+        prev = curr;
+        curr = nxt;
+    }
+    return prev;
+}
+{% elif topic.slug == 'trees' %}// Binary Tree Inorder Traversal (DFS)
+function inorderTraversal(root) {
+    const res = [];
+    function dfs(node) {
+        if (!node) return;
+        dfs(node.left);
+        res.push(node.val);
+        dfs(node.right);
+    }
+    dfs(root);
+    return res;
+}
+{% elif topic.slug == 'graphs' %}// Graph BFS Traversal Pattern
+function bfsGraph(graph, start) {
+    const visited = new Set([start]);
+    const queue = [start];
+    const result = [];
+    while (queue.length > 0) {
+        const node = queue.shift();
+        result.push(node);
+        for (const neighbor of (graph[node] || [])) {
+            if (!visited.has(neighbor)) {
+                visited.add(neighbor);
+                queue.push(neighbor);
+            }
+        }
+    }
+    return result;
+}
+{% elif topic.slug == 'dynamic-programming' %}// Dynamic Programming Tabulation Pattern
+function climbStairs(n) {
+    if (n <= 2) return n;
+    const dp = new Array(n + 1).fill(0);
+    dp[1] = 1; dp[2] = 2;
+    for (let i = 3; i <= n; i++) {
+        dp[i] = dp[i - 1] + dp[i - 2];
+    }
+    return dp[n];
+}
+{% else %}// Template coming soon for {{ topic.name }}
+{% endif %}</pre>
+                </div>
+
+                <!-- C++ Template -->
+                <div x-show="lang === 'cpp'">
+                    <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: var(--text-bright); overflow-x: auto;">
+{% if topic.slug == 'strings' %}// C++ String Processing & Two-Pointer Pattern
+#include <iostream>
+#include <string>
+#include <cctype>
+using namespace std;
+
+bool isValidPalindrome(string s) {
+    int left = 0, right = s.length() - 1;
+    while (left < right) {
+        while (left < right && !isalnum(s[left])) left++;
+        while (left < right && !isalnum(s[right])) right--;
+        if (tolower(s[left]) != tolower(s[right])) return false;
+        left++; right--;
+    }
+    return true;
+}
+{% elif topic.slug == 'arrays' %}// C++ Array Two-Pointer Pattern
+#include <vector>
+using namespace std;
+
+vector<int> twoSumSorted(vector<int>& nums, int target) {
+    int left = 0, right = nums.size() - 1;
+    while (left < right) {
+        int sum = nums[left] + nums[right];
+        if (sum == target) return {left, right};
+        if (sum < target) left++;
+        else right--;
+    }
+    return {};
+}
+{% elif topic.slug == 'linked-lists' %}// C++ Linked List Reversal Pattern
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(nullptr) {}
+};
+
+ListNode* reverseList(ListNode* head) {
+    ListNode *prev = nullptr, *curr = head;
+    while (curr != nullptr) {
+        ListNode* nextNode = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = nextNode;
+    }
+    return prev;
+}
+{% elif topic.slug == 'trees' %}// C++ Binary Tree Traversal (DFS)
+#include <vector>
+using namespace std;
+
+struct TreeNode {
+    int val;
+    TreeNode *left, *right;
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+};
+
+void dfs(TreeNode* node, vector<int>& res) {
+    if (!node) return;
+    dfs(node->left, res);
+    res.push_back(node->val);
+    dfs(node->right, res);
+}
+{% elif topic.slug == 'graphs' %}// C++ Graph BFS Pattern
+#include <vector>
+#include <queue>
+#include <unordered_set>
+using namespace std;
+
+vector<int> bfsGraph(int start, vector<vector<int>>& adj) {
+    vector<int> result;
+    unordered_set<int> visited;
+    queue<int> q;
+    visited.insert(start);
+    q.push(start);
+    while (!q.empty()) {
+        int node = q.front(); q.pop();
+        result.push_back(node);
+        for (int neighbor : adj[node]) {
+            if (visited.find(neighbor) == visited.end()) {
+                visited.insert(neighbor);
+                q.push(neighbor);
+            }
+        }
+    }
+    return result;
+}
+{% elif topic.slug == 'dynamic-programming' %}// C++ Dynamic Programming Tabulation
+#include <vector>
+using namespace std;
+
+int climbStairs(int n) {
+    if (n <= 2) return n;
+    vector<int> dp(n + 1, 0);
+    dp[1] = 1; dp[2] = 2;
+    for (int i = 3; i <= n; i++) dp[i] = dp[i - 1] + dp[i - 2];
+    return dp[n];
+}
+{% else %}// Template coming soon for {{ topic.name }}
+{% endif %}</pre>
+                </div>
+
+                <!-- Java Template -->
+                <div x-show="lang === 'java'">
+                    <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; color: var(--text-bright); overflow-x: auto;">
+{% if topic.slug == 'strings' %}// Java String Processing & Character Map Pattern
+public class StringSolution {
+    public boolean isValidPalindrome(String s) {
+        int left = 0, right = s.length() - 1;
+        while (left < right) {
+            while (left < right && !Character.isLetterOrDigit(s.charAt(left))) left++;
+            while (left < right && !Character.isLetterOrDigit(s.charAt(right))) right--;
+            if (Character.toLowerCase(s.charAt(left)) != Character.toLowerCase(s.charAt(right))) return false;
+            left++; right--;
+        }
+        return true;
+    }
+}
+{% elif topic.slug == 'arrays' %}// Java Array Two-Pointer Pattern
+public class Solution {
+    public int[] twoSumSorted(int[] nums, int target) {
+        int left = 0, right = nums.length - 1;
+        while (left < right) {
+            int sum = nums[left] + nums[right];
+            if (sum == target) return new int[]{left, right};
+            if (sum < target) left++;
+            else right--;
+        }
+        return new int[]{};
+    }
+}
+{% elif topic.slug == 'linked-lists' %}// Java Linked List Reversal Pattern
+public class Solution {
+    static class ListNode {
+        int val; ListNode next;
+        ListNode(int val) { this.val = val; }
+    }
+    public ListNode reverseList(ListNode head) {
+        ListNode prev = null, curr = head;
+        while (curr != null) {
+            ListNode nextNode = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = nextNode;
+        }
+        return prev;
+    }
+}
+{% elif topic.slug == 'trees' %}// Java Binary Tree Traversal Pattern
+import java.util.*;
+
+public class Solution {
+    static class TreeNode {
+        int val; TreeNode left, right;
+        TreeNode(int val) { this.val = val; }
+    }
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        dfs(root, res);
+        return res;
+    }
+    private void dfs(TreeNode node, List<Integer> res) {
+        if (node == null) return;
+        dfs(node.left, res);
+        res.add(node.val);
+        dfs(node.right, res);
+    }
+}
+{% elif topic.slug == 'graphs' %}// Java Graph BFS Traversal Pattern
+import java.util.*;
+
+public class Solution {
+    public List<Integer> bfsGraph(int start, List<List<Integer>> adj) {
+        List<Integer> result = new ArrayList<>();
+        Set<Integer> visited = new HashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        visited.add(start);
+        queue.add(start);
+        while (!queue.isEmpty()) {
+            int node = queue.poll();
+            result.add(node);
+            for (int neighbor : adj.get(node)) {
+                if (!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return result;
+    }
+}
+{% elif topic.slug == 'dynamic-programming' %}// Java DP Tabulation Pattern
+public class Solution {
+    public int climbStairs(int n) {
+        if (n <= 2) return n;
+        int[] dp = new int[n + 1];
+        dp[1] = 1; dp[2] = 2;
+        for (int i = 3; i <= n; i++) dp[i] = dp[i - 1] + dp[i - 2];
+        return dp[n];
+    }
+}
+{% else %}// Template coming soon for {{ topic.name }}
+{% endif %}</pre>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Problems & Notes -->
+        <div>
+            <!-- Topic Practice Problems -->
+            <div class="card mb-lg">
+                <h2 class="section-title">💻 Practice Problems</h2>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for p in problems %}
+                    <a href="{% url 'problem_detail' topic.slug p.slug %}" class="recommendation-card" style="text-decoration: none; color: inherit;">
+                        <div style="flex: 1;">
+                            <div class="font-bold text-sm" style="color: var(--text-bright);">{{ p.title }}</div>
+                            <div class="text-xs text-muted">{{ p.get_pattern_display }}</div>
+                        </div>
+                        <span class="badge badge-{{ p.difficulty }}">{{ p.get_difficulty_display }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Custom Notes Container -->
+            <div class="card">
+                <h2 class="section-title">📝 Custom Study Notes</h2>
+                <div class="text-muted text-xs mb-sm">
+                    Custom notes provided for {{ topic.name }}:
+                </div>
+                {% if topic.notes_content %}
+                <div class="problem-description text-xs" style="line-height: 1.6; background: var(--bg-tertiary); padding: 0.75rem; border-radius: var(--radius-sm);">
+                    {{ topic.notes_content|linebreaksbr }}
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 1rem;">
+                    <p class="text-muted text-xs">No custom notes added yet. You can provide notes to populate here!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
