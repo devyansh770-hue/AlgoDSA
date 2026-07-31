@@ -83,3 +83,32 @@ class Submission(models.Model):
             'running': '🔄',
         }
         return icons.get(self.status, '❓')
+
+
+class MistakeRecord(models.Model):
+    """Tracks failed submissions and missed edge cases for AI remediation."""
+
+    ERROR_CATEGORY_CHOICES = [
+        ('off_by_one', 'Off-by-One Error'),
+        ('empty_input', 'Empty / Null Input Edge Case'),
+        ('integer_overflow', 'Integer / Bound Overflow'),
+        ('tle', 'Time Limit Exceeded (Efficiency)'),
+        ('pointer_bounds', 'Pointer Out of Bounds'),
+        ('hash_collision', 'Hash Map Key Collision'),
+        ('general_logic', 'General Logic Bug'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mistakes')
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name='mistake_records')
+    problem = models.ForeignKey('problems.Problem', on_delete=models.CASCADE, related_name='mistakes')
+    error_category = models.CharField(max_length=40, choices=ERROR_CATEGORY_CHOICES, default='general_logic')
+    ai_remediation = models.TextField(blank=True, default='')
+    resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'mistake_records'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.problem.title} ({self.get_error_category_display()})"

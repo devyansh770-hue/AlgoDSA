@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}FAANG Career & Company Readiness — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    
+    <!-- Hero Header -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl">
+        <div>
+            <div class="d-flex align-center gap-xs mb-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="briefcase" class="icon-xs"></i>
+                    CAREER DASHBOARD
+                </span>
+                <span class="badge badge-easy text-2xs">Hiring Evaluation</span>
+            </div>
+            <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">FAANG Career & Company Readiness</h1>
+            <p class="text-secondary text-sm">
+                Real-time estimated readiness scores for top-tier tech companies based on your topic mastery, speed, and interview scores.
+            </p>
+        </div>
+
+        <!-- Resume Strength Pill -->
+        <div class="card p-sm text-center" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); min-width: 170px;">
+            <span class="text-2xs text-muted d-block">RESUME STRENGTH</span>
+            <span class="font-mono font-bold text-primary" style="font-size: 1.35rem;">{{ resume_score }}%</span>
+        </div>
+    </div>
+
+    <!-- Company Readiness Scorecards Grid -->
+    <div class="overview-card-grid mb-xl" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        {% for c in company_readiness %}
+        <div class="card p-md" style="background: rgba(18, 18, 23, 0.75); border: 1px solid var(--border-color); border-radius: 18px;">
+            <div class="d-flex align-center justify-between mb-sm">
+                <div class="d-flex align-center gap-xs">
+                    <span style="font-size: 1.2rem;">{{ c.logo }}</span>
+                    <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.1rem;">{{ c.name }}</h3>
+                </div>
+                <span class="font-mono font-bold text-success" style="font-size: 1.1rem;">{{ c.score }}%</span>
+            </div>
+
+            <div class="progress-bar mb-sm" style="height: 6px; margin-top: 0;">
+                <div class="progress-bar-fill" style="width: {{ c.score }}%; background: var(--success);"></div>
+            </div>
+
+            <div class="text-2xs text-muted mb-sm">
+                <strong>High Priority Topics:</strong> {{ c.target_topics }}
+            </div>
+
+            <a href="{% url 'mock_interview' %}" class="btn btn-outline btn-xs w-full" style="justify-content: center;">
+                Start {{ c.name }} Mock Interview →
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

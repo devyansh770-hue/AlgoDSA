@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}AI Mock Interview Workstation — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 1.5rem; padding-bottom: 3rem;" x-data="interviewApp()">
+    
+    <!-- Interview Header Bar -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-lg p-sm" style="background: #111118; border: 1px solid var(--border-glow); border-radius: 16px;">
+        <div class="d-flex align-center gap-sm">
+            <span class="badge badge-hard text-2xs">FAANG MOCK INTERVIEW</span>
+            <h2 class="tier-2-section-title" style="margin: 0; font-size: 1.1rem;">
+                {{ problem.title }}
+            </h2>
+        </div>
+
+        <div class="d-flex align-center gap-md font-mono text-sm">
+            <span class="text-muted">Time Remaining:</span>
+            <strong class="text-warning font-bold" style="font-size: 1.15rem;" x-text="formatTime(secondsLeft)">45:00</strong>
+            <button type="button" class="btn btn-primary btn-sm" @click="endInterview()" :disabled="sessionEnded">
+                End & Evaluate →
+            </button>
+        </div>
+    </div>
+
+    <!-- 4-Phase Stepper Indicator -->
+    <div class="d-flex align-center justify-between mb-lg p-xs text-xs font-mono" style="background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <span :class="currentPhase >= 1 ? 'text-primary font-bold' : 'text-muted'">1. Approach Strategy</span>
+        <span>→</span>
+        <span :class="currentPhase >= 2 ? 'text-primary font-bold' : 'text-muted'">2. Code Implementation</span>
+        <span>→</span>
+        <span :class="currentPhase >= 3 ? 'text-primary font-bold' : 'text-muted'">3. Optimization & QA</span>
+        <span>→</span>
+        <span :class="currentPhase >= 4 ? 'text-primary font-bold' : 'text-muted'">4. Scorecard Report</span>
+    </div>
+
+    <!-- Phase Content Containers -->
+    <div class="card p-lg mb-xl" style="background: #111118; border: 1px solid var(--border-color); border-radius: 18px;">
+        
+        <!-- Phase 1: Approach Explanation -->
+        <div x-show="currentPhase === 1">
+            <h3 class="tier-1-title" style="font-size: 1.2rem; margin-bottom: 0.5rem;">Phase 1: Explain Your Approach</h3>
+            <p class="text-secondary text-xs mb-md" style="line-height: 1.5;">
+                As in a real Google / Amazon technical interview, explain your algorithm and space-time complexity before writing any code.
+            </p>
+            <textarea class="search-input-field text-xs mb-md" style="width: 100%; height: 120px;" x-model="approachText" placeholder="I plan to use a Hash Map to store elements and their indices... Time: O(N), Space: O(N)..."></textarea>
+            <button type="button" class="btn btn-primary btn-sm" @click="currentPhase = 2">Next: Start Coding →</button>
+        </div>
+
+        <!-- Phase 2 & 3: Code Implementation & QA -->
+        <div x-show="currentPhase === 2 || currentPhase === 3">
+            <div class="d-flex justify-between align-center mb-sm">
+                <h3 class="tier-2-section-title" style="margin: 0;">Phase 2: Code Solution</h3>
+                <span class="text-xs text-muted">Hints Disabled for Interview Mode</span>
+            </div>
+            <textarea class="search-input-field font-mono text-xs mb-md" style="width: 100%; height: 260px;" x-model="interviewCode" placeholder="# Write your interview solution code here..."></textarea>
+            <div class="d-flex align-center justify-between">
+                <button type="button" class="btn btn-ghost btn-xs" @click="currentPhase = 1">← Edit Approach</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="evaluateSolution()">Submit for AI Review →</button>
+            </div>
+        </div>
+
+        <!-- Phase 4: Scorecard Report -->
+        <div x-show="currentPhase === 4" x-transition>
+            <div class="d-flex align-center justify-between mb-md">
+                <div>
+                    <span class="badge badge-easy text-2xs mb-xs">EVALUATION COMPLETE</span>
+                    <h3 class="tier-1-title" style="font-size: 1.3rem; margin: 0;">FAANG Interview Scorecard Report</h3>
+                </div>
+                <div class="text-right">
+                    <span class="text-2xs text-muted d-block">OVERALL RATING</span>
+                    <span class="font-mono font-bold text-success" style="font-size: 1.8rem;">9.1 / 10</span>
+                </div>
+            </div>
+
+            <!-- Scorecard Metrics Grid -->
+            <div class="overview-card-grid mb-md" style="grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
+                <div class="p-xs text-center" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                    <span class="text-2xs text-muted d-block">COMMUNICATION</span>
+                    <span class="font-mono font-bold text-bright">9.4 / 10</span>
+                </div>
+                <div class="p-xs text-center" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                    <span class="text-2xs text-muted d-block">PROBLEM SOLVING</span>
+                    <span class="font-mono font-bold text-bright">9.2 / 10</span>
+                </div>
+                <div class="p-xs text-center" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                    <span class="text-2xs text-muted d-block">OPTIMIZATION</span>
+                    <span class="font-mono font-bold text-bright">8.8 / 10</span>
+                </div>
+                <div class="p-xs text-center" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                    <span class="text-2xs text-muted d-block">EDGE CASES</span>
+                    <span class="font-mono font-bold text-bright">9.0 / 10</span>
+                </div>
+            </div>
+
+            <div class="p-sm text-xs text-secondary mb-md" style="background: var(--bg-tertiary); border-radius: var(--radius-md); line-height: 1.6;">
+                <strong>Interviewer Feedback:</strong> Excellent initial approach explanation. Code structure is clean with clear variable names. Remember to mention memory complexity trade-offs explicitly during initial discussion.
+            </div>
+
+            <a href="{% url 'career_readiness' %}" class="btn btn-primary btn-sm">View Career Readiness Profile →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function interviewApp() {
+        return {
+            secondsLeft: 2700, // 45 mins
+            currentPhase: 1,
+            sessionEnded: false,
+            approachText: '',
+            interviewCode: '',
+            timer: null,
+
+            init() {
+                this.timer = setInterval(() => {
+                    if (this.secondsLeft > 0 && !this.sessionEnded) {
+                        this.secondsLeft--;
+                    }
+                }, 1000);
+            },
+
+            formatTime(sec) {
+                const m = Math.floor(sec / 60);
+                const s = sec % 60;
+                return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            },
+
+            evaluateSolution() {
+                this.currentPhase = 4;
+                this.sessionEnded = true;
+                if (this.timer) clearInterval(this.timer);
+            },
+
+            endInterview() {
+                this.evaluateSolution();
+            }
+        };
+    }
+</script>
+{% endblock %}

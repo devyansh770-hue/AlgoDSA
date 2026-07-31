@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('', views.topic_list, name='topic_list'),
+    path('simulator/', views.algorithm_simulator, name='algorithm_simulator'),
+    path('interview/', views.mock_interview, name='mock_interview'),
     path('learn/', views.learn_hub_view, name='learn_hub'),
     path('learn/<slug:topic_slug>/', views.learn_topic_view, name='learn_topic'),
     path('learn/<slug:topic_slug>/<slug:pattern_slug>/', views.learn_pattern_view, name='learn_pattern'),

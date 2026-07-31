@@ -74,9 +74,19 @@ def submit_code(request):
         from apps.progress.services.spaced_repetition import update_mastery
         update_mastery(user, problem, correct=True)
     else:
-        # Update mastery for incorrect submission
+        # Update mastery & create mistake log for incorrect submission
         from apps.progress.services.spaced_repetition import update_mastery
+        from .models import MistakeRecord
         update_mastery(request.user, problem, correct=False)
+
+        cat = 'tle' if result['status'] == 'time_limit' else ('pointer_bounds' if 'index out of range' in submission.stderr.lower() else 'general_logic')
+        MistakeRecord.objects.create(
+            user=request.user,
+            submission=submission,
+            problem=problem,
+            error_category=cat,
+            ai_remediation=f"Review test case failure on {problem.title}. Focus on pointer bounds and edge cases."
+        )
 
     # Build response
     response_data = {
@@ -247,7 +257,22 @@ def get_submission_detail_api(request, submission_id):
         'prev_id': prev_id,
         'next_id': next_id,
         'submission_number': submission_index,
-        'total_submissions': total_count,
-    }
-
     return JsonResponse(data)
+
+
+@login_required
+def mistake_library(request):
+    """Searchable mistake database recording failed runs & AI remediation (Feature: Mistake Library)."""
+    from .models import MistakeRecord
+    mistakes = MistakeRecord.objects.filter(user=request.user).select_related('problem', 'submission')
+    
+    # Filter by category if requested
+    cat = request.GET.get('category')
+    if cat:
+        mistakes = mistakes.filter(error_category=cat)
+
+    context = {
+        'mistakes': mistakes,
+        'selected_category': cat or '',
+    }
+    return render(request, 'submissions/mistakes.html', context)

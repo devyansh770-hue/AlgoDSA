@@ -373,3 +373,20 @@ def get_starter_code(request, problem_id):
     language = request.GET.get('language', 'python')
     code = problem.get_starter_code(language)
     return JsonResponse({'code': code, 'language': language})
+
+
+@login_required
+def algorithm_simulator(request):
+    """Visual Algorithm Simulator with interactive step-by-step animations (Feature: Simulator)."""
+    return render(request, 'simulator/simulator.html')
+
+
+@login_required
+def mock_interview(request):
+    """FAANG AI Mock Interviewer Workstation (Feature: Interview Mode)."""
+    problem = Problem.objects.filter(is_active=True).first()
+    context = {
+        'problem': problem,
+        'time_limit_mins': 45,
+    }
+    return render(request, 'problems/interview.html', context)

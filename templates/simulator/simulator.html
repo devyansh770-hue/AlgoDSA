@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Visual Algorithm Simulator — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;" x-data="simulatorApp()">
+    
+    <!-- Hero Header -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl">
+        <div>
+            <div class="d-flex align-center gap-xs mb-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="play-circle" class="icon-xs"></i>
+                    INTERACTIVE VISUALIZER
+                </span>
+                <span class="badge badge-easy text-2xs">Step-by-Step Tracer</span>
+            </div>
+            <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">Visual Algorithm Simulator</h1>
+            <p class="text-secondary text-sm">
+                Watch algorithms execute in real time. Pause, step forward, rewind, and adjust speed to master spatial & time intuition.
+            </p>
+        </div>
+
+        <!-- Pattern Selector Pills -->
+        <div class="d-flex align-center gap-xs flex-wrap">
+            <button type="button" class="btn btn-sm" :class="activePattern === 'sliding_window' ? 'btn-primary' : 'btn-outline'" @click="setPattern('sliding_window')">🪟 Sliding Window</button>
+            <button type="button" class="btn btn-sm" :class="activePattern === 'two_pointers' ? 'btn-primary' : 'btn-outline'" @click="setPattern('two_pointers')">👉👈 Two Pointers</button>
+            <button type="button" class="btn btn-sm" :class="activePattern === 'binary_search' ? 'btn-primary' : 'btn-outline'" @click="setPattern('binary_search')">🔍 Binary Search</button>
+            <button type="button" class="btn btn-sm" :class="activePattern === 'hash_map' ? 'btn-primary' : 'btn-outline'" @click="setPattern('hash_map')">🗂 Hash Map</button>
+        </div>
+    </div>
+
+    <!-- Simulator Canvas Card -->
+    <div class="card p-lg mb-xl" style="background: #111118; border: 1px solid var(--border-glow); border-radius: 20px;">
+        
+        <!-- Controls Toolbar -->
+        <div class="d-flex align-center justify-between flex-wrap gap-md mb-lg p-xs" style="background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div class="d-flex align-center gap-xs">
+                <button type="button" class="btn btn-ghost btn-sm" @click="prevStep()" :disabled="stepIndex <= 0">⏮ Step Back</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="togglePlay()">
+                    <span x-text="isPlaying ? '⏸ Pause' : '▶ Play Auto'"></span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" @click="nextStep()" :disabled="stepIndex >= maxSteps - 1">Step Next ⏭</button>
+                <button type="button" class="btn btn-ghost btn-sm" @click="reset()">↺ Reset</button>
+            </div>
+
+            <div class="d-flex align-center gap-md text-xs font-mono">
+                <span>Step <strong class="text-primary" x-text="stepIndex + 1"></strong> / <span x-text="maxSteps"></span></span>
+                <span>Speed: <strong class="text-bright" x-text="speed + 'x'"></strong></span>
+                <button type="button" class="btn btn-ghost btn-xs" @click="speed = speed === 1 ? 2 : (speed === 2 ? 0.5 : 1)">⚙ Toggle Speed</button>
+            </div>
+        </div>
+
+        <!-- Animation Visualization Area -->
+        <div style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+            
+            <!-- Step Description Box -->
+            <div class="mb-lg p-xs text-center text-xs font-mono font-bold text-bright" style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-sm); width: 100%; max-width: 600px;" x-text="currentStepDescription">
+            </div>
+
+            <!-- Array Element Blocks Container -->
+            <div class="d-flex align-center justify-center gap-xs flex-wrap" style="padding: 20px 0;">
+                <template x-for="(val, idx) in arrayData" :key="idx">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <!-- Pointer Markers -->
+                        <div style="height: 20px; font-size: 0.75rem; font-weight: 700;" class="font-mono">
+                            <span x-show="leftPtr === idx" style="color: #6366f1;">L ▼</span>
+                            <span x-show="rightPtr === idx" style="color: #10b981;">R ▼</span>
+                        </div>
+
+                        <!-- Element Box -->
+                        <div class="d-flex align-center justify-center font-mono font-bold"
+                             style="width: 55px; height: 55px; border-radius: 12px; font-size: 1.1rem; transition: all 0.25s ease;"
+                             :style="
+                                idx >= leftPtr && idx <= rightPtr
+                                    ? 'background: rgba(99, 102, 241, 0.25); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px);'
+                                    : 'background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-muted);'
+                             " x-text="val">
+                        </div>
+
+                        <!-- Index Label -->
+                        <span class="text-2xs text-muted font-mono" x-text="'[' + idx + ']'"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function simulatorApp() {
+        return {
+            activePattern: 'sliding_window',
+            arrayData: [2, 1, 5, 2, 3, 2],
+            leftPtr: 0,
+            rightPtr: 0,
+            stepIndex: 0,
+            maxSteps: 6,
+            isPlaying: false,
+            speed: 1,
+            timer: null,
+
+            get currentStepDescription() {
+                if (this.activePattern === 'sliding_window') {
+                    return `Window Range [${this.leftPtr} .. ${this.rightPtr}] — Elements: [${this.arrayData.slice(this.leftPtr, this.rightPtr + 1).join(', ')}]`;
+                }
+                return `Pointers at Index L:${this.leftPtr}, R:${this.rightPtr}`;
+            },
+
+            setPattern(pat) {
+                this.activePattern = pat;
+                this.reset();
+            },
+
+            nextStep() {
+                if (this.stepIndex < this.maxSteps - 1) {
+                    this.stepIndex++;
+                    this.rightPtr = this.stepIndex;
+                    if (this.stepIndex > 3) this.leftPtr = 1;
+                } else {
+                    this.isPlaying = false;
+                    clearInterval(this.timer);
+                }
+            },
+
+            prevStep() {
+                if (this.stepIndex > 0) {
+                    this.stepIndex--;
+                    this.rightPtr = this.stepIndex;
+                    if (this.stepIndex <= 3) this.leftPtr = 0;
+                }
+            },
+
+            togglePlay() {
+                this.isPlaying = !this.isPlaying;
+                if (this.isPlaying) {
+                    this.timer = setInterval(() => {
+                        this.nextStep();
+                    }, 1000 / this.speed);
+                } else {
+                    clearInterval(this.timer);
+                }
+            },
+
+            reset() {
+                this.stepIndex = 0;
+                this.leftPtr = 0;
+                this.rightPtr = 0;
+                this.isPlaying = false;
+                if (this.timer) clearInterval(this.timer);
+            }
+        };
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Automated Mistake Library — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
+    
+    <!-- Hero Header -->
+    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl">
+        <div>
+            <div class="d-flex align-center gap-xs mb-xs">
+                <span class="badge badge-pattern text-2xs">
+                    <i data-lucide="shield-alert" class="icon-xs"></i>
+                    AI REMEDIATION
+                </span>
+                <span class="badge badge-medium text-2xs">Auto-Captured Bugs</span>
+            </div>
+            <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">Automated Mistake Library</h1>
+            <p class="text-secondary text-sm">
+                Every wrong answer, TLE, or missed edge case is automatically logged here. Review AI remediation insights to eliminate repeat bugs.
+            </p>
+        </div>
+
+        <!-- Filter Pill Buttons -->
+        <div class="d-flex align-center gap-xs flex-wrap">
+            <a href="{% url 'mistake_library' %}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline{% endif %}">All Mistakes</a>
+            <a href="{% url 'mistake_library' %}?category=pointer_bounds" class="btn btn-sm {% if selected_category == 'pointer_bounds' %}btn-primary{% else %}btn-outline{% endif %}">Pointer Bounds</a>
+            <a href="{% url 'mistake_library' %}?category=tle" class="btn btn-sm {% if selected_category == 'tle' %}btn-primary{% else %}btn-outline{% endif %}">Time Limit Exceeded</a>
+            <a href="{% url 'mistake_library' %}?category=general_logic" class="btn btn-sm {% if selected_category == 'general_logic' %}btn-primary{% else %}btn-outline{% endif %}">Logic Bugs</a>
+        </div>
+    </div>
+
+    <!-- Mistakes List Grid -->
+    <div class="d-flex flex-col gap-md">
+        {% for m in mistakes %}
+        <div class="card p-md" style="background: rgba(18, 18, 23, 0.75); border: 1px solid var(--border-color); border-radius: 16px;">
+            <div class="d-flex align-center justify-between flex-wrap gap-sm mb-sm">
+                <div class="d-flex align-center gap-xs">
+                    <span class="badge badge-hard text-2xs">{{ m.get_error_category_display }}</span>
+                    <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.05rem;">
+                        <a href="{% url 'problem_detail' m.problem.topic.slug m.problem.slug %}" class="text-bright text-decoration-none">
+                            {{ m.problem.title }}
+                        </a>
+                    </h3>
+                </div>
+                <span class="text-xs text-muted font-mono">{{ m.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+
+            <div class="p-xs mb-sm text-xs font-mono" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); color: #f87171;">
+                <strong>AI Remediation Insight:</strong> {{ m.ai_remediation }}
+            </div>
+
+            <div class="d-flex align-center justify-between">
+                <span class="text-2xs text-muted">Topic: {{ m.problem.topic.name }} • Pattern: {{ m.problem.get_pattern_display }}</span>
+                <a href="{% url 'problem_detail' m.problem.topic.slug m.problem.slug %}" class="btn btn-primary btn-xs">
+                    Re-Attempt Problem →
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card p-xl text-center" style="background: rgba(18, 18, 23, 0.5); border-radius: 16px;">
+            <p class="text-muted text-sm mb-xs">🎉 No recorded mistakes found! Keep solving problems to build your AI remediation profile.</p>
+            <a href="{% url 'topic_list' %}" class="btn btn-primary btn-sm">Browse Learning Hub →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
