@@ -5,6 +5,9 @@ django-allauth==65.3.0
 whitenoise==6.8.2
 requests==2.32.3
 openai==1.58.1
-anthropic==0.42.0
 python-dotenv==1.0.1
 Pillow==11.1.0
+gunicorn==23.0.0
+psycopg2-binary==2.9.10
+dj-database-url==2.3.0
+reportlab==5.0.0

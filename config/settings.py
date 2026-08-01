@@ -71,13 +71,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database — SQLite for dev, swap to PostgreSQL for production
+import dj_database_url
+
+# Database — SQLite for dev, PostgreSQL via DATABASE_URL in production
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+
+csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins.split(',') if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://*.railway.app']
+
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
