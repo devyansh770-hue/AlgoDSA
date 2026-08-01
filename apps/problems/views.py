@@ -384,9 +384,24 @@ def algorithm_simulator(request):
 @login_required
 def mock_interview(request):
     """FAANG AI Mock Interviewer Workstation (Feature: Interview Mode)."""
-    problem = Problem.objects.filter(is_active=True).first()
+    problem_id = request.GET.get('problem_id')
+    problem = None
+    if problem_id:
+        problem = Problem.objects.filter(id=problem_id, is_active=True).first()
+    if not problem:
+        problem = Problem.objects.filter(is_active=True).first()
+
+    all_problems = list(Problem.objects.filter(is_active=True).select_related('topic')[:12])
+    sample_cases = list(problem.test_cases.filter(is_sample=True)) if problem else []
+    hints = list(problem.hints.all().order_by('level')) if problem else []
+
     context = {
         'problem': problem,
+        'all_problems': all_problems,
+        'sample_cases': sample_cases,
+        'hints': hints,
         'time_limit_mins': 45,
     }
     return render(request, 'problems/interview.html', context)
+
+

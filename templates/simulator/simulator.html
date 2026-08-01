@@ -17,7 +17,7 @@
             </div>
             <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">Visual Algorithm Simulator</h1>
             <p class="text-secondary text-sm">
-                Watch algorithms execute in real time. Pause, step forward, rewind, and adjust speed to master spatial & time intuition.
+                Watch algorithms execute in real time. Pause, step forward, rewind, and master spatial & time intuition.
             </p>
         </div>
 
@@ -27,6 +27,21 @@
             <button type="button" class="btn btn-sm" :class="activePattern === 'two_pointers' ? 'btn-primary' : 'btn-outline'" @click="setPattern('two_pointers')">👉👈 Two Pointers</button>
             <button type="button" class="btn btn-sm" :class="activePattern === 'binary_search' ? 'btn-primary' : 'btn-outline'" @click="setPattern('binary_search')">🔍 Binary Search</button>
             <button type="button" class="btn btn-sm" :class="activePattern === 'hash_map' ? 'btn-primary' : 'btn-outline'" @click="setPattern('hash_map')">🗂 Hash Map</button>
+        </div>
+    </div>
+
+    <!-- Algorithm Concept Overview Bar -->
+    <div class="card p-md mb-lg d-flex align-center justify-between flex-wrap gap-md" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 14px;">
+        <div class="d-flex align-center gap-md">
+            <div style="font-size: 1.8rem;" x-text="patternMeta.icon"></div>
+            <div>
+                <h3 class="text-bright font-bold" style="font-size: 1rem; margin-bottom: 2px;" x-text="patternMeta.title"></h3>
+                <p class="text-muted text-xs" x-text="patternMeta.description"></p>
+            </div>
+        </div>
+        <div class="d-flex align-center gap-xs">
+            <span class="badge badge-medium" x-text="'Time: ' + patternMeta.timeComplexity"></span>
+            <span class="badge badge-easy" x-text="'Space: ' + patternMeta.spaceComplexity"></span>
         </div>
     </div>
 
@@ -40,42 +55,55 @@
                 <button type="button" class="btn btn-primary btn-sm" @click="togglePlay()">
                     <span x-text="isPlaying ? '⏸ Pause' : '▶ Play Auto'"></span>
                 </button>
-                <button type="button" class="btn btn-ghost btn-sm" @click="nextStep()" :disabled="stepIndex >= maxSteps - 1">Step Next ⏭</button>
+                <button type="button" class="btn btn-ghost btn-sm" @click="nextStep()" :disabled="stepIndex >= currentSteps.length - 1">Step Next ⏭</button>
                 <button type="button" class="btn btn-ghost btn-sm" @click="reset()">↺ Reset</button>
             </div>
 
             <div class="d-flex align-center gap-md text-xs font-mono">
-                <span>Step <strong class="text-primary" x-text="stepIndex + 1"></strong> / <span x-text="maxSteps"></span></span>
+                <span>Step <strong class="text-primary" x-text="stepIndex + 1"></strong> / <span x-text="currentSteps.length"></span></span>
                 <span>Speed: <strong class="text-bright" x-text="speed + 'x'"></strong></span>
-                <button type="button" class="btn btn-ghost btn-xs" @click="speed = speed === 1 ? 2 : (speed === 2 ? 0.5 : 1)">⚙ Toggle Speed</button>
+                <button type="button" class="btn btn-ghost btn-xs" @click="toggleSpeed()">⚙ Toggle Speed</button>
             </div>
         </div>
 
         <!-- Animation Visualization Area -->
-        <div style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+        <div style="min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
             
-            <!-- Step Description Box -->
-            <div class="mb-lg p-xs text-center text-xs font-mono font-bold text-bright" style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-sm); width: 100%; max-width: 600px;" x-text="currentStepDescription">
+            <!-- Step Explanation Banner -->
+            <div class="mb-lg p-sm text-center text-xs font-mono font-bold text-bright" 
+                 style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-sm); width: 100%; max-width: 720px; line-height: 1.5;" 
+                 x-text="currentStep.explanation">
             </div>
 
+            <!-- Additional Metrics / Status Counters (e.g. Target, Current Sum, Max Sum) -->
+            <template x-if="currentStep.metrics">
+                <div class="d-flex align-center justify-center gap-md mb-md flex-wrap">
+                    <template x-for="(mVal, mKey) in currentStep.metrics" :key="mKey">
+                        <div class="badge" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 4px 12px; font-family: var(--font-mono); font-size: 0.75rem;">
+                            <span class="text-muted" x-text="mKey + ': '"></span>
+                            <strong class="text-bright" x-text="mVal"></strong>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
             <!-- Array Element Blocks Container -->
-            <div class="d-flex align-center justify-center gap-xs flex-wrap" style="padding: 20px 0;">
-                <template x-for="(val, idx) in arrayData" :key="idx">
+            <div class="d-flex align-center justify-center gap-xs flex-wrap" style="padding: 20px 0; min-height: 110px;">
+                <template x-for="(val, idx) in currentStep.array" :key="idx">
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                         <!-- Pointer Markers -->
-                        <div style="height: 20px; font-size: 0.75rem; font-weight: 700;" class="font-mono">
-                            <span x-show="leftPtr === idx" style="color: #6366f1;">L ▼</span>
-                            <span x-show="rightPtr === idx" style="color: #10b981;">R ▼</span>
+                        <div style="height: 24px; font-size: 0.75rem; font-weight: 700; text-align: center;" class="font-mono">
+                            <span x-show="currentStep.pointers.left === idx" style="color: #6366f1; display: block;">L ▼</span>
+                            <span x-show="currentStep.pointers.right === idx" style="color: #10b981; display: block;">R ▼</span>
+                            <span x-show="currentStep.pointers.mid === idx" style="color: #f59e0b; display: block;">MID ▼</span>
+                            <span x-show="currentStep.pointers.curr === idx" style="color: #ec4899; display: block;">CURR ▼</span>
                         </div>
 
                         <!-- Element Box -->
                         <div class="d-flex align-center justify-center font-mono font-bold"
-                             style="width: 55px; height: 55px; border-radius: 12px; font-size: 1.1rem; transition: all 0.25s ease;"
-                             :style="
-                                idx >= leftPtr && idx <= rightPtr
-                                    ? 'background: rgba(99, 102, 241, 0.25); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px);'
-                                    : 'background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-muted);'
-                             " x-text="val">
+                             style="width: 58px; height: 58px; border-radius: 14px; font-size: 1.15rem; transition: all 0.25s ease;"
+                             :style="getElementStyle(idx)" 
+                             x-text="val">
                         </div>
 
                         <!-- Index Label -->
@@ -83,6 +111,27 @@
                     </div>
                 </template>
             </div>
+
+            <!-- Hash Map Visualizer Sub-panel (Only for Hash Map Algorithm) -->
+            <template x-if="activePattern === 'hash_map'">
+                <div class="mt-lg p-md w-full" style="max-width: 600px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <div class="d-flex align-center justify-between mb-sm">
+                        <span class="text-xs font-mono font-bold text-muted">🗂 HASH MAP STATE (Value ➔ Index)</span>
+                        <span class="text-2xs text-primary font-mono" x-text="Object.keys(currentStep.hashMap || {}).length + ' entries'"></span>
+                    </div>
+                    <div class="d-flex align-center gap-xs flex-wrap">
+                        <template x-if="!currentStep.hashMap || Object.keys(currentStep.hashMap).length === 0">
+                            <span class="text-xs text-muted font-mono italic">Map is empty</span>
+                        </template>
+                        <template x-for="(indexVal, mapKey) in (currentStep.hashMap || {})" :key="mapKey">
+                            <div class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-family: var(--font-mono); font-size: 0.8rem; padding: 4px 10px;">
+                                <span x-text="mapKey"></span> ➔ <strong x-text="'[' + indexVal + ']'"></strong>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
         </div>
     </div>
 </div>
@@ -93,20 +142,202 @@
     function simulatorApp() {
         return {
             activePattern: 'sliding_window',
-            arrayData: [2, 1, 5, 2, 3, 2],
-            leftPtr: 0,
-            rightPtr: 0,
             stepIndex: 0,
-            maxSteps: 6,
             isPlaying: false,
             speed: 1,
             timer: null,
 
-            get currentStepDescription() {
-                if (this.activePattern === 'sliding_window') {
-                    return `Window Range [${this.leftPtr} .. ${this.rightPtr}] — Elements: [${this.arrayData.slice(this.leftPtr, this.rightPtr + 1).join(', ')}]`;
+            // Algorithm Configurations & Visual Steps
+            patterns: {
+                sliding_window: {
+                    title: 'Sliding Window (Max Sum Subarray of Size K=3)',
+                    icon: '🪟',
+                    description: 'Maintain a contiguous window range [Left..Right] of size K=3, dynamically sliding right while tracking maximum sum.',
+                    timeComplexity: 'O(N)',
+                    spaceComplexity: 'O(1)',
+                    steps: [
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 0, right: 0 },
+                            windowRange: [0, 0],
+                            explanation: 'Step 1: Initialize Right pointer at index 0 (val = 2). Window is expanding.',
+                            metrics: { 'Window Size': '1', 'Window Sum': 2, 'Max Sum': 2 }
+                        },
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 0, right: 1 },
+                            windowRange: [0, 1],
+                            explanation: 'Step 2: Expand Right pointer to index 1 (val = 1). Window elements: [2, 1].',
+                            metrics: { 'Window Size': '2', 'Window Sum': 3, 'Max Sum': 3 }
+                        },
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 0, right: 2 },
+                            windowRange: [0, 2],
+                            explanation: 'Step 3: Expand Right pointer to index 2 (val = 5). Window reaches size K=3! Sum = 2 + 1 + 5 = 8. Max Sum = 8.',
+                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 8, 'Max Sum': 8 }
+                        },
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 1, right: 3 },
+                            windowRange: [1, 3],
+                            explanation: 'Step 4: Slide window! Subtract element at Left (index 0, -2) and add Right (index 3, +1). New Window Sum: 7.',
+                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 7, 'Max Sum': 8 }
+                        },
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 2, right: 4 },
+                            windowRange: [2, 4],
+                            explanation: 'Step 5: Slide window! Subtract index 1 (-1), add index 4 (+3). Window [5, 1, 3] Sum = 9. New Max Sum = 9!',
+                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 9, 'Max Sum': 9 }
+                        },
+                        {
+                            array: [2, 1, 5, 1, 3, 2],
+                            pointers: { left: 3, right: 5 },
+                            windowRange: [3, 5],
+                            explanation: 'Step 6: Slide window! Subtract index 2 (-5), add index 5 (+2). Window [1, 3, 2] Sum = 6. Max Sum remains 9.',
+                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 6, 'Max Sum': 9 }
+                        }
+                    ]
+                },
+                two_pointers: {
+                    title: 'Two Pointers (Pair with Target Sum = 9)',
+                    icon: '👉👈',
+                    description: 'Utilize two pointers starting at extreme ends of a sorted array to converge toward the target sum in O(N) time.',
+                    timeComplexity: 'O(N)',
+                    spaceComplexity: 'O(1)',
+                    steps: [
+                        {
+                            array: [1, 3, 4, 6, 8, 11],
+                            pointers: { left: 0, right: 5 },
+                            explanation: 'Step 1: Set Left = 0 (1) and Right = 5 (11). Current Sum = 1 + 11 = 12. Since 12 > Target (9), decrement Right pointer.',
+                            metrics: { 'Target': 9, 'Current Sum': 12, 'Action': 'Right-- (12 > 9)' }
+                        },
+                        {
+                            array: [1, 3, 4, 6, 8, 11],
+                            pointers: { left: 0, right: 4 },
+                            explanation: 'Step 2: Set Right = 4 (8). Current Sum = 1 + 8 = 9. Target 9 MATCHED at indices [0, 4]!',
+                            metrics: { 'Target': 9, 'Current Sum': 9, 'Status': '✅ MATCH FOUND' }
+                        },
+                        {
+                            array: [1, 3, 4, 6, 8, 11],
+                            pointers: { left: 0, right: 4 },
+                            explanation: 'Step 3: Verification complete. Two Pointers found pair (1, 8) in 2 steps without extra space.',
+                            metrics: { 'Target': 9, 'Result': '[0, 4] -> (1, 8)', 'Time': 'O(N)' }
+                        }
+                    ]
+                },
+                binary_search: {
+                    title: 'Binary Search (Find Target = 7 in Sorted Array)',
+                    icon: '🔍',
+                    description: 'Repeatedly divide search interval in half by comparing middle element against target.',
+                    timeComplexity: 'O(log N)',
+                    spaceComplexity: 'O(1)',
+                    steps: [
+                        {
+                            array: [1, 3, 5, 7, 9, 11, 13],
+                            pointers: { left: 0, right: 6, mid: 3 },
+                            eliminated: [],
+                            explanation: 'Step 1: Search range [0..6]. Calculate Mid = (0 + 6)/2 = 3. Element at Mid = 7. Compare 7 with Target (7).',
+                            metrics: { 'Target': 7, 'Mid Index': 3, 'Mid Val': 7, 'Status': '✅ MATCH FOUND!' }
+                        },
+                        {
+                            array: [1, 3, 5, 7, 9, 11, 13],
+                            pointers: { mid: 3 },
+                            eliminated: [0, 1, 2, 4, 5, 6],
+                            explanation: 'Step 2: Target 7 located at Index 3 in a single O(log N) comparison! Search completed successfully.',
+                            metrics: { 'Target': 7, 'Found Index': 3, 'Comparisons': 1 }
+                        }
+                    ]
+                },
+                hash_map: {
+                    title: 'Hash Map (Two Sum for Target = 9)',
+                    icon: '🗂',
+                    description: 'Store seen numbers in a Hash Map to look up required complement (Target - Current) in O(1) constant time.',
+                    timeComplexity: 'O(N)',
+                    spaceComplexity: 'O(N)',
+                    steps: [
+                        {
+                            array: [2, 11, 7, 15],
+                            pointers: { curr: 0 },
+                            hashMap: {},
+                            explanation: 'Step 1: Index 0 (val = 2). Needed complement = 9 - 2 = 7. Check Map for 7: Not found. Insert { 2 ➔ [0] } into Map.',
+                            metrics: { 'Target': 9, 'Current': 2, 'Complement Needed': 7, 'Map Check': 'Miss' }
+                        },
+                        {
+                            array: [2, 11, 7, 15],
+                            pointers: { curr: 1 },
+                            hashMap: { '2': 0 },
+                            explanation: 'Step 2: Index 1 (val = 11). Needed complement = 9 - 11 = -2. Check Map for -2: Not found. Insert { 11 ➔ [1] } into Map.',
+                            metrics: { 'Target': 9, 'Current': 11, 'Complement Needed': -2, 'Map Check': 'Miss' }
+                        },
+                        {
+                            array: [2, 11, 7, 15],
+                            pointers: { curr: 2 },
+                            hashMap: { '2': 0, '11': 1 },
+                            explanation: 'Step 3: Index 2 (val = 7). Needed complement = 9 - 7 = 2. Check Map for 2: FOUND at Index 0! Return [0, 2].',
+                            metrics: { 'Target': 9, 'Current': 7, 'Complement Needed': 2, 'Map Check': '✅ HIT at Index 0' }
+                        }
+                    ]
                 }
-                return `Pointers at Index L:${this.leftPtr}, R:${this.rightPtr}`;
+            },
+
+            get patternMeta() {
+                return this.patterns[this.activePattern] || this.patterns.sliding_window;
+            },
+
+            get currentSteps() {
+                return this.patternMeta.steps;
+            },
+
+            get currentStep() {
+                return this.currentSteps[this.stepIndex] || this.currentSteps[0];
+            },
+
+            getElementStyle(idx) {
+                const step = this.currentStep;
+                
+                // Sliding Window range highlighting
+                if (this.activePattern === 'sliding_window' && step.windowRange) {
+                    const [wStart, wEnd] = step.windowRange;
+                    if (idx >= wStart && idx <= wEnd) {
+                        return 'background: rgba(99, 102, 241, 0.28); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(99,102,241,0.3);';
+                    }
+                }
+
+                // Two Pointers match highlighting
+                if (this.activePattern === 'two_pointers') {
+                    if (step.pointers.left === idx || step.pointers.right === idx) {
+                        const isMatch = step.metrics && step.metrics.Status && step.metrics.Status.includes('MATCH');
+                        if (isMatch) {
+                            return 'background: rgba(16, 185, 129, 0.3); border: 2px solid #34d399; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(16,185,129,0.3);';
+                        }
+                        return 'background: rgba(99, 102, 241, 0.25); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px);';
+                    }
+                }
+
+                // Binary Search Mid / Match highlighting
+                if (this.activePattern === 'binary_search') {
+                    if (step.pointers.mid === idx) {
+                        return 'background: rgba(245, 158, 11, 0.3); border: 2px solid #fbbf24; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(245,158,11,0.3);';
+                    }
+                    if (step.eliminated && step.eliminated.includes(idx)) {
+                        return 'background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color); color: var(--text-muted); opacity: 0.4;';
+                    }
+                }
+
+                // Hash Map current highlighting
+                if (this.activePattern === 'hash_map') {
+                    if (step.pointers.curr === idx) {
+                        const isHit = step.metrics && step.metrics['Map Check'] && step.metrics['Map Check'].includes('HIT');
+                        if (isHit) {
+                            return 'background: rgba(16, 185, 129, 0.3); border: 2px solid #34d399; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(16,185,129,0.3);';
+                        }
+                        return 'background: rgba(236, 72, 153, 0.25); border: 2px solid #f472b6; color: #fff; transform: translateY(-4px);';
+                    }
+                }
+
+                return 'background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-muted);';
             },
 
             setPattern(pat) {
@@ -115,10 +346,8 @@
             },
 
             nextStep() {
-                if (this.stepIndex < this.maxSteps - 1) {
+                if (this.stepIndex < this.currentSteps.length - 1) {
                     this.stepIndex++;
-                    this.rightPtr = this.stepIndex;
-                    if (this.stepIndex > 3) this.leftPtr = 1;
                 } else {
                     this.isPlaying = false;
                     clearInterval(this.timer);
@@ -128,8 +357,6 @@
             prevStep() {
                 if (this.stepIndex > 0) {
                     this.stepIndex--;
-                    this.rightPtr = this.stepIndex;
-                    if (this.stepIndex <= 3) this.leftPtr = 0;
                 }
             },
 
@@ -138,16 +365,24 @@
                 if (this.isPlaying) {
                     this.timer = setInterval(() => {
                         this.nextStep();
-                    }, 1000 / this.speed);
+                    }, 1200 / this.speed);
                 } else {
                     clearInterval(this.timer);
                 }
             },
 
+            toggleSpeed() {
+                this.speed = this.speed === 1 ? 2 : (this.speed === 2 ? 0.5 : 1);
+                if (this.isPlaying) {
+                    clearInterval(this.timer);
+                    this.timer = setInterval(() => {
+                        this.nextStep();
+                    }, 1200 / this.speed);
+                }
+            },
+
             reset() {
                 this.stepIndex = 0;
-                this.leftPtr = 0;
-                this.rightPtr = 0;
                 this.isPlaying = false;
                 if (this.timer) clearInterval(this.timer);
             }

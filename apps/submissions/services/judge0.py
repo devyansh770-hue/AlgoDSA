@@ -157,6 +157,7 @@ class Judge0Service:
                     import subprocess
                     import tempfile
                     import os
+                    import sys
 
                     with tempfile.NamedTemporaryFile(mode='w', suffix='.py',
                                                       delete=False) as f:
@@ -166,7 +167,7 @@ class Judge0Service:
 
                     try:
                         proc = subprocess.run(
-                            ['python', temp_path],
+                            [sys.executable, temp_path],
                             input=tc.input_data,
                             capture_output=True,
                             text=True,

@@ -848,7 +848,7 @@
                     const code = monacoEditor ? monacoEditor.getValue() : '';
 
                     try {
-                        const response = await fetch('{% url "get_hint" %}', {
+                        const response = await fetch('{% url "get_ai_hint" %}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

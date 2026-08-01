@@ -29,6 +29,7 @@ class User(AbstractUser):
     streak = models.PositiveIntegerField(default=0)
     longest_streak = models.PositiveIntegerField(default=0)
     solved_count = models.PositiveIntegerField(default=0)
+    xp = models.PositiveIntegerField(default=0)
     last_active_date = models.DateField(null=True, blank=True)
     avatar_url = models.URLField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)

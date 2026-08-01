@@ -28,3 +28,4 @@ media/
 *.swo
 .DS_Store
 Thumbs.db
+staticfiles/

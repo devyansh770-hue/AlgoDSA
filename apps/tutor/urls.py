@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('hint/', views.get_ai_hint, name='get_hint'),
+    path('hint/', views.get_ai_hint, name='get_ai_hint'),
     path('explain/', views.submit_explanation, name='submit_explanation'),
     path('chat/<int:problem_id>/', views.get_chat_history, name='chat_history'),
     path('api/validate-approach/', views.validate_approach, name='validate_approach'),

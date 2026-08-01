@@ -257,6 +257,8 @@ def get_submission_detail_api(request, submission_id):
         'prev_id': prev_id,
         'next_id': next_id,
         'submission_number': submission_index,
+        'total_submissions': total_count,
+    }
     return JsonResponse(data)
 
 

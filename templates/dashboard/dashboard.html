@@ -33,9 +33,223 @@
         border: 1px solid rgba(245, 158, 11, 0.3);
         display: block;
     }
-    .btn-syncing {
-        opacity: 0.7;
+    /* INTERACTIVE TOPIC MASTERY DASHBOARD SYSTEM */
+    .tm-dashboard-container {
+        background: rgba(15, 16, 26, 0.85);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(16px);
+    }
+
+    .tm-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .tm-search-box {
+        position: relative;
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .tm-search-input {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 8px 12px 8px 34px;
+        color: var(--text-main);
+        font-size: 0.85rem;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .tm-search-input:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .tm-search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .tm-filters-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .tm-filter-select {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+        color: var(--text-sub);
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .tm-filter-select:focus, .tm-filter-select:hover {
+        border-color: var(--primary-light);
+        color: var(--text-main);
+    }
+
+    /* TOPIC CARD */
+    .tm-topic-card {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 14px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: all 0.25s ease;
+    }
+
+    .tm-topic-card:hover {
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .tm-topic-header {
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        background: rgba(255, 255, 255, 0.02);
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .tm-topic-header:hover {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* MASTERY BADGES */
+    .badge-mastery {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-mono);
+    }
+
+    .badge-mastered { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-advanced { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-intermediate { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-improving { background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+    .badge-beginner { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* TOPIC METRICS ROW */
+    .tm-metrics-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+    }
+
+    .tm-metric-pill {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* PROBLEM GRID */
+    .tm-problem-grid {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    /* PROBLEM CARD */
+    .tm-problem-card {
+        background: rgba(20, 22, 34, 0.9);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        transition: all 0.2s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .tm-problem-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--primary-light);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* PLATFORM BADGES */
+    .badge-platform {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: var(--font-mono);
+    }
+    .badge-platform-algodsa { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
+    .badge-platform-leetcode { background: rgba(255, 161, 22, 0.2); color: #ffa116; border: 1px solid rgba(255, 161, 22, 0.4); }
+    .badge-platform-gfg { background: rgba(47, 157, 87, 0.2); color: #2f9d57; border: 1px solid rgba(47, 157, 87, 0.4); }
+
+    /* SLIDE-OVER DRAWER */
+    .tm-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
+        z-index: 99999;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .tm-drawer-panel {
+        width: 600px;
+        max-width: 100%;
+        height: 100%;
+        background: #11121c;
+        border-left: 1px solid var(--border-color);
+        box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* HOVER TOOLTIP */
+    .tm-hover-tooltip {
+        position: fixed;
+        z-index: 999999;
+        width: 280px;
+        background: #161726;
+        border: 1px solid var(--border-glow);
+        border-radius: 10px;
+        padding: 10px 14px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.6);
         pointer-events: none;
+        backdrop-filter: blur(12px);
     }
 </style>
 {% endblock %}
@@ -401,60 +615,574 @@
                 </div>
             </div>
 
-            <!-- Right: Solved Breakdown by Topic Matrix -->
+            <!-- Right: Solved Breakdown Summary Widget -->
             <div class="card p-md" style="background: rgba(18, 18, 23, 0.75); border: 1px solid var(--border-color); border-radius: 16px;">
                 <div class="d-flex align-center justify-between mb-sm">
                     <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.05rem;">
-                        <i data-lucide="table" class="icon-sm" style="color: var(--primary-light);"></i>
-                        <span>Topic Mastery Breakdown</span>
+                        <i data-lucide="layers" class="icon-sm" style="color: var(--primary-light);"></i>
+                        <span>Topic Mastery Hub</span>
                     </h3>
-                    <a href="{% url 'topic_list' %}" class="btn btn-ghost btn-xs text-2xs text-primary">View Hub →</a>
+                    <a href="#topic-mastery-section" class="btn btn-ghost btn-xs text-2xs text-primary">Jump to Hub ↓</a>
                 </div>
 
-                <div style="overflow-x: auto; max-height: 240px;">
-                    <table class="problem-table text-xs">
-                        <thead>
-                            <tr>
-                                <th>Topic</th>
-                                <th style="text-align: center;">AlgoDSA</th>
-                                <th style="text-align: center;">LC</th>
-                                <th style="text-align: center;">GFG</th>
-                                <th style="text-align: right;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tp in topic_progresses %}
-                            <tr>
-                                <td class="font-medium text-bright d-flex align-center gap-xs">
-                                    <span>{{ tp.topic.icon }}</span>
-                                    <span>{{ tp.topic.name }}</span>
-                                </td>
-                                <td style="text-align: center;" class="font-mono text-muted">{{ tp.solved_count|default:"0" }}</td>
-                                <td style="text-align: center;" class="font-mono text-muted">0</td>
-                                <td style="text-align: center;" class="font-mono text-muted">0</td>
-                                <td style="text-align: right;" class="font-mono font-bold text-primary">{{ tp.solved_count|default:"0" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted p-sm">No topic progress data yet.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="d-flex flex-col gap-xs font-mono text-xs" style="max-height: 240px; overflow-y: auto;">
+                    {% for tp in topic_mastery_data %}
+                    <div class="d-flex align-center justify-between p-xs" style="background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <div class="d-flex align-center gap-xs">
+                            <span>{{ tp.icon }}</span>
+                            <span class="text-bright font-medium">{{ tp.name }}</span>
+                        </div>
+                        <div class="d-flex align-center gap-xs">
+                            <span class="badge-mastery" class="{{ tp.badge.class }}">{{ tp.badge.icon }} {{ tp.badge.label }}</span>
+                            <span class="text-primary font-bold">{{ tp.solved_count }}/{{ tp.total_problems }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
+    </section>
+
+    <!-- JSON Payload Script Container to Prevent HTML Attribute Escaping Corruption -->
+    <script id="topic-mastery-json-payload" type="application/json">
+        {{ topic_mastery_json|safe }}
+    </script>
+
+    <!-- =======================================================
+         TIER 3 — INTERACTIVE TOPIC MASTERY BREAKDOWN DASHBOARD
+         (GitHub Projects + Notion + Linear Inspired Experience)
+         ======================================================= -->
+    <section id="topic-mastery-section" class="mt-xl mb-xl" aria-label="Topic Mastery Breakdown Dashboard" x-data="topicMasteryDashboard()">
+        <div class="tm-dashboard-container">
+            
+            <!-- SECTION HEADER & CONTROLS TOOLBAR -->
+            <div class="tm-header-bar">
+                <div>
+                    <h2 class="tier-2-section-title" style="margin: 0; font-size: 1.25rem;">
+                        <i data-lucide="layers" class="icon-md" style="color: var(--primary-light);"></i>
+                        <span>Topic Mastery Breakdown</span>
+                    </h2>
+                    <p class="text-muted text-xs" style="margin-top: 2px;">
+                        Interactive learning dashboard across AlgoDSA, LeetCode, and GeeksforGeeks. Click any topic to view solved questions.
+                    </p>
+                </div>
+
+                <!-- SEARCH BAR -->
+                <div class="tm-search-box">
+                    <i data-lucide="search" class="icon-xs tm-search-icon"></i>
+                    <input type="text" class="tm-search-input" placeholder="Search solved problems, topics, or patterns..." x-model="searchQuery">
+                </div>
+            </div>
+
+            <!-- FILTERS & SORTING TOOLBAR -->
+            <div class="tm-filters-row mb-md">
+                <!-- Platform Filter -->
+                <select class="tm-filter-select" x-model="platformFilter">
+                    <option value="all">🌐 All Platforms</option>
+                    <option value="algodsa">⚡ AlgoDSA</option>
+                    <option value="leetcode">🟧 LeetCode</option>
+                    <option value="gfg">🟩 GeeksforGeeks</option>
+                </select>
+
+                <!-- Difficulty Filter -->
+                <select class="tm-filter-select" x-model="difficultyFilter">
+                    <option value="all">📊 All Difficulties</option>
+                    <option value="easy">🟢 Easy</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="hard">🔴 Hard</option>
+                </select>
+
+                <!-- Pattern Filter -->
+                <select class="tm-filter-select" x-model="patternFilter">
+                    <option value="all">🎯 All Patterns</option>
+                    <option value="two_pointers">Two Pointers</option>
+                    <option value="sliding_window">Sliding Window</option>
+                    <option value="binary_search">Binary Search</option>
+                    <option value="dfs">DFS / BFS</option>
+                    <option value="dynamic_programming">Dynamic Programming</option>
+                    <option value="hash_map">Hash Map</option>
+                    <option value="linked_list">Linked List</option>
+                    <option value="tree_traversal">Trees</option>
+                    <option value="heap">Heap</option>
+                </select>
+
+                <!-- Status Filter -->
+                <select class="tm-filter-select" x-model="statusFilter">
+                    <option value="all">🏷 All Statuses</option>
+                    <option value="Mastered">👑 Mastered</option>
+                    <option value="Learning">📖 Learning</option>
+                    <option value="Needs Review">⏰ Needs Review</option>
+                </select>
+
+                <!-- Timeframe Filter -->
+                <select class="tm-filter-select" x-model="timeframeFilter">
+                    <option value="all">📅 All Time</option>
+                    <option value="this_week">⚡ Solved This Week</option>
+                    <option value="recent">🕒 Recently Solved</option>
+                </select>
+
+                <!-- Sort By -->
+                <select class="tm-filter-select" x-model="sortBy">
+                    <option value="latest">⬇ Latest Solved</option>
+                    <option value="oldest">⬆ Oldest Solved</option>
+                    <option value="difficulty">🔴 Difficulty (High-Low)</option>
+                    <option value="xp">⭐ XP (High-Low)</option>
+                    <option value="attempts">🎯 Attempts (Low-High)</option>
+                </select>
+
+                <!-- Toggle Needs Review -->
+                <button type="button" class="btn btn-xs" :class="needsReviewOnly ? 'btn-primary' : 'btn-ghost'" @click="needsReviewOnly = !needsReviewOnly" style="padding: 5px 10px; font-size: 0.78rem;">
+                    ⏰ Needs Review Only
+                </button>
+            </div>
+
+            <!-- PLATFORM CONNECTION WARNING BANNERS -->
+            {% if not is_leetcode_connected or not is_gfg_connected %}
+            <div class="d-flex align-center gap-sm mb-md p-sm" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; flex-wrap: wrap;">
+                <i data-lucide="link" class="icon-sm text-primary"></i>
+                <div style="flex: 1; min-width: 240px;">
+                    <strong class="text-bright text-xs d-block">Connect Platform Accounts for Dynamic Multi-Platform Progress</strong>
+                    <div class="d-flex align-center gap-md mt-2xs text-2xs text-muted">
+                        {% if not is_leetcode_connected %}
+                        <span>🟧 Connect LeetCode to import solved problems.</span>
+                        {% endif %}
+                        {% if not is_gfg_connected %}
+                        <span>🟩 Connect GeeksforGeeks to import solved problems.</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'profile' %}" class="btn btn-primary btn-xs">Connect Accounts →</a>
+            </div>
+            {% endif %}
+
+            <!-- EXPANDABLE TOPICS ACCORDION LIST -->
+            <div class="d-flex flex-col gap-sm">
+                <template x-for="topic in filteredTopics" :key="topic.id">
+                    <div class="tm-topic-card" x-data="{ activeTopicTab: 'solved', pageLimit: 20 }">
+                        
+                        <!-- TOPIC ACCORDION HEADER (CLICK TO EXPAND/COLLAPSE) -->
+                        <div class="tm-topic-header" @click="toggleTopic(topic.id)">
+                            
+                            <!-- LEFT: Topic Icon, Name, Progress Bar, Mastery Badge -->
+                            <div class="d-flex align-center gap-md" style="flex: 1; min-width: 320px;">
+                                <span style="font-size: 1.5rem;" x-text="topic.icon">📚</span>
+                                <div>
+                                    <div class="d-flex align-center gap-xs mb-2xs">
+                                        <strong class="text-bright text-sm" x-text="topic.name">Arrays & Hashing</strong>
+                                        <span class="badge-mastery" :class="topic.badge.class" x-text="topic.badge.icon + ' ' + topic.badge.label">🌱 Beginner</span>
+                                    </div>
+
+                                    <!-- Visual Progress Bar (AlgoDSA Roadmap ONLY) -->
+                                    <div class="d-flex align-center gap-xs">
+                                        <div class="progress-bar" style="width: 140px; height: 6px; margin: 0; background: rgba(0,0,0,0.5);">
+                                            <div class="progress-bar-fill" :style="'width: ' + topic.progress_pct + '%; background: ' + topic.badge.color + ';'"></div>
+                                        </div>
+                                        <span class="font-mono text-2xs text-muted" x-text="topic.progress_pct + '% Roadmap (' + topic.algodsa_solved + ' / ' + topic.algodsa_roadmap_total + ' Solved)'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MIDDLE: SEPARATED PLATFORM BREAKDOWN PILLS -->
+                            <div class="d-flex align-center gap-xs text-2xs font-mono flex-wrap">
+                                <span class="badge-platform badge-platform-algodsa" title="AlgoDSA Curated Roadmap Solved" x-text="'AlgoDSA: ' + topic.algodsa_solved"></span>
+                                <span class="badge-platform badge-platform-leetcode" title="LeetCode Solved" x-text="'LeetCode: ' + topic.leetcode_count"></span>
+                                <span class="badge-platform badge-platform-gfg" title="GeeksforGeeks Solved" x-text="'GFG: ' + topic.gfg_count"></span>
+                                <span class="tm-metric-pill text-bright font-bold" title="Combined Total Solved" x-text="'Combined Total: ' + topic.combined_total"></span>
+                            </div>
+
+                            <!-- RIGHT: Chevron -->
+                            <div class="d-flex align-center gap-sm">
+                                <i data-lucide="chevron-down" class="icon-sm text-muted" :style="isExpanded(topic.id) ? 'transform: rotate(180deg)' : ''" style="transition: transform 0.2s ease;"></i>
+                            </div>
+                        </div>
+
+                        <!-- EXPANDED BODY CONTENT -->
+                        <div x-show="isExpanded(topic.id)" x-transition>
+                            
+                            <!-- SUB-TABS BAR -->
+                            <div class="d-flex align-center gap-2xs p-xs" style="background: rgba(0,0,0,0.4); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+                                <button type="button" class="btn btn-xs" :class="activeTopicTab === 'solved' ? 'btn-primary' : 'btn-ghost'" @click="activeTopicTab = 'solved'">
+                                    💻 Solved Problems (<span x-text="getFilteredProblems(topic).length"></span>)
+                                </button>
+                                <button type="button" class="btn btn-xs" :class="activeTopicTab === 'recommended' ? 'btn-primary' : 'btn-ghost'" @click="activeTopicTab = 'recommended'">
+                                    🎯 Recommended Next (<span x-text="topic.recommended_first ? topic.recommended_first.length : 0"></span>)
+                                </button>
+                                <button type="button" class="btn btn-xs" :class="activeTopicTab === 'review' ? 'btn-primary' : 'btn-ghost'" @click="activeTopicTab = 'review'">
+                                    ⏰ Review Due (SM-2)
+                                </button>
+                            </div>
+
+                            <!-- TAB 1: SOLVED PROBLEMS GRID -->
+                            <div x-show="activeTopicTab === 'solved'">
+                                <template x-if="getFilteredProblems(topic).length > 0">
+                                    <div>
+                                        <div class="tm-problem-grid">
+                                            <template x-for="prob in getFilteredProblems(topic).slice(0, pageLimit)" :key="prob.id">
+                                                <div class="tm-problem-card" 
+                                                     @mouseenter="showTooltip($event, prob)" 
+                                                     @mouseleave="hideTooltip()"
+                                                     @click="openDrawer(prob)">
+                                                    
+                                                    <!-- PROBLEM TITLE & PLATFORMS -->
+                                                    <div>
+                                                        <div class="d-flex align-center justify-between mb-xs gap-xs">
+                                                            <strong class="text-bright text-xs truncate" x-text="prob.title"></strong>
+                                                            <span class="badge" :class="'badge-' + prob.difficulty" x-text="prob.difficulty_display"></span>
+                                                        </div>
+
+                                                        <div class="d-flex align-center gap-2xs mb-xs flex-wrap">
+                                                            <template x-for="plat in prob.platforms" :key="plat">
+                                                                <span class="badge-platform" 
+                                                                      :class="'badge-platform-' + plat"
+                                                                      x-text="plat === 'algodsa' ? 'AlgoDSA ✓' : (plat === 'leetcode' ? 'LeetCode ✓' : 'GFG ✓')">
+                                                                </span>
+                                                            </template>
+                                                            <span class="badge badge-pattern text-2xs" x-text="prob.pattern_display"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- METRICS & FOOTER -->
+                                                    <div>
+                                                        <div class="d-flex align-center justify-between text-2xs text-muted font-mono mb-xs pt-xs" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                                            <span>Solved: <strong class="text-bright" x-text="prob.date_solved"></strong></span>
+                                                            <span>Attempts: <strong class="text-bright" x-text="prob.attempts"></strong></span>
+                                                        </div>
+
+                                                        <div class="d-flex align-center justify-between gap-xs">
+                                                            <span class="text-2xs font-mono text-warning" x-text="'+' + prob.xp_earned + ' XP'"></span>
+                                                            <div class="d-flex align-center gap-2xs">
+                                                                <a :href="'/problems/' + prob.topic_slug + '/' + prob.slug + '/'" class="btn btn-ghost btn-2xs" @click.stop title="Open Problem Detail">Open →</a>
+                                                                <button type="button" class="btn btn-ghost btn-2xs" @click.stop="openDrawer(prob)" title="View Submission Drawer">View Submission →</button>
+                                                                <a :href="'/topics/interview/?problem_id=' + prob.id" class="btn btn-primary btn-2xs" @click.stop title="Solve Again in Simulator">⚡ Solve Again</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- LOAD MORE PAGINATION BUTTON -->
+                                        <template x-if="getFilteredProblems(topic).length > pageLimit">
+                                            <div class="p-sm text-center" style="background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-subtle);">
+                                                <button type="button" class="btn btn-ghost btn-xs text-primary" @click="pageLimit += 20">
+                                                    Load More Solved Problems (+<span x-text="getFilteredProblems(topic).length - pageLimit"></span> remaining) ↓
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- EMPTY STATE FOR SOLVED PROBLEMS -->
+                                <template x-if="getFilteredProblems(topic).length === 0">
+                                    <div class="p-md text-center" style="background: rgba(0,0,0,0.3);">
+                                        <p class="text-muted text-xs mb-0">No solved problems match your filters in this topic.</p>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- TAB 2: RECOMMENDED NEXT -->
+                            <div x-show="activeTopicTab === 'recommended'" class="p-md" style="background: rgba(0,0,0,0.3);">
+                                <template x-if="topic.recommended_first && topic.recommended_first.length > 0">
+                                    <div class="d-flex align-center gap-xs flex-wrap">
+                                        <template x-for="rec in topic.recommended_first" :key="rec.id">
+                                            <a :href="'/topics/interview/?problem_id=' + rec.id" class="btn btn-ghost btn-xs text-bright" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
+                                                <span x-text="rec.title"></span>
+                                                <span class="badge text-2xs ml-xs" :class="'badge-' + rec.difficulty" x-text="rec.difficulty_display"></span>
+                                                <span class="text-primary ml-xs">Solve →</span>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="!topic.recommended_first || topic.recommended_first.length === 0">
+                                    <p class="text-muted text-xs mb-0">All problems in this topic roadmap have been completed! 🎉</p>
+                                </template>
+                            </div>
+
+                            <!-- TAB 3: REVIEW DUE (SM-2) -->
+                            <div x-show="activeTopicTab === 'review'" class="p-md" style="background: rgba(0,0,0,0.3);">
+                                <div class="d-flex flex-col gap-xs">
+                                    <template x-for="prob in getFilteredProblems(topic).filter(p => p.mastery_status === 'Needs Review' || p.review_due === 'Due Today')" :key="prob.id">
+                                        <div class="d-flex align-center justify-between p-xs text-xs" style="background: rgba(239, 68, 68, 0.1); border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                            <div class="d-flex align-center gap-xs">
+                                                <strong class="text-bright" x-text="prob.title"></strong>
+                                                <span class="badge badge-error text-2xs" x-text="prob.review_due"></span>
+                                            </div>
+                                            <a :href="'/topics/interview/?problem_id=' + prob.id" class="btn btn-primary btn-2xs">Review Now →</a>
+                                        </div>
+                                    </template>
+                                    <template x-if="getFilteredProblems(topic).filter(p => p.mastery_status === 'Needs Review' || p.review_due === 'Due Today').length === 0">
+                                        <p class="text-success text-xs mb-0">No reviews due for this topic right now. Great job!</p>
+                                    </template>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+        </div>
+
+        <!-- =======================================================
+             DETAILED SIDE DRAWER (SLIDE-OVER PANEL)
+             ======================================================= -->
+        <div class="tm-drawer-backdrop" x-show="activeDrawerProblem !== null" x-transition.opacity style="display: none;">
+            <div class="tm-drawer-panel" @click.outside="closeDrawer()" x-transition:enter="transition transform ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full">
+                
+                <template x-if="activeDrawerProblem">
+                    <div class="d-flex flex-col h-full">
+                        
+                        <!-- DRAWER HEADER -->
+                        <div class="p-md d-flex align-center justify-between" style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.4);">
+                            <div>
+                                <div class="d-flex align-center gap-xs mb-2xs">
+                                    <h3 class="tier-2-section-title" style="margin: 0; font-size: 1.1rem;" x-text="activeDrawerProblem.title"></h3>
+                                    <span class="badge" :class="'badge-' + activeDrawerProblem.difficulty" x-text="activeDrawerProblem.difficulty_display"></span>
+                                </div>
+                                <div class="d-flex align-center gap-xs text-2xs text-muted font-mono">
+                                    <span>Pattern: <strong class="text-bright" x-text="activeDrawerProblem.pattern_display"></strong></span>
+                                    <span>• Solved: <strong class="text-bright" x-text="activeDrawerProblem.date_solved"></strong></span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-center gap-xs">
+                                <a :href="'/topics/interview/?problem_id=' + activeDrawerProblem.id" class="btn btn-primary btn-xs">⚡ Solve Again</a>
+                                <button type="button" class="btn btn-ghost btn-xs text-muted" @click="closeDrawer()">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- DRAWER TABS -->
+                        <div class="d-flex align-center gap-2xs p-xs" style="background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--border-subtle);">
+                            <button type="button" class="btn btn-xs" :class="activeDrawerTab === 'code' ? 'btn-primary' : 'btn-ghost'" @click="activeDrawerTab = 'code'">💻 Latest Code</button>
+                            <button type="button" class="btn btn-xs" :class="activeDrawerTab === 'review' ? 'btn-primary' : 'btn-ghost'" @click="activeDrawerTab = 'review'">🤖 AI Review</button>
+                            <button type="button" class="btn btn-xs" :class="activeDrawerTab === 'history' ? 'btn-primary' : 'btn-ghost'" @click="activeDrawerTab = 'history'">📜 History</button>
+                            <button type="button" class="btn btn-xs" :class="activeDrawerTab === 'notes' ? 'btn-primary' : 'btn-ghost'" @click="activeDrawerTab = 'notes'">📝 Notes</button>
+                        </div>
+
+                        <!-- DRAWER CONTENT BODY -->
+                        <div class="p-md" style="flex: 1; overflow-y: auto;">
+                            
+                            <!-- TAB 1: LATEST CODE -->
+                            <div x-show="activeDrawerTab === 'code'">
+                                <div class="d-flex align-center justify-between mb-xs">
+                                    <span class="text-2xs text-muted font-mono">SUBMITTED SOURCE CODE:</span>
+                                    <button type="button" class="btn btn-ghost btn-2xs" @click="navigator.clipboard.writeText(activeDrawerProblem.code); alert('Code copied!');">📋 Copy Code</button>
+                                </div>
+                                <pre style="background: #0d0e15; padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); font-family: var(--font-mono); font-size: 0.8rem; color: #f8fafc; overflow-x: auto; white-space: pre-wrap;" x-text="activeDrawerProblem.code"></pre>
+                            </div>
+
+                            <!-- TAB 2: AI REVIEW -->
+                            <div x-show="activeDrawerTab === 'review'">
+                                <div class="p-sm mb-md" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 10px;">
+                                    <strong class="text-primary text-xs d-block mb-2xs">🤖 Alex AI Mentor Feedback:</strong>
+                                    <p class="text-xs text-bright mb-0" style="line-height: 1.6;" x-text="activeDrawerProblem.ai_review"></p>
+                                </div>
+
+                                <div class="grid grid-2 gap-sm font-mono text-2xs mb-md">
+                                    <div class="p-xs" style="background: rgba(0,0,0,0.4); border-radius: 6px;">
+                                        <span class="text-muted">Time Complexity:</span>
+                                        <strong class="text-warning d-block" x-text="activeDrawerProblem.time_complexity">O(N)</strong>
+                                    </div>
+                                    <div class="p-xs" style="background: rgba(0,0,0,0.4); border-radius: 6px;">
+                                        <span class="text-muted">Space Complexity:</span>
+                                        <strong class="text-success d-block" x-text="activeDrawerProblem.space_complexity">O(1)</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: SUBMISSION HISTORY -->
+                            <div x-show="activeDrawerTab === 'history'">
+                                <div class="d-flex flex-col gap-xs">
+                                    <template x-for="(sub, idx) in activeDrawerProblem.previous_submissions" :key="idx">
+                                        <div class="d-flex align-center justify-between p-xs text-xs" style="background: rgba(0,0,0,0.4); border-radius: 6px; border: 1px solid var(--border-subtle);">
+                                            <div class="d-flex align-center gap-xs">
+                                                <span class="text-success font-bold" x-text="sub.status"></span>
+                                                <span class="text-muted font-mono text-2xs" x-text="sub.language"></span>
+                                            </div>
+                                            <span class="text-muted text-2xs font-mono" x-text="sub.date"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- TAB 4: PERSONAL NOTES -->
+                            <div x-show="activeDrawerTab === 'notes'">
+                                <label class="text-2xs text-muted font-mono mb-xs d-block">PERSONAL STUDY NOTES:</label>
+                                <textarea class="search-input-field text-xs font-mono" style="height: 180px; width: 100%;" x-model="drawerUserNotes" placeholder="Write key insights, edge cases, or key formulas for this problem..."></textarea>
+                                <button type="button" class="btn btn-primary btn-xs mt-xs" @click="saveDrawerNotes()">Save Notes</button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- =======================================================
+             HOVER QUICK SUMMARY TOOLTIP
+             ======================================================= -->
+        <div class="tm-hover-tooltip" x-show="hoverProblem !== null" :style="'left: ' + hoverPos.x + 'px; top: ' + hoverPos.y + 'px;'" x-transition.opacity style="display: none;">
+            <template x-if="hoverProblem">
+                <div>
+                    <strong class="text-bright text-xs d-block mb-2xs" x-text="hoverProblem.title"></strong>
+                    <p class="text-2xs text-muted mb-xs" x-text="hoverProblem.description_excerpt"></p>
+                    <div class="d-flex justify-between text-2xs font-mono pt-2xs" style="border-top: 1px solid rgba(255,255,255,0.08);">
+                        <span>Time: <strong class="text-warning" x-text="hoverProblem.time_complexity"></strong></span>
+                        <span>Space: <strong class="text-success" x-text="hoverProblem.space_complexity"></strong></span>
+                        <span>Acceptance: <strong class="text-primary" x-text="hoverProblem.acceptance_rate"></strong></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
     </section>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    function topicMasteryDashboard() {
+        let topicData = [];
+        try {
+            const rawJsonEl = document.getElementById('topic-mastery-json-payload');
+            if (rawJsonEl && rawJsonEl.textContent) {
+                topicData = JSON.parse(rawJsonEl.textContent);
+            }
+        } catch (e) {
+            console.error('Failed to parse topic mastery JSON data:', e);
+        }
+
+        return {
+            topics: topicData,
+            expandedTopics: {},
+            searchQuery: '',
+            platformFilter: 'all',
+            difficultyFilter: 'all',
+            patternFilter: 'all',
+            statusFilter: 'all',
+            timeframeFilter: 'all',
+            sortBy: 'latest',
+            needsReviewOnly: false,
+
+            activeDrawerProblem: null,
+            activeDrawerTab: 'code',
+            drawerUserNotes: '',
+
+            hoverProblem: null,
+            hoverPos: { x: 0, y: 0 },
+
+            init() {
+                if (this.topics.length > 0) {
+                    this.expandedTopics[this.topics[0].id] = true;
+                }
+                window.addEventListener('update-topic-mastery', (evt) => {
+                    if (evt.detail) {
+                        this.topics = evt.detail;
+                    }
+                });
+            },
+
+            toggleTopic(id) {
+                this.expandedTopics[id] = !this.expandedTopics[id];
+            },
+
+            isExpanded(id) {
+                return !!this.expandedTopics[id];
+            },
+
+            get filteredTopics() {
+                return this.topics;
+            },
+
+            getFilteredProblems(topic) {
+                if (!topic || !topic.solved_problems) return [];
+                let probs = [...topic.solved_problems];
+
+                // Search Filter (Problem Title, Topic Name, Pattern, Platform, Difficulty)
+                if (this.searchQuery.trim()) {
+                    const q = this.searchQuery.toLowerCase();
+                    probs = probs.filter(p => 
+                        p.title.toLowerCase().includes(q) || 
+                        p.pattern_display.toLowerCase().includes(q) ||
+                        p.difficulty_display.toLowerCase().includes(q) ||
+                        p.platforms.some(plat => plat.toLowerCase().includes(q))
+                    );
+                }
+
+                // Platform Filter
+                if (this.platformFilter !== 'all') {
+                    probs = probs.filter(p => p.platforms.includes(this.platformFilter));
+                }
+
+                // Difficulty Filter
+                if (this.difficultyFilter !== 'all') {
+                    probs = probs.filter(p => p.difficulty === this.difficultyFilter);
+                }
+
+                // Pattern Filter
+                if (this.patternFilter !== 'all') {
+                    probs = probs.filter(p => p.pattern === this.patternFilter);
+                }
+
+                // Status Filter
+                if (this.statusFilter !== 'all') {
+                    probs = probs.filter(p => p.mastery_status === this.statusFilter);
+                }
+
+                // Needs Review Only
+                if (this.needsReviewOnly) {
+                    probs = probs.filter(p => p.mastery_status === 'Needs Review' || p.review_due === 'Due Today');
+                }
+
+                // Sorting
+                probs.sort((a, b) => {
+                    if (this.sortBy === 'latest') return b.created_at_timestamp - a.created_at_timestamp;
+                    if (this.sortBy === 'oldest') return a.created_at_timestamp - b.created_at_timestamp;
+                    if (this.sortBy === 'xp') return b.xp_earned - a.xp_earned;
+                    if (this.sortBy === 'attempts') return a.attempts - b.attempts;
+                    return 0;
+                });
+
+                return probs;
+            },
+
+            showTooltip(evt, prob) {
+                const rect = evt.currentTarget.getBoundingClientRect();
+                this.hoverPos = {
+                    x: Math.min(window.innerWidth - 300, rect.left),
+                    y: Math.max(10, rect.top - 90)
+                };
+                this.hoverProblem = prob;
+            },
+
+            hideTooltip() {
+                this.hoverProblem = null;
+            },
+
+            openDrawer(prob) {
+                this.activeDrawerProblem = prob;
+                this.activeDrawerTab = 'code';
+                this.drawerUserNotes = localStorage.getItem(`algodsa_notes_${prob.id}`) || '';
+            },
+
+            closeDrawer() {
+                this.activeDrawerProblem = null;
+            },
+
+            saveDrawerNotes() {
+                if (this.activeDrawerProblem) {
+                    localStorage.setItem(`algodsa_notes_${this.activeDrawerProblem.id}`, this.drawerUserNotes);
+                    alert('Notes saved!');
+                }
+            }
+        };
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Lucide Icons
         if (window.lucide) lucide.createIcons();
 
-        // Render Difficulty Distribution Donut Chart
         const ctx = document.getElementById('difficultyChart');
         if (ctx) {
             new Chart(ctx, {
