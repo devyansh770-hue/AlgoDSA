@@ -71,22 +71,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+import sys
 import dj_database_url
 
 # Database — SQLite for dev, PostgreSQL via DATABASE_URL in production
+_TESTING = 'test' in sys.argv
+database_ssl_require = not DEBUG and not _TESTING and 'DATABASE_URL' in os.environ
+
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
         conn_health_checks=True,
+        ssl_require=database_ssl_require,
     )
 }
 
+# CSRF Trusted Origins for Production
 csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins.split(',') if o.strip()]
 else:
-    CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://*.railway.app']
+    CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://*.railway.app', 'https://*.vercel.app']
 
 
 # Custom User Model
@@ -111,13 +117,11 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Use simple static storage during test runs (avoids manifest/collectstatic requirements)
-import sys
-_TESTING = 'test' in sys.argv
+# WhiteNoise static storage configuration
 STORAGES = {
     'staticfiles': {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if _TESTING
-                   else 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+                   else 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
 
@@ -154,6 +158,19 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Production Security Audit Enhancements
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 'yes')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
 # Judge0 Configuration
 JUDGE0_API_URL = os.getenv('JUDGE0_API_URL', 'https://judge0-ce.p.rapidapi.com')
 JUDGE0_API_KEY = os.getenv('JUDGE0_API_KEY', '')
@@ -164,3 +181,4 @@ AI_PROVIDER = os.getenv('AI_PROVIDER', 'mock')  # 'openai', 'anthropic', or 'moc
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 AI_MODEL = os.getenv('AI_MODEL', 'gpt-4')
+
