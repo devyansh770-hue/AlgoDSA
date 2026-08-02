@@ -622,10 +622,6 @@ def learn_lesson_view(request, topic_slug, pattern_slug, lesson_slug):
     pattern = get_object_or_404(Pattern, topic=topic, slug=pattern_slug)
     lesson = get_object_or_404(Lesson, pattern=pattern, slug=lesson_slug)
 
-    videos = lesson.video_resources.all()
-    if not videos.exists():
-        videos = VideoResource.objects.filter(topic=topic).order_by('order')
-
     problems = list(topic.problems.filter(is_active=True))
     accepted_ids = set(Submission.objects.filter(
         user=request.user, problem__topic=topic, status='accepted'
@@ -633,14 +629,36 @@ def learn_lesson_view(request, topic_slug, pattern_slug, lesson_slug):
 
     all_topics = Topic.objects.all().prefetch_related('patterns', 'lessons').order_by('order')
 
+    patterns = topic.patterns.prefetch_related('lessons').all()
+    lessons = topic.lessons.all()
+    if not lessons.exists() and patterns.exists():
+        lessons = Lesson.objects.filter(pattern__in=patterns)
+
+    videos = lesson.video_resources.all()
+    if not videos.exists():
+        videos = VideoResource.objects.filter(topic=topic).order_by('order')
+
+    tier_concept = [p for p in problems if p.practice_tier == 'concept_building' or p.difficulty == 'easy']
+    tier_pattern = [p for p in problems if p.practice_tier == 'pattern_recognition' or p.difficulty == 'easy']
+    tier_mastery = [p for p in problems if p.practice_tier == 'pattern_mastery' or p.difficulty == 'medium']
+    tier_interview = [p for p in problems if p.practice_tier == 'interview_ready' or p.difficulty == 'medium']
+    tier_expert = [p for p in problems if p.practice_tier == 'expert' or p.difficulty == 'hard']
+
     context = {
         'topic': topic,
         'pattern': pattern,
+        'patterns': patterns,
+        'lessons': lessons,
         'lesson': lesson,
         'active_lesson': lesson,
         'videos': videos,
         'problems': problems,
         'accepted_ids': accepted_ids,
+        'tier_concept': tier_concept,
+        'tier_pattern': tier_pattern,
+        'tier_mastery': tier_mastery,
+        'tier_interview': tier_interview,
+        'tier_expert': tier_expert,
         'all_topics': all_topics,
     }
     return render(request, 'problems/learn_topic.html', context)
