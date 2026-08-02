@@ -72,7 +72,7 @@
                     <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
                     <span>Search DSA Topics, Patterns & Sub-Concepts</span>
                 </h2>
-                <p class="text-xs text-slate-400 font-mono">Instant search like GeeksforGeeks e.g. "array", "prefix sum", "sliding window", "binary search", "tree", "dp"</p>
+                <p class="text-xs text-slate-400 font-mono">Instant search like GeeksforGeeks e.g. "array", "math", "sliding window", "binary search", "tree", "dp"</p>
             </div>
 
             <!-- Search Input Box -->
@@ -80,7 +80,7 @@
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="search" class="w-4 h-4"></i>
                 </div>
-                <input type="text" id="hub-search-input" autocomplete="off" placeholder="Search topic or concept (e.g. array, prefix sum)..."
+                <input type="text" id="hub-search-input" autocomplete="off" placeholder="Search topic or concept (e.g. array, math)..."
                        class="w-full pl-10 pr-9 py-3 rounded-2xl bg-slate-950 border border-slate-700/80 text-xs text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all font-mono shadow-inner">
                 <button type="button" id="clear-search-btn" style="display: none;" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -115,12 +115,12 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-2 text-xs font-mono">
                 <span class="text-indigo-400 font-bold flex items-center gap-1.5">
                     <i data-lucide="zap" class="w-3.5 h-3.5"></i>
-                    <span>Matching Topics & Sub-Concepts</span>
+                    <span>Matching Topics & Study Options (Select What You Want To Learn)</span>
                 </span>
-                <span id="search-results-count" class="text-slate-400">0 Results Found</span>
+                <span id="search-results-count" class="text-slate-400 font-bold">0 Options Found</span>
             </div>
 
-            <div id="search-results-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+            <div id="search-results-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto pr-1">
                 <!-- Dynamic search items populated by JS -->
             </div>
         </div>
@@ -130,7 +130,7 @@
     <div id="search-no-results" style="display: none;" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 text-center space-y-3">
         <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto text-xl">🔍</div>
         <h3 class="text-lg font-bold text-white">No Matching Topics Found</h3>
-        <p class="text-xs text-slate-400">Try searching for terms like "array", "prefix sum", "sliding window", "tree", "bfs", or "dp".</p>
+        <p class="text-xs text-slate-400">Try searching for terms like "array", "math", "prefix sum", "sliding window", "tree", "bfs", or "dp".</p>
     </div>
 
     <!-- ================= 3. BIG-O TIME & SPACE COMPLEXITY CHEAT SHEET ================= -->
@@ -238,6 +238,7 @@
                 <div class="topic-card-item p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between"
                      data-search-text="{{ item.search_text }}"
                      data-topic-name="{{ item.topic.name }}"
+                     data-topic-slug="{{ item.topic.slug }}"
                      data-topic-category="{{ item.topic.category }}">
                     
                     <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl hover:bg-indigo-500/15 transition-all"></div>
@@ -325,8 +326,9 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for t in topics %}
             <div class="tree-accordion-item rounded-2xl bg-slate-950/80 border border-slate-800/90 overflow-hidden transition-all duration-300"
-                 data-search-text="{{ t.name }} {{ t.description }} {{ t.notes_content }} arrays prefix sum sliding window two pointer binary search tree graph dp"
-                 data-topic-name="{{ t.name }}">
+                 data-search-text="{{ t.name }} {{ t.description }} {{ t.notes_content }} arrays string math tree graph dp"
+                 data-topic-name="{{ t.name }}"
+                 data-topic-slug="{{ t.slug }}">
                 
                 <!-- Topic Accordion Header -->
                 <button type="button" onclick="toggleTreeAccordion('tree-content-{{ t.slug }}', this)"
@@ -437,10 +439,13 @@
 
 </div>
 
-<!-- Vanilla JS Search Index & Accordion Engine -->
-<script>
-const SEARCH_INDEX = {{ search_index_json|safe }};
+<!-- JSON Search Index Data Element -->
+<script id="search-index-json" type="application/json">
+{{ search_index_json|safe }}
+</script>
 
+<!-- Vanilla JS Search Engine & Accordion Controller -->
+<script>
 function toggleTreeAccordion(contentId, btnEl) {
     const content = document.getElementById(contentId);
     const icon = btnEl.querySelector('.chevron-icon');
@@ -458,6 +463,14 @@ function toggleTreeAccordion(contentId, btnEl) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    let SEARCH_INDEX = [];
+    try {
+        const rawJson = document.getElementById('search-index-json').textContent;
+        SEARCH_INDEX = JSON.parse(rawJson);
+    } catch(err) {
+        console.error('Failed to parse search index JSON:', err);
+    }
+
     const searchInput = document.getElementById('hub-search-input');
     const clearBtn = document.getElementById('clear-search-btn');
     const dropdown = document.getElementById('search-results-dropdown');
@@ -489,9 +502,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dropdown) dropdown.style.display = 'none';
         } else {
             const matches = SEARCH_INDEX.filter(item => {
-                const k = item.keywords || '';
+                const k = (item.keywords || '').toLowerCase();
                 const t = (item.title || '').toLowerCase();
-                return k.includes(query) || t.includes(query) || query.includes(t);
+                const p = (item.parent_topic || '').toLowerCase();
+                return k.includes(query) || t.includes(query) || p.includes(query) || query.includes(t) || query.includes(p);
             });
 
             if (dropdownList) {
@@ -499,17 +513,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (matches.length === 0) {
                     dropdownList.innerHTML = `
                         <div class="col-span-full py-4 text-center text-xs text-slate-400">
-                            No instant dropdown matches. Check filtered course cards below.
+                            No instant dropdown matches for "${query}". Check course cards below.
                         </div>
                     `;
                 } else {
-                    matches.slice(0, 9).forEach(item => {
+                    matches.slice(0, 15).forEach(item => {
                         const card = document.createElement('a');
                         card.href = item.url;
                         card.className = 'flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/80 transition-all text-xs group';
                         
-                        const badgeText = item.type === 'topic' ? 'Topic Course' : (item.type === 'pattern' ? 'Sub-Pattern' : 'Lesson');
-                        const badgeColor = item.type === 'topic' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300';
+                        let badgeText = 'Study Option';
+                        let badgeColor = 'bg-indigo-500/20 text-indigo-300';
+                        if (item.type === 'topic') { badgeText = 'Full Workspace'; badgeColor = 'bg-indigo-500/20 text-indigo-300'; }
+                        else if (item.type === 'subconcept') { badgeText = 'Section Option'; badgeColor = 'bg-cyan-500/20 text-cyan-300'; }
+                        else if (item.type === 'pattern') { badgeText = 'Sub-Pattern'; badgeColor = 'bg-purple-500/20 text-purple-300'; }
+                        else if (item.type === 'lesson') { badgeText = 'Lesson Guide'; badgeColor = 'bg-emerald-500/20 text-emerald-300'; }
                         
                         card.innerHTML = `
                             <div class="flex items-center gap-2.5 truncate">
@@ -526,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            if (dropdownCount) dropdownCount.textContent = `${matches.length} Results Found`;
+            if (dropdownCount) dropdownCount.textContent = `${matches.length} Options Found`;
             if (dropdown) dropdown.style.display = 'block';
         }
 
@@ -537,9 +555,11 @@ document.addEventListener('DOMContentLoaded', function() {
         topicCards.forEach(card => {
             const searchData = (card.getAttribute('data-search-text') || '').toLowerCase();
             const topicName = (card.getAttribute('data-topic-name') || '').toLowerCase();
+            const topicSlug = (card.getAttribute('data-topic-slug') || '').toLowerCase();
+            const topicCat = (card.getAttribute('data-topic-category') || '').toLowerCase();
 
-            // Match query against keywords
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || query.includes(topicName);
+            // Match query against search keywords, name, or slug
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || topicSlug.includes(query) || topicCat.includes(query) || query.includes(topicName) || query.includes(topicSlug);
 
             if (isMatch) {
                 card.style.display = 'flex';
@@ -560,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Hide empty category group headers
+        // Hide category groups with zero visible topics
         document.querySelectorAll('.topic-category-group').forEach(group => {
             const visibleCards = group.querySelectorAll('.topic-card-item:not([style*="display: none"])');
             group.style.display = (visibleCards.length > 0) ? 'block' : 'none';
@@ -571,8 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
         treeItems.forEach(item => {
             const searchData = (item.getAttribute('data-search-text') || '').toLowerCase();
             const topicName = (item.getAttribute('data-topic-name') || '').toLowerCase();
+            const topicSlug = (item.getAttribute('data-topic-slug') || '').toLowerCase();
 
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || query.includes(topicName);
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || topicSlug.includes(query) || query.includes(topicName);
 
             if (isMatch) {
                 item.style.display = 'block';

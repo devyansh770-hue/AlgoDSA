@@ -155,46 +155,83 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: WHEN & WHY TO USE -->
-            <div id="sec-when" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+            <!-- SECTION 2: CORE LOGIC & ALGORITHM STRATEGY -->
+            <div id="sec-logic" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
                 <div class="flex items-center gap-2.5 border-b border-slate-800 pb-3">
                     <div class="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center font-bold">2</div>
-                    <h2 class="text-lg font-extrabold text-white tracking-tight">When & Why To Use (Triggers vs Anti-Signals)</h2>
+                    <h2 class="text-lg font-extrabold text-white tracking-tight">Core Logic & Algorithm Strategy</h2>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <!-- Positive Triggers -->
-                    <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2">
-                        <span class="font-bold text-emerald-400 flex items-center gap-1.5 text-sm">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
-                            When TO Use This Pattern
-                        </span>
-                        <p class="text-slate-300 leading-relaxed">
-                            {% if active_lesson and active_lesson.when_use %}{{ active_lesson.when_use }}{% else %}Use when processing contiguous subarrays, sliding intervals, or when searching monotonic solution space to reduce $O(N^2)$ to $O(N)$ or $O(\log N)$.{% endif %}
-                        </p>
+                <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+                    {% if active_lesson and active_lesson.math_intuition %}
+                    <div class="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/30 font-mono text-purple-200">
+                        <div class="font-bold text-purple-300 text-xs mb-1">📐 Mathematical Logic & Invariants:</div>
+                        <div>{{ active_lesson.math_intuition }}</div>
                     </div>
+                    {% endif %}
 
-                    <!-- Negative Triggers -->
-                    <div class="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 space-y-2">
-                        <span class="font-bold text-rose-400 flex items-center gap-1.5 text-sm">
-                            <i data-lucide="x-circle" class="w-4 h-4 text-rose-400"></i>
-                            When NOT To Use
-                        </span>
-                        <p class="text-slate-300 leading-relaxed">
-                            {% if active_lesson and active_lesson.when_not_to_use %}{{ active_lesson.when_not_to_use }}{% else %}Avoid when elements do not require contiguous order or when all subsets/permutations must be generated (Use Backtracking).{% endif %}
-                        </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-1.5">
+                            <span class="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                Positive Algorithm Triggers
+                            </span>
+                            <p class="text-slate-300 leading-relaxed">
+                                {% if active_lesson and active_lesson.when_use %}{{ active_lesson.when_use }}{% else %}Use when data structure properties guarantee monotonic order or optimal subproblems.{% endif %}
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 space-y-1.5">
+                            <span class="font-bold text-rose-400 flex items-center gap-1.5 text-xs">
+                                <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                Anti-Signals (When NOT To Use)
+                            </span>
+                            <p class="text-slate-300 leading-relaxed">
+                                {% if active_lesson and active_lesson.when_not_to_use %}{{ active_lesson.when_not_to_use }}{% else %}Avoid when elements do not require contiguous bounds or when all permutations must be generated.{% endif %}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION 3: ANIMATED ALGORITHM VISUALIZER & DRY RUN -->
+            <!-- SECTION 3: TIME & SPACE COMPLEXITY MATRIX -->
+            <div id="sec-complexity" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold">3</div>
+                        <h2 class="text-lg font-extrabold text-white tracking-tight">Time & Space Complexity Matrix (Big-O)</h2>
+                    </div>
+                    <span class="text-xs text-amber-400 font-mono font-bold">Asymptotic Bounds</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
+                    <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                        <div class="text-[10px] text-slate-500 uppercase">Best Time</div>
+                        <div class="font-bold text-emerald-400 text-sm mt-1">{% if active_lesson %}{{ active_lesson.time_complexity_best }}{% else %}O(1){% endif %}</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                        <div class="text-[10px] text-slate-500 uppercase">Average Time</div>
+                        <div class="font-bold text-indigo-400 text-sm mt-1">{% if active_lesson %}{{ active_lesson.time_complexity_avg }}{% else %}O(N){% endif %}</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                        <div class="text-[10px] text-slate-500 uppercase">Worst Time</div>
+                        <div class="font-bold text-amber-400 text-sm mt-1">{% if active_lesson %}{{ active_lesson.time_complexity_worst }}{% else %}O(N){% endif %}</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                        <div class="text-[10px] text-slate-500 uppercase">Auxiliary Space</div>
+                        <div class="font-bold text-purple-400 text-sm mt-1">{% if active_lesson %}{{ active_lesson.space_complexity }}{% else %}O(1){% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: ANIMATED ALGORITHM VISUALIZER -->
             <div id="sec-visualizer" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center font-bold">3</div>
+                        <div class="w-8 h-8 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center font-bold">4</div>
                         <h2 class="text-lg font-extrabold text-white tracking-tight">Interactive Visual Algorithm Engine</h2>
                     </div>
-                    <span class="text-xs text-cyan-400 font-mono">Interactive Execution</span>
+                    <span class="text-xs text-cyan-400 font-mono">Interactive Canvas</span>
                 </div>
 
                 <div id="visualizer-container" class="w-full">
@@ -202,12 +239,13 @@
                 </div>
             </div>
 
-            <!-- SECTION 4: MULTI-LANGUAGE CODE (6 LANGUAGES) -->
+            <!-- SECTION 5: OPERATIONS & MULTI-LANGUAGE CODE (6 LANGUAGES) -->
             <div id="sec-code" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div id="sec-operations"></div>
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold">4</div>
-                        <h2 class="text-lg font-extrabold text-white tracking-tight">Multi-Language Code Implementation</h2>
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold">5</div>
+                        <h2 class="text-lg font-extrabold text-white tracking-tight">Operations Performed & Multi-Language Code</h2>
                     </div>
 
                     <!-- Language Switcher Tabs -->
@@ -231,48 +269,46 @@
                 </div>
             </div>
 
-            <!-- SECTION 5: CURATED VIDEO PLAYLISTS -->
-            <div id="sec-videos" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+            <!-- SECTION 6: COMMON MISTAKES & THINGS TO REMEMBER -->
+            <div id="sec-gotchas" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div id="sec-remember"></div>
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/30 text-red-400 flex items-center justify-center font-bold">5</div>
-                        <h2 class="text-lg font-extrabold text-white tracking-tight">Curated Video Playlists</h2>
+                        <div class="w-8 h-8 rounded-xl bg-rose-600/20 border border-rose-500/30 text-rose-400 flex items-center justify-center font-bold">6</div>
+                        <h2 class="text-lg font-extrabold text-white tracking-tight">Common Mistakes & Things To Remember</h2>
                     </div>
-                    <span class="text-xs text-slate-400 font-mono">Love Babbar, Striver, NeetCode</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {% for v in videos %}
-                    <a href="{{ v.youtube_url }}" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-red-500/50 space-y-3 group transition-all">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-bold uppercase tracking-wider text-[10px]">
-                                {{ v.get_channel_display }}
-                            </span>
-                            <span class="font-mono text-slate-500 text-[10px]">{{ v.duration }}</span>
-                        </div>
-                        <h3 class="font-bold text-sm text-slate-100 group-hover:text-red-400 transition-colors">
-                            {{ v.title }}
-                        </h3>
-                        <div class="flex items-center gap-1.5 text-xs text-red-400 font-bold pt-1">
-                            <i data-lucide="play-circle" class="w-4 h-4"></i>
-                            <span>Watch Video →</span>
-                        </div>
-                    </a>
-                    {% empty %}
-                    <a href="https://www.youtube.com/results?search_query={{ topic.name }}+DSA+Love+Babbar+Striver+NeetCode" target="_blank" rel="noopener" class="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-red-500/50 space-y-2 col-span-3 text-center">
-                        <div class="text-sm font-bold text-slate-200">Recommended Videos for {{ topic.name }}</div>
-                        <div class="text-xs text-slate-400">Search Love Babbar, Striver A2Z, & NeetCode playlists</div>
-                    </a>
-                    {% endfor %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 space-y-2">
+                        <span class="font-bold text-rose-400 flex items-center gap-1.5 text-sm">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                            Common Mistakes & Pitfalls
+                        </span>
+                        <p class="text-slate-300 leading-relaxed">
+                            {% if active_lesson and active_lesson.common_mistakes %}{{ active_lesson.common_mistakes }}{% else %}Off-by-one index bounds, uninitialized dynamic state arrays, integer arithmetic overflow in 32-bit types, or forgetting empty/null root checks.{% endif %}
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2">
+                        <span class="font-bold text-amber-400 flex items-center gap-1.5 text-sm">
+                            <i data-lucide="bookmark" class="w-4 h-4"></i>
+                            Things to Remember & FAANG Hacks
+                        </span>
+                        <p class="text-slate-300 leading-relaxed">
+                            {% if active_lesson and active_lesson.interview_tips %}{{ active_lesson.interview_tips }}{% else %}State worst-case and space complexity upfront before typing code. Leverage CPU cache locality and in-place transformations.{% endif %}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <!-- SECTION 6: PRACTICE ROADMAP TIERS 1 TO 5 -->
-            <div id="sec-roadmap" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-6">
+            <!-- SECTION 7: INTERVIEW QUESTIONS & PRACTICE TIERS -->
+            <div id="sec-practice" class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-6">
+                <div id="sec-roadmap"></div>
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold">6</div>
-                        <h2 class="text-lg font-extrabold text-white tracking-tight">Grouped Practice Questions (Tiers 1 to 5)</h2>
+                        <div class="w-8 h-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold">7</div>
+                        <h2 class="text-lg font-extrabold text-white tracking-tight">Interview Questions & Practice Tiers (1 to 5)</h2>
                     </div>
                     <span class="text-xs text-slate-400 font-mono">{{ problems|length }} Problems Total</span>
                 </div>

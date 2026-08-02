@@ -212,49 +212,112 @@ def learn_hub_view(request):
             patterns = list(t.patterns.all())
             lessons = list(t.lessons.all())
 
-            # Built-in concepts
+            # Sub-concepts options
             sub_concepts = [
                 {'name': 'Introduction & Memory', 'icon': '📖', 'url': f'/learn/{t.slug}/#sec-overview'},
-                {'name': 'Big-O Complexity', 'icon': '📈', 'url': f'/learn/{t.slug}/#sec-complexity'},
+                {'name': 'Core Logic & Strategy', 'icon': '💡', 'url': f'/learn/{t.slug}/#sec-logic'},
+                {'name': 'Big-O Complexity Matrix', 'icon': '📈', 'url': f'/learn/{t.slug}/#sec-complexity'},
                 {'name': 'Operations & Code (6 Languages)', 'icon': '💻', 'url': f'/learn/{t.slug}/#sec-code'},
-                {'name': 'Common Mistakes', 'icon': '⚠️', 'url': f'/learn/{t.slug}/#sec-gotchas'},
-                {'name': 'Interview Tips', 'icon': '💡', 'url': f'/learn/{t.slug}/#sec-gotchas'},
+                {'name': 'Common Mistakes & Gotchas', 'icon': '⚠️', 'url': f'/learn/{t.slug}/#sec-gotchas'},
+                {'name': 'Things to Remember & Hacks', 'icon': '📌', 'url': f'/learn/{t.slug}/#sec-remember'},
+                {'name': 'Interview Questions (5 Tiers)', 'icon': '🧠', 'url': f'/learn/{t.slug}/#sec-practice'},
             ]
 
-            # Primary topic keywords
-            keywords = [t.name.lower(), t.slug.lower(), t.description.lower(), cat['title'].lower(), 'introduction', 'complexity', 'operations', 'common mistakes', 'interview']
+            # Primary keywords
+            t_kw = [t.name.lower(), t.slug.lower(), t.description.lower(), cat['title'].lower(), 'introduction', 'logic', 'complexity', 'operations', 'common mistakes', 'remember', 'interview', 'questions']
 
-            # Append singular/plural variants
-            if 'arrays' in t.slug or t.slug == 'arrays':
-                keywords.extend(['array', 'arrays', 'prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access'])
+            # Topic specific keywords expansion
+            if t.slug == 'arrays':
+                t_kw.extend(['array', 'arrays', 'prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access'])
             elif t.slug == 'strings':
-                keywords.extend(['string', 'strings', 'frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
+                t_kw.extend(['string', 'strings', 'frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
+            elif t.slug == 'sliding-window':
+                t_kw.extend(['sliding window', 'window', 'fixed window', 'variable window', 'subarray sum', 'max sum', 'min window'])
+            elif t.slug == 'two-pointer':
+                t_kw.extend(['two pointer', 'two pointers', 'opposite direction', 'same direction', 'slow fast pointers', 'container with most water', '3sum'])
+            elif t.slug == 'binary-search':
+                t_kw.extend(['binary search', 'search', 'logarithmic search', 'lower bound', 'upper bound', 'rotated sorted array', 'binary search on answer'])
+            elif t.slug == 'linked-list':
+                t_kw.extend(['linked list', 'list', 'pointers', 'dummy node', 'slow fast pointers', 'floyd cycle', 'reversal'])
+            elif t.slug == 'stack':
+                t_kw.extend(['stack', 'lifo', 'valid parentheses', 'monotonic stack', 'next greater element'])
+            elif t.slug == 'queue':
+                t_kw.extend(['queue', 'fifo', 'deque', 'monotonic queue', 'sliding window max'])
             elif t.slug == 'trees':
-                keywords.extend(['tree', 'trees', 'binary tree', 'dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'height', 'diameter', 'lca'])
-            elif t.slug == 'graphs':
-                keywords.extend(['graph', 'graphs', 'bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu'])
+                t_kw.extend(['tree', 'trees', 'binary tree', 'dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'height', 'diameter', 'lca'])
+            elif t.slug == 'bst':
+                t_kw.extend(['bst', 'binary search tree', 'inorder sorted', 'validate bst', 'kth smallest'])
+            elif t.slug == 'heap':
+                t_kw.extend(['heap', 'priority queue', 'min heap', 'max heap', 'top k elements', 'median stream'])
+            elif t.slug == 'trie':
+                t_kw.extend(['trie', 'prefix tree', 'autocomplete', 'word search'])
+            elif t.slug == 'graph':
+                t_kw.extend(['graph', 'graphs', 'bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu', 'connected components'])
+            elif t.slug == 'greedy':
+                t_kw.extend(['greedy', 'interval scheduling', 'activity selection', 'fractional knapsack', 'jump game'])
+            elif t.slug == 'backtracking':
+                t_kw.extend(['backtracking', 'subsets', 'combinations', 'permutations', 'n-queens', 'sudoku solver'])
+            elif t.slug == 'dynamic-programming':
+                t_kw.extend(['dynamic programming', 'dp', 'memoization', 'tabulation', '0/1 knapsack', 'lcs', 'subproblems'])
+            elif t.slug == 'segment-tree':
+                t_kw.extend(['segment tree', 'segment', 'range query', 'point update', 'lazy propagation'])
+            elif t.slug == 'fenwick-tree':
+                t_kw.extend(['fenwick tree', 'fenwick', 'bit', 'binary indexed tree', 'prefix sum query'])
+            elif t.slug == 'bit-manipulation':
+                t_kw.extend(['bit manipulation', 'bit', 'bitwise', 'binary', 'xor', 'single number', 'kernighan', 'bitmask'])
+            elif t.slug == 'math':
+                t_kw.extend(['math', 'mathematics', 'number theory', 'prime sieve', 'gcd', 'euclidean', 'exponentiation', 'modular arithmetic', 'prime', 'primes', 'bit & math'])
 
+            # 1. Main Topic Entry in Search Index
+            search_index.append({
+                'type': 'topic',
+                'title': f"{t.name} (Full Workspace)",
+                'parent_topic': cat['title'],
+                'icon': t.icon or '📊',
+                'keywords': ' '.join(set(t_kw)),
+                'url': f'/learn/{t.slug}/'
+            })
+
+            # 2. Add Sub-part learning options for this topic in Search Index
+            topic_options = [
+                ('📖 Overview & Real-World Intuition', f'/learn/{t.slug}/#sec-overview', f"{t.name} overview intuition real world daily life analogy"),
+                ('💡 Core Logic & Algorithm Strategy', f'/learn/{t.slug}/#sec-logic', f"{t.name} logic core strategy algorithm approach"),
+                ('📈 Time & Space Complexity (Big-O)', f'/learn/{t.slug}/#sec-complexity', f"{t.name} complexity time space big-o best average worst space complexity"),
+                ('💻 Operations Performed (6 Languages)', f'/learn/{t.slug}/#sec-code', f"{t.name} operations python cpp java js go rust code insert delete access search"),
+                ('⚠️ Common Mistakes in Data Structures', f'/learn/{t.slug}/#sec-gotchas', f"{t.name} common mistakes gotchas pitfalls off by one overflow"),
+                ('📌 Things to Remember & FAANG Hacks', f'/learn/{t.slug}/#sec-remember', f"{t.name} things to remember faang interview tips tricks hacks"),
+                ('🧠 Interview Questions (5 Tiers)', f'/learn/{t.slug}/#sec-practice', f"{t.name} interview questions practice concept pattern mastery expert easy medium hard"),
+            ]
+
+            for opt_title, opt_url, opt_kw in topic_options:
+                search_index.append({
+                    'type': 'subconcept',
+                    'title': f"{t.name} — {opt_title}",
+                    'parent_topic': t.name,
+                    'icon': t.icon or '📚',
+                    'keywords': f"{opt_kw} {' '.join(t_kw)}".lower(),
+                    'url': opt_url
+                })
+
+            # 3. Add Sub-Patterns & Lessons
             for p in patterns:
-                keywords.append(p.name.lower())
-                keywords.append(p.slug.lower())
+                t_kw.append(p.name.lower())
                 sub_concepts.append({
                     'name': p.name,
                     'icon': p.icon or '⚡',
                     'url': f'/learn/{t.slug}/{p.slug}/'
                 })
-                # Add to search index
                 search_index.append({
                     'type': 'pattern',
-                    'title': p.name,
+                    'title': f"{p.name} Pattern",
                     'parent_topic': t.name,
                     'icon': p.icon or '⚡',
-                    'keywords': f"{p.name} {p.slug} {t.name} {t.slug}".lower(),
+                    'keywords': f"{p.name} {p.slug} {t.name} {' '.join(t_kw)}".lower(),
                     'url': f'/learn/{t.slug}/{p.slug}/'
                 })
 
             for l in lessons:
-                keywords.append(l.title.lower())
-                keywords.append(l.slug.lower())
+                t_kw.append(l.title.lower())
                 p_slug = l.pattern.slug if l.pattern else (patterns[0].slug if patterns else '')
                 if p_slug:
                     sub_concepts.append({
@@ -264,24 +327,14 @@ def learn_hub_view(request):
                     })
                     search_index.append({
                         'type': 'lesson',
-                        'title': l.title,
+                        'title': f"Lesson: {l.title}",
                         'parent_topic': t.name,
                         'icon': '📖',
-                        'keywords': f"{l.title} {l.slug} {p.name} {t.name} {l.overview}".lower(),
+                        'keywords': f"{l.title} {l.slug} {p.name} {t.name} {l.overview} {' '.join(t_kw)}".lower(),
                         'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
                     })
 
-            search_keywords_str = ' '.join(set(keywords))
-
-            # Add Topic to Search Index
-            search_index.append({
-                'type': 'topic',
-                'title': t.name,
-                'parent_topic': cat['title'],
-                'icon': t.icon or '📊',
-                'keywords': search_keywords_str,
-                'url': f'/learn/{t.slug}/'
-            })
+            search_keywords_str = ' '.join(set(t_kw))
 
             topic_items.append({
                 'topic': t,
