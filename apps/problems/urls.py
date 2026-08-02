@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # Primary Topics & Learning Hub Routes
-    path('', views.learn_hub_view, name='topic_list'),
+    path('learn/', views.learn_hub_view, name='topic_list'),
     path('learn/', views.learn_hub_view, name='learn_hub'),
 
     # APIs
