@@ -55,6 +55,7 @@ class ProblemViewsTests(TestCase):
         )
 
     def test_topic_list_view(self):
+        self.client.force_login(self.user)
         response = self.client.get(reverse('topic_list'))
         self.assertEqual(response.status_code, 200)
 
