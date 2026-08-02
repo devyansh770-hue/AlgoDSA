@@ -345,6 +345,13 @@ def learn_hub_view(request):
 
             search_keywords_str = ' '.join(set(t_kw))
 
+            four_pillars = [
+                {'name': 'Notes & Theory', 'icon': '📖', 'url': f'/learn/{t.slug}/#sec-overview', 'badge': 'Theory'},
+                {'name': 'Cheatsheets & Big-O', 'icon': '⚡', 'url': f'/learn/{t.slug}/#sec-complexity', 'badge': 'Matrix'},
+                {'name': 'Interview Questions', 'icon': '🧠', 'url': f'/learn/{t.slug}/#sec-practice', 'badge': f"{t_total} Qs"},
+                {'name': 'Common Mistakes', 'icon': '⚠️', 'url': f'/learn/{t.slug}/#sec-gotchas', 'badge': 'Gotchas'},
+            ]
+
             topic_items.append({
                 'topic': t,
                 'solved_count': t_solved,
@@ -352,6 +359,7 @@ def learn_hub_view(request):
                 'progress_pct': t_pct,
                 'lesson_count': len(lessons) or len(patterns) or 1,
                 'sub_concepts': sub_concepts,
+                'four_pillars': four_pillars,
                 'search_text': search_keywords_str
             })
 
