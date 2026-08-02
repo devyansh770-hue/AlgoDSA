@@ -176,6 +176,7 @@ def learn_hub_view(request):
     from apps.progress.models import PatternMastery, SM2ReviewSchedule
     from django.utils import timezone
 
+    user = request.user
     topics = Topic.objects.all().prefetch_related('patterns', 'lessons', 'problems').order_by('order')
 
     # Categories grouping
@@ -331,6 +332,7 @@ def learn_hub_view(request):
             for l in lessons:
                 t_kw.append(l.title.lower())
                 p_slug = l.pattern.slug if l.pattern else (patterns[0].slug if patterns else '')
+                p_name = l.pattern.name if l.pattern else ''
                 if p_slug:
                     sub_concepts.append({
                         'name': l.title,
@@ -342,7 +344,7 @@ def learn_hub_view(request):
                         'title': f"Lesson: {l.title}",
                         'parent_topic': t.name,
                         'icon': '📖',
-                        'keywords': clean_kw(f"{l.title} {l.slug} {p.name} {t.name} {l.overview} {' '.join(t_kw)}"),
+                        'keywords': clean_kw(f"{l.title} {l.slug} {p_name} {t.name} {l.overview} {' '.join(t_kw)}"),
                         'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
                     })
 
