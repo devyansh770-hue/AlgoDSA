@@ -1,392 +1,816 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Visual Algorithm Simulator — AlgoDSA{% endblock %}
+{% block title %}Interactive DSA Visual Lab — AlgoDSA{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --lab-sidebar-w: 260px;
+    --lab-right-w: 300px;
+    --lab-bg: #09090b;
+    --lab-panel: #0f0f14;
+    --lab-panel2: #131318;
+    --lab-border: #1f2937;
+    --lab-border-glow: rgba(99,102,241,0.25);
+    --lab-accent: #6366f1;
+    --lab-accent2: #10b981;
+    --lab-text: #e2e8f0;
+    --lab-muted: #6b7280;
+    --lab-sm: 0.75rem;
+    --lab-xs: 0.68rem;
+  }
+
+  body { background: var(--lab-bg) !important; }
+
+  #lab-layout {
+    display: grid;
+    grid-template-columns: var(--lab-sidebar-w) 1fr var(--lab-right-w);
+    grid-template-rows: auto 1fr auto;
+    height: calc(100vh - 64px);
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* ─── TOP CONTROLS BAR ─── */
+  #lab-topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--lab-panel);
+    border-bottom: 1px solid var(--lab-border);
+    flex-wrap: wrap;
+  }
+
+  /* ─── LEFT SIDEBAR ─── */
+  #lab-sidebar {
+    background: var(--lab-panel);
+    border-right: 1px solid var(--lab-border);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #1f2937 transparent;
+  }
+
+  #lab-sidebar::-webkit-scrollbar { width: 4px; }
+  #lab-sidebar::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+
+  .sidebar-cat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 2px 6px;
+    transition: background 0.15s;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lab-muted);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .sidebar-cat-header:hover { background: rgba(99,102,241,0.08); color: #a5b4fc; }
+  .sidebar-cat-header.open { color: var(--lab-accent); }
+
+  .sidebar-algo-btn {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 1px 12px;
+    padding: 6px 12px 6px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    text-align: left;
+    font-size: 0.72rem;
+    color: var(--lab-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-algo-btn:hover { background: rgba(99,102,241,0.1); color: #c7d2fe; }
+  .sidebar-algo-btn.active {
+    background: rgba(99,102,241,0.2);
+    color: #e0e7ff;
+    border-left: 2px solid var(--lab-accent);
+    padding-left: 26px;
+  }
+
+  /* ─── CENTER CANVAS ─── */
+  #lab-center {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--lab-bg);
+  }
+
+  #lab-meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--lab-panel);
+    border-bottom: 1px solid var(--lab-border);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #lab-canvas-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+    position: relative;
+  }
+
+  #lab-canvas {
+    min-height: 250px;
+    background: var(--lab-panel2);
+    border: 1px solid var(--lab-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+  }
+  #lab-canvas.active-anim { border-color: var(--lab-border-glow); box-shadow: 0 0 32px rgba(99,102,241,0.08); }
+
+  #lab-explanation {
+    margin: 10px 12px 0;
+    padding: 12px 16px;
+    background: rgba(99,102,241,0.07);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #c7d2fe;
+    line-height: 1.6;
+    min-height: 52px;
+  }
+
+  #lab-step-progress {
+    margin: 8px 12px;
+    height: 3px;
+    background: var(--lab-border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  #lab-step-bar { height: 100%; background: var(--lab-accent); border-radius: 99px; transition: width 0.4s ease; }
+
+  /* ─── RIGHT PANEL ─── */
+  #lab-right {
+    background: var(--lab-panel);
+    border-left: 1px solid var(--lab-border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: #1f2937 transparent;
+  }
+  #lab-right::-webkit-scrollbar { width: 4px; }
+
+  .right-section {
+    border-bottom: 1px solid var(--lab-border);
+    padding: 12px 14px;
+  }
+  .right-section-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lab-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  /* Pseudo code */
+  #pseudo-code-list { margin: 0; padding: 0; list-style: none; }
+  .pseudo-line {
+    display: block;
+    padding: 3px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #4b5563;
+    border-radius: 4px;
+    white-space: pre;
+    transition: all 0.25s;
+  }
+  .pseudo-line.active {
+    background: rgba(99,102,241,0.25);
+    color: #a5b4fc;
+    border-left: 2px solid var(--lab-accent);
+  }
+
+  /* Memory state */
+  .mem-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: var(--lab-xs);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mem-key { color: var(--lab-muted); }
+  .mem-val { color: #a5b4fc; font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ─── BOTTOM PANEL ─── */
+  #lab-bottom {
+    grid-column: 2 / 3;
+    border-top: 1px solid var(--lab-border);
+    background: var(--lab-panel);
+    max-height: 220px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #lab-bottom-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--lab-border);
+  }
+  .bottom-tab {
+    padding: 8px 16px;
+    font-size: var(--lab-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--lab-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+  .bottom-tab:hover { color: #c7d2fe; }
+  .bottom-tab.active { color: var(--lab-accent); border-bottom: 2px solid var(--lab-accent); }
+
+  #lab-bottom-content { flex: 1; overflow-y: auto; padding: 10px 14px; }
+
+  /* Code panel */
+  .code-lang-tabs { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+  .code-lang-btn {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    border: 1px solid #374151;
+    background: transparent;
+    color: #6b7280;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .code-lang-btn:hover { border-color: var(--lab-accent); color: #a5b4fc; }
+  .code-lang-btn.active { background: rgba(99,102,241,0.2); border-color: var(--lab-accent); color: #e0e7ff; }
+
+  #code-display {
+    background: #0a0a0f;
+    border: 1px solid var(--lab-border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: #a5b4fc;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* Interview questions */
+  .iq-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: var(--lab-xs);
+  }
+  .iq-diff { padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .diff-easy { background: rgba(16,185,129,0.15); color: #10b981; }
+  .diff-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .diff-hard { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+  /* Controls */
+  .ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--lab-border);
+    background: var(--lab-panel2);
+    color: var(--lab-text);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .ctrl-btn:hover { border-color: var(--lab-accent); color: #e0e7ff; background: rgba(99,102,241,0.1); }
+  .ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .ctrl-btn.primary { background: var(--lab-accent); border-color: var(--lab-accent); color: #fff; }
+  .ctrl-btn.primary:hover { background: #4f46e5; }
+  .ctrl-btn.success { background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; }
+
+  .speed-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid #f59e0b;
+    color: #fbbf24;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  /* Phase badge */
+  .phase-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.3s;
+  }
+
+  /* Input editor */
+  #lab-input-editor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--lab-panel2);
+    border-bottom: 1px solid var(--lab-border);
+  }
+  #lab-input-editor input {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.2s;
+  }
+  #lab-input-editor input:focus { border-color: var(--lab-accent); }
+
+  /* Queue display */
+  .queue-strip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .queue-item {
+    background: rgba(245,158,11,0.15);
+    border: 1px solid #f59e0b;
+    color: #fbbf24;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  @keyframes floatUp { from { opacity: 1; transform: translateX(-50%) translateY(0); } to { opacity: 0; transform: translateX(-50%) translateY(-40px); } }
+  @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); } 50% { box-shadow: 0 0 20px 4px rgba(99,102,241,0.3); } }
+  .playing-pulse { animation: pulse-glow 1.5s infinite; }
+
+  @media (max-width: 900px) {
+    #lab-layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto 1fr auto;
+      height: auto;
+      overflow: auto;
+    }
+    #lab-sidebar { grid-column: 1; max-height: 200px; overflow-x: auto; display: flex; flex-direction: row; border-right: none; border-bottom: 1px solid var(--lab-border); }
+    #lab-right { display: none; }
+    #lab-bottom { grid-column: 1; }
+    .sidebar-cat-header { white-space: nowrap; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;" x-data="simulatorApp()">
-    
-    <!-- Hero Header -->
-    <div class="d-flex align-center justify-between flex-wrap gap-md mb-xl">
-        <div>
-            <div class="d-flex align-center gap-xs mb-xs">
-                <span class="badge badge-pattern text-2xs">
-                    <i data-lucide="play-circle" class="icon-xs"></i>
-                    INTERACTIVE VISUALIZER
-                </span>
-                <span class="badge badge-easy text-2xs">Step-by-Step Tracer</span>
+<div id="lab-layout" x-data="dsaLab()" x-init="init()">
+
+  <!-- ═══ TOP CONTROLS BAR ═══ -->
+  <div id="lab-topbar">
+    <!-- Algorithm label -->
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:1.15rem;" x-text="activeCatIcon"></span>
+      <span style="font-size:0.82rem;font-weight:700;color:#e2e8f0;" x-text="activeAlgoLabel"></span>
+      <span class="phase-badge"
+            :style="`background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;`"
+            x-text="currentState?.phaseLabel || 'READY'"></span>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
+      <button class="ctrl-btn" @click="prevStep()" :disabled="stepIndex <= 0">⏮ Back</button>
+      <button class="ctrl-btn primary" :class="isPlaying ? 'playing-pulse' : ''" @click="togglePlay()" id="lab-play-btn">
+        <span x-text="isPlaying ? '⏸ Pause' : '▶ Play'"></span>
+      </button>
+      <button class="ctrl-btn" @click="nextStep()" :disabled="stepIndex >= totalSteps - 1">Next ⏭</button>
+      <button class="ctrl-btn" @click="resetSim()">↺ Reset</button>
+      <span class="speed-badge" @click="cycleSpeed()" x-text="speedLabel"></span>
+      <span style="font-size:0.72rem;color:#6b7280;font-family:monospace;">
+        Step <strong style="color:#a5b4fc;" x-text="stepIndex + 1"></strong> /
+        <span x-text="totalSteps"></span>
+      </span>
+    </div>
+
+    <!-- Complexity badges -->
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;font-weight:700;" x-text="'Time: ' + complexity.time"></span>
+      <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#34d399;padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;font-weight:700;" x-text="'Space: ' + complexity.space"></span>
+    </div>
+  </div>
+
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <div id="lab-sidebar">
+    <div style="padding:8px 6px 4px;font-size:0.65rem;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">22 Categories</div>
+
+    <template x-for="cat in catalog" :key="cat.id">
+      <div>
+        <div class="sidebar-cat-header" :class="openCat === cat.id ? 'open' : ''"
+             @click="openCat = openCat === cat.id ? null : cat.id">
+          <span x-text="cat.icon"></span>
+          <span x-text="cat.label" style="flex:1;"></span>
+          <span x-text="openCat === cat.id ? '▾' : '▸'" style="font-size:10px;"></span>
+        </div>
+
+        <template x-if="openCat === cat.id">
+          <div>
+            <template x-for="algo in cat.algorithms" :key="algo.id">
+              <button class="sidebar-algo-btn"
+                      :class="activeAlgoId === algo.id ? 'active' : ''"
+                      @click="loadAlgo(cat, algo)"
+                      x-text="algo.label"></button>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+
+  <!-- ═══ CENTER PANEL ═══ -->
+  <div id="lab-center">
+    <!-- Meta bar -->
+    <div id="lab-meta-bar">
+      <div>
+        <div style="font-size:0.72rem;color:#6b7280;margin-bottom:2px;">Current Step Note</div>
+        <div style="font-size:11px;color:#f59e0b;font-family:'JetBrains Mono',monospace;" x-text="currentState?.complexityNote || '—'"></div>
+      </div>
+
+      <!-- Queue strip (show when relevant) -->
+      <template x-if="currentState?.queueItems?.length > 0">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:#6b7280;font-family:monospace;">Queue:</span>
+          <div style="display:flex;gap:4px;">
+            <template x-for="item in (currentState.queueItems || [])" :key="item">
+              <span class="queue-item" x-text="item"></span>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <!-- Stack frames (for recursion/DFS) -->
+      <template x-if="currentState?.stackFrames?.length > 0">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:#6b7280;font-family:monospace;">Call Stack:</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <template x-for="frame in (currentState.stackFrames || [])" :key="frame">
+              <span style="background:rgba(139,92,246,0.15);border:1px solid #8b5cf6;color:#c4b5fd;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:11px;" x-text="frame"></span>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Input editor -->
+    <div id="lab-input-editor">
+      <span style="font-size:11px;color:#6b7280;font-family:monospace;">Input:</span>
+      <input type="text" id="lab-custom-input" placeholder="e.g. 2,1,5,1,3,2" x-model="customInput">
+      <button class="ctrl-btn" @click="applyCustomInput()" style="padding:5px 12px;font-size:11px;">Apply</button>
+      <span style="font-size:11px;color:#4b5563;font-family:monospace;margin-left:4px;">Edit array/target to see custom visualization</span>
+    </div>
+
+    <!-- Main canvas -->
+    <div id="lab-canvas-wrap">
+      <div id="lab-canvas" :class="isPlaying ? 'active-anim' : ''"></div>
+    </div>
+
+    <!-- Explanation banner -->
+    <div id="lab-explanation" x-text="currentState?.explanation || 'Select an algorithm from the left sidebar to begin.'"></div>
+
+    <!-- Step progress bar -->
+    <div id="lab-step-progress">
+      <div id="lab-step-bar" :style="`width:${totalSteps > 1 ? ((stepIndex / (totalSteps-1)) * 100) : 0}%`"></div>
+    </div>
+
+    <!-- Bottom tabs -->
+    <div id="lab-bottom">
+      <div id="lab-bottom-tabs">
+        <button class="bottom-tab" :class="bottomTab === 'code' ? 'active' : ''" @click="bottomTab='code'">💻 Code</button>
+        <button class="bottom-tab" :class="bottomTab === 'interview' ? 'active' : ''" @click="bottomTab='interview'">🧠 Interview Qs</button>
+        <button class="bottom-tab" :class="bottomTab === 'notes' ? 'active' : ''" @click="bottomTab='notes'">📝 Notes</button>
+      </div>
+
+      <div id="lab-bottom-content">
+        <!-- Code panel -->
+        <template x-if="bottomTab === 'code'">
+          <div>
+            <div class="code-lang-tabs">
+              <template x-for="lang in ['python','cpp','java','javascript','go','rust']" :key="lang">
+                <button class="code-lang-btn" :class="codeLang === lang ? 'active' : ''" @click="codeLang=lang" x-text="lang"></button>
+              </template>
             </div>
-            <h1 class="tier-1-title" style="margin-bottom: 0.25rem;">Visual Algorithm Simulator</h1>
-            <p class="text-secondary text-sm">
-                Watch algorithms execute in real time. Pause, step forward, rewind, and master spatial & time intuition.
+            <pre id="code-display" x-text="codeSnippet"></pre>
+          </div>
+        </template>
+
+        <!-- Interview questions panel -->
+        <template x-if="bottomTab === 'interview'">
+          <div>
+            <template x-if="interviewQs.length === 0">
+              <div style="color:#4b5563;font-family:monospace;font-size:12px;padding:12px 0;">No interview questions mapped for this algorithm yet. Try Sliding Window, Binary Search, Tree Traversal, or Graph BFS/Dijkstra.</div>
+            </template>
+            <template x-for="(q, i) in interviewQs" :key="i">
+              <div class="iq-row">
+                <span class="iq-diff" :class="`diff-${q.difficulty}`" x-text="q.difficulty"></span>
+                <span style="flex:1;color:#c7d2fe;font-size:0.72rem;" x-text="q.q"></span>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <template x-for="company in (q.companies || [])" :key="company">
+                    <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#34d399;padding:1px 6px;border-radius:4px;font-size:10px;" x-text="company"></span>
+                  </template>
+                </div>
+                <a :href="`https://leetcode.com/problems/problem-${q.lc}/`" target="_blank"
+                   style="font-size:10px;color:#6366f1;text-decoration:none;white-space:nowrap;">LC #<span x-text="q.lc"></span> →</a>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- Notes panel -->
+        <template x-if="bottomTab === 'notes'">
+          <div style="font-size:0.72rem;font-family:'JetBrains Mono',monospace;color:#6b7280;line-height:1.8;">
+            <p><strong style="color:#a5b4fc;">Pattern:</strong> <span x-text="activeAlgoLabel"></span></p>
+            <p><strong style="color:#a5b4fc;">Time:</strong> <span x-text="complexity.time"></span> &nbsp;|&nbsp; <strong style="color:#a5b4fc;">Space:</strong> <span x-text="complexity.space"></span></p>
+            <p style="margin-top:8px;color:#4b5563;">
+              💡 Use this pattern when: you need to process contiguous subarrays/sublists, or when you can eliminate half the search space per step.
+              Always think about what the "window" or "range" represents.
             </p>
-        </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
 
-        <!-- Pattern Selector Pills -->
-        <div class="d-flex align-center gap-xs flex-wrap">
-            <button type="button" class="btn btn-sm" :class="activePattern === 'sliding_window' ? 'btn-primary' : 'btn-outline'" @click="setPattern('sliding_window')">🪟 Sliding Window</button>
-            <button type="button" class="btn btn-sm" :class="activePattern === 'two_pointers' ? 'btn-primary' : 'btn-outline'" @click="setPattern('two_pointers')">👉👈 Two Pointers</button>
-            <button type="button" class="btn btn-sm" :class="activePattern === 'binary_search' ? 'btn-primary' : 'btn-outline'" @click="setPattern('binary_search')">🔍 Binary Search</button>
-            <button type="button" class="btn btn-sm" :class="activePattern === 'hash_map' ? 'btn-primary' : 'btn-outline'" @click="setPattern('hash_map')">🗂 Hash Map</button>
-        </div>
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div id="lab-right">
+
+    <!-- Pseudo Code -->
+    <div class="right-section">
+      <div class="right-section-title">📋 Pseudo Code</div>
+      <ul id="pseudo-code-list">
+        <template x-for="(line, i) in pseudoCode" :key="i">
+          <li class="pseudo-line" :class="currentState?.pseudoCodeLine === i ? 'active' : ''" x-text="line"></li>
+        </template>
+        <template x-if="pseudoCode.length === 0">
+          <li class="pseudo-line" style="color:#374151;font-style:italic;">No pseudo code available</li>
+        </template>
+      </ul>
     </div>
 
-    <!-- Algorithm Concept Overview Bar -->
-    <div class="card p-md mb-lg d-flex align-center justify-between flex-wrap gap-md" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 14px;">
-        <div class="d-flex align-center gap-md">
-            <div style="font-size: 1.8rem;" x-text="patternMeta.icon"></div>
-            <div>
-                <h3 class="text-bright font-bold" style="font-size: 1rem; margin-bottom: 2px;" x-text="patternMeta.title"></h3>
-                <p class="text-muted text-xs" x-text="patternMeta.description"></p>
+    <!-- Memory State -->
+    <div class="right-section">
+      <div class="right-section-title">🧠 Memory State</div>
+      <template x-if="currentState?.memoryState">
+        <div>
+          <template x-for="[k, v] in Object.entries(currentState?.memoryState || {})" :key="k">
+            <div class="mem-row">
+              <span class="mem-key" x-text="k"></span>
+              <span class="mem-val" x-text="typeof v === 'object' ? JSON.stringify(v) : v"></span>
             </div>
+          </template>
         </div>
-        <div class="d-flex align-center gap-xs">
-            <span class="badge badge-medium" x-text="'Time: ' + patternMeta.timeComplexity"></span>
-            <span class="badge badge-easy" x-text="'Space: ' + patternMeta.spaceComplexity"></span>
-        </div>
+      </template>
+      <template x-if="!currentState?.memoryState">
+        <div style="color:#374151;font-size:11px;font-family:monospace;">No state yet</div>
+      </template>
     </div>
 
-    <!-- Simulator Canvas Card -->
-    <div class="card p-lg mb-xl" style="background: #111118; border: 1px solid var(--border-glow); border-radius: 20px;">
-        
-        <!-- Controls Toolbar -->
-        <div class="d-flex align-center justify-between flex-wrap gap-md mb-lg p-xs" style="background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-            <div class="d-flex align-center gap-xs">
-                <button type="button" class="btn btn-ghost btn-sm" @click="prevStep()" :disabled="stepIndex <= 0">⏮ Step Back</button>
-                <button type="button" class="btn btn-primary btn-sm" @click="togglePlay()">
-                    <span x-text="isPlaying ? '⏸ Pause' : '▶ Play Auto'"></span>
-                </button>
-                <button type="button" class="btn btn-ghost btn-sm" @click="nextStep()" :disabled="stepIndex >= currentSteps.length - 1">Step Next ⏭</button>
-                <button type="button" class="btn btn-ghost btn-sm" @click="reset()">↺ Reset</button>
-            </div>
+    <!-- Pointer Positions -->
+    <template x-if="currentState?.pointers && Object.keys(currentState.pointers).length > 0">
+      <div class="right-section">
+        <div class="right-section-title">📍 Pointers</div>
+        <template x-for="[name, val] in Object.entries(currentState?.pointers || {})" :key="name">
+          <div class="mem-row">
+            <span style="color:#f59e0b;font-family:monospace;font-size:11px;" x-text="name"></span>
+            <span style="color:#e0e7ff;font-family:monospace;font-size:12px;font-weight:700;" x-text="'→ idx ' + val"></span>
+          </div>
+        </template>
+      </div>
+    </template>
 
-            <div class="d-flex align-center gap-md text-xs font-mono">
-                <span>Step <strong class="text-primary" x-text="stepIndex + 1"></strong> / <span x-text="currentSteps.length"></span></span>
-                <span>Speed: <strong class="text-bright" x-text="speed + 'x'"></strong></span>
-                <button type="button" class="btn btn-ghost btn-xs" @click="toggleSpeed()">⚙ Toggle Speed</button>
-            </div>
+    <!-- Complexity -->
+    <div class="right-section">
+      <div class="right-section-title">⚡ Complexity</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:8px 12px;">
+          <div style="font-size:10px;color:#6b7280;font-family:monospace;">TIME</div>
+          <div style="font-size:1rem;color:#fbbf24;font-family:'JetBrains Mono',monospace;font-weight:700;" x-text="complexity.time"></div>
         </div>
-
-        <!-- Animation Visualization Area -->
-        <div style="min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-            
-            <!-- Step Explanation Banner -->
-            <div class="mb-lg p-sm text-center text-xs font-mono font-bold text-bright" 
-                 style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-sm); width: 100%; max-width: 720px; line-height: 1.5;" 
-                 x-text="currentStep.explanation">
-            </div>
-
-            <!-- Additional Metrics / Status Counters (e.g. Target, Current Sum, Max Sum) -->
-            <template x-if="currentStep.metrics">
-                <div class="d-flex align-center justify-center gap-md mb-md flex-wrap">
-                    <template x-for="(mVal, mKey) in currentStep.metrics" :key="mKey">
-                        <div class="badge" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 4px 12px; font-family: var(--font-mono); font-size: 0.75rem;">
-                            <span class="text-muted" x-text="mKey + ': '"></span>
-                            <strong class="text-bright" x-text="mVal"></strong>
-                        </div>
-                    </template>
-                </div>
-            </template>
-
-            <!-- Array Element Blocks Container -->
-            <div class="d-flex align-center justify-center gap-xs flex-wrap" style="padding: 20px 0; min-height: 110px;">
-                <template x-for="(val, idx) in currentStep.array" :key="idx">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                        <!-- Pointer Markers -->
-                        <div style="height: 24px; font-size: 0.75rem; font-weight: 700; text-align: center;" class="font-mono">
-                            <span x-show="currentStep.pointers.left === idx" style="color: #6366f1; display: block;">L ▼</span>
-                            <span x-show="currentStep.pointers.right === idx" style="color: #10b981; display: block;">R ▼</span>
-                            <span x-show="currentStep.pointers.mid === idx" style="color: #f59e0b; display: block;">MID ▼</span>
-                            <span x-show="currentStep.pointers.curr === idx" style="color: #ec4899; display: block;">CURR ▼</span>
-                        </div>
-
-                        <!-- Element Box -->
-                        <div class="d-flex align-center justify-center font-mono font-bold"
-                             style="width: 58px; height: 58px; border-radius: 14px; font-size: 1.15rem; transition: all 0.25s ease;"
-                             :style="getElementStyle(idx)" 
-                             x-text="val">
-                        </div>
-
-                        <!-- Index Label -->
-                        <span class="text-2xs text-muted font-mono" x-text="'[' + idx + ']'"></span>
-                    </div>
-                </template>
-            </div>
-
-            <!-- Hash Map Visualizer Sub-panel (Only for Hash Map Algorithm) -->
-            <template x-if="activePattern === 'hash_map'">
-                <div class="mt-lg p-md w-full" style="max-width: 600px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 12px;">
-                    <div class="d-flex align-center justify-between mb-sm">
-                        <span class="text-xs font-mono font-bold text-muted">🗂 HASH MAP STATE (Value ➔ Index)</span>
-                        <span class="text-2xs text-primary font-mono" x-text="Object.keys(currentStep.hashMap || {}).length + ' entries'"></span>
-                    </div>
-                    <div class="d-flex align-center gap-xs flex-wrap">
-                        <template x-if="!currentStep.hashMap || Object.keys(currentStep.hashMap).length === 0">
-                            <span class="text-xs text-muted font-mono italic">Map is empty</span>
-                        </template>
-                        <template x-for="(indexVal, mapKey) in (currentStep.hashMap || {})" :key="mapKey">
-                            <div class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-family: var(--font-mono); font-size: 0.8rem; padding: 4px 10px;">
-                                <span x-text="mapKey"></span> ➔ <strong x-text="'[' + indexVal + ']'"></strong>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </template>
-
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:8px 12px;">
+          <div style="font-size:10px;color:#6b7280;font-family:monospace;">SPACE</div>
+          <div style="font-size:1rem;color:#34d399;font-family:'JetBrains Mono',monospace;font-weight:700;" x-text="complexity.space"></div>
         </div>
+        <div style="font-size:10px;color:#4b5563;font-family:monospace;padding:4px 0;" x-text="currentState?.complexityNote || ''"></div>
+      </div>
     </div>
+
+    <!-- Step counter -->
+    <div class="right-section">
+      <div class="right-section-title">📊 Progress</div>
+      <div style="font-size:0.72rem;color:#6b7280;font-family:monospace;margin-bottom:6px;">
+        Step <strong style="color:#a5b4fc;" x-text="stepIndex + 1"></strong> of <span x-text="totalSteps"></span>
+      </div>
+      <div style="height:6px;background:#1f2937;border-radius:99px;overflow:hidden;">
+        <div :style="`width:${totalSteps > 1 ? ((stepIndex / (totalSteps-1)) * 100) : 0}%;height:100%;background:var(--lab-accent);border-radius:99px;transition:width 0.4s;`"></div>
+      </div>
+    </div>
+
+    <!-- Phase info -->
+    <div class="right-section">
+      <div class="right-section-title">🏷️ Current Phase</div>
+      <div style="font-size:1rem;font-weight:700;color:#e0e7ff;font-family:'JetBrains Mono',monospace;" x-text="currentState?.phaseLabel || '—'"></div>
+    </div>
+
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/visualizers/visualizer_engine.js' %}"></script>
 <script>
-    function simulatorApp() {
-        return {
-            activePattern: 'sliding_window',
-            stepIndex: 0,
-            isPlaying: false,
-            speed: 1,
-            timer: null,
+function dsaLab() {
+  return {
+    // Catalog
+    catalog: [],
 
-            // Algorithm Configurations & Visual Steps
-            patterns: {
-                sliding_window: {
-                    title: 'Sliding Window (Max Sum Subarray of Size K=3)',
-                    icon: '🪟',
-                    description: 'Maintain a contiguous window range [Left..Right] of size K=3, dynamically sliding right while tracking maximum sum.',
-                    timeComplexity: 'O(N)',
-                    spaceComplexity: 'O(1)',
-                    steps: [
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 0, right: 0 },
-                            windowRange: [0, 0],
-                            explanation: 'Step 1: Initialize Right pointer at index 0 (val = 2). Window is expanding.',
-                            metrics: { 'Window Size': '1', 'Window Sum': 2, 'Max Sum': 2 }
-                        },
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 0, right: 1 },
-                            windowRange: [0, 1],
-                            explanation: 'Step 2: Expand Right pointer to index 1 (val = 1). Window elements: [2, 1].',
-                            metrics: { 'Window Size': '2', 'Window Sum': 3, 'Max Sum': 3 }
-                        },
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 0, right: 2 },
-                            windowRange: [0, 2],
-                            explanation: 'Step 3: Expand Right pointer to index 2 (val = 5). Window reaches size K=3! Sum = 2 + 1 + 5 = 8. Max Sum = 8.',
-                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 8, 'Max Sum': 8 }
-                        },
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 1, right: 3 },
-                            windowRange: [1, 3],
-                            explanation: 'Step 4: Slide window! Subtract element at Left (index 0, -2) and add Right (index 3, +1). New Window Sum: 7.',
-                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 7, 'Max Sum': 8 }
-                        },
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 2, right: 4 },
-                            windowRange: [2, 4],
-                            explanation: 'Step 5: Slide window! Subtract index 1 (-1), add index 4 (+3). Window [5, 1, 3] Sum = 9. New Max Sum = 9!',
-                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 9, 'Max Sum': 9 }
-                        },
-                        {
-                            array: [2, 1, 5, 1, 3, 2],
-                            pointers: { left: 3, right: 5 },
-                            windowRange: [3, 5],
-                            explanation: 'Step 6: Slide window! Subtract index 2 (-5), add index 5 (+2). Window [1, 3, 2] Sum = 6. Max Sum remains 9.',
-                            metrics: { 'Window Size': '3 (K)', 'Window Sum': 6, 'Max Sum': 9 }
-                        }
-                    ]
-                },
-                two_pointers: {
-                    title: 'Two Pointers (Pair with Target Sum = 9)',
-                    icon: '👉👈',
-                    description: 'Utilize two pointers starting at extreme ends of a sorted array to converge toward the target sum in O(N) time.',
-                    timeComplexity: 'O(N)',
-                    spaceComplexity: 'O(1)',
-                    steps: [
-                        {
-                            array: [1, 3, 4, 6, 8, 11],
-                            pointers: { left: 0, right: 5 },
-                            explanation: 'Step 1: Set Left = 0 (1) and Right = 5 (11). Current Sum = 1 + 11 = 12. Since 12 > Target (9), decrement Right pointer.',
-                            metrics: { 'Target': 9, 'Current Sum': 12, 'Action': 'Right-- (12 > 9)' }
-                        },
-                        {
-                            array: [1, 3, 4, 6, 8, 11],
-                            pointers: { left: 0, right: 4 },
-                            explanation: 'Step 2: Set Right = 4 (8). Current Sum = 1 + 8 = 9. Target 9 MATCHED at indices [0, 4]!',
-                            metrics: { 'Target': 9, 'Current Sum': 9, 'Status': '✅ MATCH FOUND' }
-                        },
-                        {
-                            array: [1, 3, 4, 6, 8, 11],
-                            pointers: { left: 0, right: 4 },
-                            explanation: 'Step 3: Verification complete. Two Pointers found pair (1, 8) in 2 steps without extra space.',
-                            metrics: { 'Target': 9, 'Result': '[0, 4] -> (1, 8)', 'Time': 'O(N)' }
-                        }
-                    ]
-                },
-                binary_search: {
-                    title: 'Binary Search (Find Target = 7 in Sorted Array)',
-                    icon: '🔍',
-                    description: 'Repeatedly divide search interval in half by comparing middle element against target.',
-                    timeComplexity: 'O(log N)',
-                    spaceComplexity: 'O(1)',
-                    steps: [
-                        {
-                            array: [1, 3, 5, 7, 9, 11, 13],
-                            pointers: { left: 0, right: 6, mid: 3 },
-                            eliminated: [],
-                            explanation: 'Step 1: Search range [0..6]. Calculate Mid = (0 + 6)/2 = 3. Element at Mid = 7. Compare 7 with Target (7).',
-                            metrics: { 'Target': 7, 'Mid Index': 3, 'Mid Val': 7, 'Status': '✅ MATCH FOUND!' }
-                        },
-                        {
-                            array: [1, 3, 5, 7, 9, 11, 13],
-                            pointers: { mid: 3 },
-                            eliminated: [0, 1, 2, 4, 5, 6],
-                            explanation: 'Step 2: Target 7 located at Index 3 in a single O(log N) comparison! Search completed successfully.',
-                            metrics: { 'Target': 7, 'Found Index': 3, 'Comparisons': 1 }
-                        }
-                    ]
-                },
-                hash_map: {
-                    title: 'Hash Map (Two Sum for Target = 9)',
-                    icon: '🗂',
-                    description: 'Store seen numbers in a Hash Map to look up required complement (Target - Current) in O(1) constant time.',
-                    timeComplexity: 'O(N)',
-                    spaceComplexity: 'O(N)',
-                    steps: [
-                        {
-                            array: [2, 11, 7, 15],
-                            pointers: { curr: 0 },
-                            hashMap: {},
-                            explanation: 'Step 1: Index 0 (val = 2). Needed complement = 9 - 2 = 7. Check Map for 7: Not found. Insert { 2 ➔ [0] } into Map.',
-                            metrics: { 'Target': 9, 'Current': 2, 'Complement Needed': 7, 'Map Check': 'Miss' }
-                        },
-                        {
-                            array: [2, 11, 7, 15],
-                            pointers: { curr: 1 },
-                            hashMap: { '2': 0 },
-                            explanation: 'Step 2: Index 1 (val = 11). Needed complement = 9 - 11 = -2. Check Map for -2: Not found. Insert { 11 ➔ [1] } into Map.',
-                            metrics: { 'Target': 9, 'Current': 11, 'Complement Needed': -2, 'Map Check': 'Miss' }
-                        },
-                        {
-                            array: [2, 11, 7, 15],
-                            pointers: { curr: 2 },
-                            hashMap: { '2': 0, '11': 1 },
-                            explanation: 'Step 3: Index 2 (val = 7). Needed complement = 9 - 7 = 2. Check Map for 2: FOUND at Index 0! Return [0, 2].',
-                            metrics: { 'Target': 9, 'Current': 7, 'Complement Needed': 2, 'Map Check': '✅ HIT at Index 0' }
-                        }
-                    ]
-                }
-            },
+    // Active state
+    activeAlgoId: 'sliding_window',
+    activeAlgoLabel: 'Sliding Window (Max Sum K=3)',
+    activeCatId: 'arrays',
+    activeCatIcon: '🔢',
+    openCat: 'arrays',
 
-            get patternMeta() {
-                return this.patterns[this.activePattern] || this.patterns.sliding_window;
-            },
+    // Playback
+    states: [],
+    stepIndex: 0,
+    isPlaying: false,
+    timer: null,
+    speedIdx: 1,
+    speeds: [0.5, 1, 2, 4],
+    speedLabels: ['0.5× Slow', '1× Normal', '2× Fast', '4× Turbo'],
 
-            get currentSteps() {
-                return this.patternMeta.steps;
-            },
+    // Algorithm data
+    pseudoCode: [],
+    complexity: { time: 'O(N)', space: 'O(1)' },
+    interviewQs: [],
+    codeLang: 'python',
+    customInput: '',
 
-            get currentStep() {
-                return this.currentSteps[this.stepIndex] || this.currentSteps[0];
-            },
+    // UI state
+    bottomTab: 'code',
 
-            getElementStyle(idx) {
-                const step = this.currentStep;
-                
-                // Sliding Window range highlighting
-                if (this.activePattern === 'sliding_window' && step.windowRange) {
-                    const [wStart, wEnd] = step.windowRange;
-                    if (idx >= wStart && idx <= wEnd) {
-                        return 'background: rgba(99, 102, 241, 0.28); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(99,102,241,0.3);';
-                    }
-                }
+    get totalSteps() { return this.states.length || 1; },
+    get currentState() { return this.states[this.stepIndex] || null; },
+    get speedLabel() { return this.speedLabels[this.speedIdx]; },
+    get speedMs() { return 1200 / this.speeds[this.speedIdx]; },
+    get codeSnippet() {
+      const snippets = window.DSA?.CODE_SNIPPETS;
+      if (!snippets || !snippets[this.activeAlgoId]) {
+        return `// Code for ${this.activeAlgoLabel}\n// Coming soon in all 6 languages`;
+      }
+      return snippets[this.activeAlgoId][this.codeLang] || `// No ${this.codeLang} snippet yet`;
+    },
 
-                // Two Pointers match highlighting
-                if (this.activePattern === 'two_pointers') {
-                    if (step.pointers.left === idx || step.pointers.right === idx) {
-                        const isMatch = step.metrics && step.metrics.Status && step.metrics.Status.includes('MATCH');
-                        if (isMatch) {
-                            return 'background: rgba(16, 185, 129, 0.3); border: 2px solid #34d399; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(16,185,129,0.3);';
-                        }
-                        return 'background: rgba(99, 102, 241, 0.25); border: 2px solid #818cf8; color: #fff; transform: translateY(-4px);';
-                    }
-                }
+    init() {
+      this.catalog = window.DSA?.CATALOG || [];
+      this.loadAlgo(
+        { id: 'arrays', label: 'Arrays', icon: '🔢' },
+        { id: 'sliding_window', label: 'Sliding Window (Max Sum K=3)' }
+      );
+    },
 
-                // Binary Search Mid / Match highlighting
-                if (this.activePattern === 'binary_search') {
-                    if (step.pointers.mid === idx) {
-                        return 'background: rgba(245, 158, 11, 0.3); border: 2px solid #fbbf24; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(245,158,11,0.3);';
-                    }
-                    if (step.eliminated && step.eliminated.includes(idx)) {
-                        return 'background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color); color: var(--text-muted); opacity: 0.4;';
-                    }
-                }
+    loadAlgo(cat, algo) {
+      this.pause();
+      this.activeCatId = cat.id;
+      this.activeCatIcon = cat.icon || '📊';
+      this.activeAlgoId = algo.id;
+      this.activeAlgoLabel = algo.label;
+      this.openCat = cat.id;
+      this.stepIndex = 0;
+      this.customInput = '';
 
-                // Hash Map current highlighting
-                if (this.activePattern === 'hash_map') {
-                    if (step.pointers.curr === idx) {
-                        const isHit = step.metrics && step.metrics['Map Check'] && step.metrics['Map Check'].includes('HIT');
-                        if (isHit) {
-                            return 'background: rgba(16, 185, 129, 0.3); border: 2px solid #34d399; color: #fff; transform: translateY(-4px); box-shadow: 0 4px 12px rgba(16,185,129,0.3);';
-                        }
-                        return 'background: rgba(236, 72, 153, 0.25); border: 2px solid #f472b6; color: #fff; transform: translateY(-4px);';
-                    }
-                }
+      try {
+        const result = window.DSA.loadAlgorithm(algo.id);
+        this.states = result.states || [];
+        this.pseudoCode = result.pseudo || [];
+        this.complexity = result.complexity || { time: 'O(N)', space: 'O(1)' };
+      } catch (e) {
+        console.error('Algorithm load error:', e);
+        this.states = [{
+          array: [1, 2, 3, 4, 5],
+          highlighted: [], active: [], eliminated: [], pointers: {},
+          explanation: `${algo.label} — visualization coming soon!`,
+          pseudoCodeLine: 0, memoryState: {}, complexityNote: '', phaseLabel: 'READY'
+        }];
+        this.pseudoCode = [];
+        this.complexity = { time: '—', space: '—' };
+      }
 
-                return 'background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-muted);';
-            },
+      const iqMap = window.DSA?.INTERVIEW_QUESTIONS || {};
+      this.interviewQs = iqMap[algo.id] || [];
 
-            setPattern(pat) {
-                this.activePattern = pat;
-                this.reset();
-            },
+      this.$nextTick(() => this.render());
+    },
 
-            nextStep() {
-                if (this.stepIndex < this.currentSteps.length - 1) {
-                    this.stepIndex++;
-                } else {
-                    this.isPlaying = false;
-                    clearInterval(this.timer);
-                }
-            },
+    applyCustomInput() {
+      if (!this.customInput.trim()) return;
+      try {
+        const parsed = this.customInput.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+        if (parsed.length < 2) { alert('Enter at least 2 numbers separated by commas'); return; }
+        this.pause();
+        this.stepIndex = 0;
+        // Re-run with custom input for supported algorithms
+        const result = window.DSA.loadAlgorithm(this.activeAlgoId, parsed);
+        this.states = result.states || this.states;
+        this.pseudoCode = result.pseudo || this.pseudoCode;
+        this.complexity = result.complexity || this.complexity;
+        this.$nextTick(() => this.render());
+      } catch(e) { console.warn('Custom input error:', e); }
+    },
 
-            prevStep() {
-                if (this.stepIndex > 0) {
-                    this.stepIndex--;
-                }
-            },
+    render() {
+      const canvas = document.getElementById('lab-canvas');
+      if (!canvas) return;
+      window.DSA.renderState(this.currentState, canvas);
+    },
 
-            togglePlay() {
-                this.isPlaying = !this.isPlaying;
-                if (this.isPlaying) {
-                    this.timer = setInterval(() => {
-                        this.nextStep();
-                    }, 1200 / this.speed);
-                } else {
-                    clearInterval(this.timer);
-                }
-            },
+    nextStep() {
+      if (this.stepIndex < this.totalSteps - 1) {
+        this.stepIndex++;
+        this.render();
+      } else {
+        this.pause();
+      }
+    },
 
-            toggleSpeed() {
-                this.speed = this.speed === 1 ? 2 : (this.speed === 2 ? 0.5 : 1);
-                if (this.isPlaying) {
-                    clearInterval(this.timer);
-                    this.timer = setInterval(() => {
-                        this.nextStep();
-                    }, 1200 / this.speed);
-                }
-            },
+    prevStep() {
+      if (this.stepIndex > 0) {
+        this.stepIndex--;
+        this.render();
+      }
+    },
 
-            reset() {
-                this.stepIndex = 0;
-                this.isPlaying = false;
-                if (this.timer) clearInterval(this.timer);
-            }
-        };
-    }
+    togglePlay() {
+      if (this.isPlaying) { this.pause(); } else { this.play(); }
+    },
+
+    play() {
+      if (this.stepIndex >= this.totalSteps - 1) this.stepIndex = 0;
+      this.isPlaying = true;
+      this.timer = setInterval(() => { this.nextStep(); }, this.speedMs);
+    },
+
+    pause() {
+      this.isPlaying = false;
+      if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    },
+
+    resetSim() {
+      this.pause();
+      this.stepIndex = 0;
+      this.render();
+    },
+
+    cycleSpeed() {
+      this.speedIdx = (this.speedIdx + 1) % this.speeds.length;
+      if (this.isPlaying) { this.pause(); this.play(); }
+    },
+  };
+}
 </script>
 {% endblock %}
