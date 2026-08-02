@@ -63,3 +63,19 @@ class User(AbstractUser):
         if self.streak > self.longest_streak:
             self.longest_streak = self.streak
         self.save(update_fields=['streak', 'longest_streak', 'last_active_date'])
+
+    @property
+    def level(self):
+        """Calculate user level based on XP (every 250 XP is 1 Level, min level 1)."""
+        return max(1, (self.xp // 250) + 1)
+
+    @property
+    def level_progress(self):
+        """Percentage progress toward next level."""
+        return int(((self.xp % 250) / 250.0) * 100)
+
+    @property
+    def total_platform_solved(self):
+        """Combined total solved across AlgoDSA, LeetCode, and GFG."""
+        return max(self.solved_count, self.leetcode_total_solved + self.gfg_total_solved)
+
