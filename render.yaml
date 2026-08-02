@@ -4,7 +4,7 @@ services:
     env: python
     region: singapore
     plan: starter
-    buildCommand: "pip install -r requirements.txt && python manage.py makemigrations && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
+    buildCommand: "pip install -r requirements.txt && python manage.py makemigrations && python manage.py migrate --noinput && python manage.py seed_full_dsa_pattern_curriculum && python manage.py seed_problems && python manage.py collectstatic --noinput"
     startCommand: "gunicorn config.wsgi:application --log-file -"
     envVars:
       - key: DEBUG
