@@ -368,6 +368,53 @@ def learn_hub_view(request):
             'topics': topic_items
         })
 
+    # Fetch last submitted problem or studied topic for Continue Learning
+    last_sub = Submission.objects.filter(user=user).select_related('problem__topic').order_by('-created_at').first()
+    continue_learning = None
+    if last_sub and last_sub.problem and last_sub.problem.topic:
+        t = last_sub.problem.topic
+        t_probs = t.problems.filter(is_active=True)
+        t_solved = sum(1 for p in t_probs if p.id in accepted_ids)
+        t_total = t_probs.count()
+        t_pct = int((t_solved / t_total * 100) if t_total > 0 else 0)
+        continue_learning = {
+            'topic': t,
+            'last_problem': last_sub.problem,
+            'solved_count': t_solved,
+            'total_count': t_total,
+            'progress_pct': t_pct,
+            'url': f'/learn/{t.slug}/'
+        }
+    else:
+        arrays_topic = Topic.objects.filter(slug='arrays').first()
+        if arrays_topic:
+            t_probs = arrays_topic.problems.filter(is_active=True)
+            t_solved = sum(1 for p in t_probs if p.id in accepted_ids)
+            t_total = t_probs.count()
+            t_pct = int((t_solved / t_total * 100) if t_total > 0 else 0)
+            continue_learning = {
+                'topic': arrays_topic,
+                'last_problem': t_probs.first(),
+                'solved_count': t_solved,
+                'total_count': t_total,
+                'progress_pct': t_pct,
+                'url': f'/learn/{arrays_topic.slug}/'
+            }
+
+    # Recommended next track
+    recommended_topic = Topic.objects.filter(slug='sliding-window').first() or topics.first()
+
+    # Ecosystem statistics
+    statistics = {
+        'total_topics': topics.count(),
+        'total_lessons': sum(t.lessons.count() or t.patterns.count() or 1 for t in topics),
+        'total_problems': total_problems,
+        'total_solved': total_solved,
+        'overall_progress': overall_progress,
+        'user_streak': getattr(user, 'streak', 1),
+        'due_reviews': due_reviews
+    }
+
     import json
     context = {
         'categorized_topics': categorized_topics,
@@ -378,8 +425,92 @@ def learn_hub_view(request):
         'overall_progress': overall_progress,
         'due_reviews_count': due_reviews,
         'user_streak': getattr(user, 'streak', 1),
+        'continue_learning': continue_learning,
+        'recommended_topic': recommended_topic,
+        'statistics': statistics
     }
     return render(request, 'problems/learn_hub.html', context)
+
+
+@login_required
+def global_search_api(request):
+    """
+    Global Search API Endpoint (/api/search/?q=...)
+    Searches across Topic, Pattern, Lesson, Problem models and returns categorized JSON.
+    """
+    from django.db.models import Q
+    from .models import Topic, Pattern, Lesson, Problem
+
+    query = request.GET.get('q', '').strip()
+    if not query or len(query) < 2:
+        return JsonResponse({'results': []})
+
+    results = []
+
+    # 1. Topic Matches
+    topics = Topic.objects.filter(
+        Q(name__icontains=query) | Q(slug__icontains=query) | Q(description__icontains=query) | Q(notes_content__icontains=query)
+    )[:6]
+    for t in topics:
+        results.append({
+            'type': 'topic',
+            'title': f"{t.name} Track",
+            'slug': t.slug,
+            'parent': t.get_category_display() if hasattr(t, 'get_category_display') else t.category,
+            'icon': t.icon or '📊',
+            'desc': t.description[:90] if t.description else f"{t.name} DSA Track",
+            'url': f'/learn/{t.slug}/'
+        })
+
+    # 2. Pattern Matches
+    patterns = Pattern.objects.filter(
+        Q(name__icontains=query) | Q(slug__icontains=query) | Q(description__icontains=query)
+    ).select_related('topic')[:6]
+    for p in patterns:
+        results.append({
+            'type': 'pattern',
+            'title': f"{p.name} Pattern",
+            'slug': p.slug,
+            'parent': p.topic.name,
+            'icon': p.icon or '⚡',
+            'desc': p.description[:90] if p.description else f"Pattern in {p.topic.name}",
+            'url': f'/learn/{p.topic.slug}/{p.slug}/'
+        })
+
+    # 3. Lesson Matches
+    lessons = Lesson.objects.filter(
+        Q(title__icontains=query) | Q(slug__icontains=query) | Q(overview__icontains=query) | Q(when_use__icontains=query)
+    ).select_related('topic', 'pattern')[:6]
+    for l in lessons:
+        p_slug = l.pattern.slug if l.pattern else ''
+        url = f'/learn/{l.topic.slug}/{p_slug}/{l.slug}/' if p_slug else f'/learn/{l.topic.slug}/'
+        results.append({
+            'type': 'lesson',
+            'title': l.title,
+            'slug': l.slug,
+            'parent': l.topic.name,
+            'icon': '📖',
+            'desc': l.overview[:90] if l.overview else f"Lesson in {l.topic.name}",
+            'url': url
+        })
+
+    # 4. Problem Matches
+    problems = Problem.objects.filter(
+        Q(title__icontains=query) | Q(slug__icontains=query) | Q(difficulty__icontains=query)
+    ).select_related('topic')[:6]
+    for pr in problems:
+        t_slug = pr.topic.slug if pr.topic else 'arrays'
+        results.append({
+            'type': 'problem',
+            'title': pr.title,
+            'slug': pr.slug,
+            'parent': pr.topic.name if pr.topic else 'DSA',
+            'icon': '🎯',
+            'desc': f"{pr.difficulty.capitalize()} Problem • Est: {pr.est_time_mins} mins",
+            'url': f'/{t_slug}/{pr.slug}/'
+        })
+
+    return JsonResponse({'query': query, 'count': len(results), 'results': results})
 
 
 @login_required
