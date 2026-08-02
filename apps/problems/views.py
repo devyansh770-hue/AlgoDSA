@@ -292,21 +292,54 @@ def problem_detail(request, topic_slug, problem_slug):
 def learn_hub_view(request):
     """DSA Learning & Notes Hub Overview Page."""
     topics = Topic.objects.all().order_by('order')
+    user = request.user
 
-    # Aggregated pattern stats for learning cards
+    from apps.submissions.models import Submission
+    from apps.progress.models import PatternMastery
+
+    # Solved problem IDs for current user
+    accepted_ids = set(Submission.objects.filter(
+        user=user, status='accepted'
+    ).values_list('problem_id', flat=True))
+
+    total_problems = Problem.objects.filter(is_active=True).count()
+    total_solved = len(accepted_ids)
+    overall_progress = int((total_solved / total_problems * 100) if total_problems > 0 else 0)
+
+    # Masteries & due reviews
+    from django.utils import timezone
+    today = timezone.now().date()
+    masteries = PatternMastery.objects.filter(user=user)
+    due_reviews = [m for m in masteries if m.next_review and m.next_review <= today]
+
     topic_data = []
     for topic in topics:
-        total_p = topic.problems.filter(is_active=True).count()
-        total_patterns = topic.patterns.count()
+        topic_problems = topic.problems.filter(is_active=True)
+        total_p = topic_problems.count()
+        solved_p = sum(1 for p in topic_problems if p.id in accepted_ids)
+        progress_pct = int((solved_p / total_p * 100) if total_p > 0 else 0)
+
+        # Get mastery score for topic's patterns if available
+        p_mastery = masteries.filter(pattern__icontains=topic.slug).first()
+        mastery_score = p_mastery.mastery_score if p_mastery else (progress_pct * 0.9)
+
         topic_data.append({
             'topic': topic,
             'total_problems': total_p,
-            'total_patterns': total_patterns,
+            'solved_problems': solved_p,
+            'progress': progress_pct,
+            'mastery_score': round(mastery_score, 0),
+            'total_patterns': topic.patterns.count(),
         })
 
     context = {
         'topic_data': topic_data,
         'topics': topics,
+        'total_problems': total_problems,
+        'total_solved': total_solved,
+        'overall_progress': overall_progress,
+        'due_reviews_count': len(due_reviews),
+        'user_streak': user.streak,
     }
     return render(request, 'problems/learn_hub.html', context)
 
@@ -315,23 +348,57 @@ def learn_hub_view(request):
 def learn_topic_view(request, topic_slug):
     """Detailed Learning Guide & Custom Notes Page for a specific topic."""
     topic = get_object_or_404(Topic, slug=topic_slug)
-    problems = topic.problems.filter(is_active=True)
+    user = request.user
+    problems = list(topic.problems.filter(is_active=True))
     patterns = topic.patterns.all()
 
+    from apps.submissions.models import Submission
+    from apps.progress.models import PatternMastery
+
+    accepted_ids = set(Submission.objects.filter(
+        user=user, problem__topic=topic, status='accepted'
+    ).values_list('problem_id', flat=True))
+
+    # Categorize problems into 5 Levels for the learning roadmap
+    level1_problems = [p for p in problems if p.difficulty == 'easy'][:3]
+    level2_problems = [p for p in problems if p.difficulty == 'easy'][3:] + [p for p in problems if p.difficulty == 'medium'][:2]
+    level3_problems = [p for p in problems if p.difficulty == 'medium'][2:5]
+    level4_problems = [p for p in problems if p.difficulty == 'medium'][5:] + [p for p in problems if p.difficulty == 'hard'][:2]
+    level5_problems = [p for p in problems if p.difficulty == 'hard'][2:]
+
+    # Fallbacks if list division leaves some levels empty
+    if not level1_problems and problems:
+        level1_problems = problems[:2]
+    if not level3_problems and len(problems) > 2:
+        level3_problems = problems[2:5]
+    if not level5_problems and len(problems) > 4:
+        level5_problems = problems[4:]
+
     # Calculate Easy, Medium, Hard breakdown
-    easy_count = problems.filter(difficulty='easy').count()
-    medium_count = problems.filter(difficulty='medium').count()
-    hard_count = problems.filter(difficulty='hard').count()
+    easy_count = sum(1 for p in problems if p.difficulty == 'easy')
+    medium_count = sum(1 for p in problems if p.difficulty == 'medium')
+    hard_count = sum(1 for p in problems if p.difficulty == 'hard')
+
+    # Spaced repetition status for this topic pattern
+    p_mastery = PatternMastery.objects.filter(user=user, pattern__icontains=topic.slug).first()
 
     context = {
         'topic': topic,
         'problems': problems,
         'patterns': patterns,
+        'accepted_ids': accepted_ids,
         'easy_count': easy_count,
         'medium_count': medium_count,
         'hard_count': hard_count,
+        'level1_problems': level1_problems,
+        'level2_problems': level2_problems,
+        'level3_problems': level3_problems,
+        'level4_problems': level4_problems,
+        'level5_problems': level5_problems,
+        'p_mastery': p_mastery,
     }
     return render(request, 'problems/learn_topic.html', context)
+
 
 
 @login_required
