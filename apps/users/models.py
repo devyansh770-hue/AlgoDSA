@@ -6,11 +6,14 @@ class User(AbstractUser):
     """Custom user model with DSA learning profile fields."""
 
     LANGUAGE_CHOICES = [
-        ('python', 'Python'),
-        ('javascript', 'JavaScript'),
         ('cpp', 'C++'),
         ('java', 'Java'),
+        ('python', 'Python'),
+        ('javascript', 'JavaScript'),
         ('go', 'Go'),
+        ('rust', 'Rust'),
+        ('typescript', 'TypeScript'),
+        ('csharp', 'C#'),
     ]
 
     bio = models.TextField(max_length=500, blank=True, default='')

@@ -2,7 +2,44 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from .forms import CustomUserCreationForm, UserProfileForm
+from .models import User
+
+
+def check_username_api(request):
+    """AJAX endpoint to check username availability."""
+    username = request.GET.get('username', '').strip()
+    if not username:
+        return JsonResponse({'valid': False, 'available': False, 'message': 'Username is required'})
+
+    if len(username) < 3:
+        return JsonResponse({'valid': False, 'available': False, 'message': 'Minimum 3 characters required'})
+
+    exists = User.objects.filter(username__iexact=username).exists()
+    if exists:
+        return JsonResponse({'valid': True, 'available': False, 'message': 'Username already taken'})
+    return JsonResponse({'valid': True, 'available': True, 'message': 'Username available'})
+
+
+def check_email_api(request):
+    """AJAX endpoint to check email format and availability."""
+    email = request.GET.get('email', '').strip()
+    if not email:
+        return JsonResponse({'valid': True, 'available': True, 'message': 'Email is optional'})
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'valid': False, 'available': False, 'message': 'Invalid email format'})
+
+    exists = User.objects.filter(email__iexact=email).exists()
+    if exists:
+        return JsonResponse({'valid': True, 'available': False, 'message': 'Email already registered'})
+    return JsonResponse({'valid': True, 'available': True, 'message': 'Email format valid & available'})
+
 
 
 def landing_page(request):

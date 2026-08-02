@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AlgoDSA — AI Interview Preparation Platform{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            glow: 'rgba(99, 102, 241, 0.25)',
+                        },
+                        dark: {
+                            bg: '#070a12',
+                            card: 'rgba(15, 23, 42, 0.75)',
+                            input: 'rgba(15, 23, 42, 0.9)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 3s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { opacity: '0.4', filter: 'blur(30px)' },
+                            '100%': { opacity: '0.8', filter: 'blur(50px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Particle Canvas JS -->
+    <script src="{% static 'js/auth_particles.js' %}"></script>
+
+    <style>
+        /* Modern Glassmorphism & Custom Focus Glows */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-input {
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-input:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-text-accent {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            background-size: 200% 200%;
+            transition: all 0.4s ease;
+        }
+
+        .btn-gradient:hover {
+            background-position: 100% 100%;
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Custom Scrollbar for Dropdown */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-[#070a12] text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white relative">
+
+    <!-- Particle Background Canvas -->
+    <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+    <!-- Animated Glowing Background Blobs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none animate-glow z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none animate-glow z-0" style="animation-delay: 2s;"></div>
+    <div class="fixed top-[40%] left-[35%] w-[400px] h-[400px] bg-cyan-600/10 rounded-full blur-[100px] pointer-events-none animate-pulse-slow z-0"></div>
+
+    <!-- Main Outer Container -->
+    <main class="relative z-10 flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div class="w-full max-w-[1400px] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            
+            <!-- ================= LEFT SIDE (45%) BRANDING SECTION ================= -->
+            <div class="lg:col-span-5 flex flex-col justify-between space-y-8 py-4 lg:py-6">
+                <!-- Logo & Brand Header -->
+                <div>
+                    <a href="{% url 'landing' %}" class="inline-flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded-xl p-1">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 p-[1px] shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div class="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center">
+                                <i data-lucide="zap" class="w-6 h-6 text-indigo-400 group-hover:text-cyan-300 transition-colors"></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
+                                Algo<span class="gradient-text-accent">DSA</span>
+                                <span class="px-2 py-0.5 text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full uppercase tracking-wider">AI Platform</span>
+                            </span>
+                        </div>
+                    </a>
+
+                    <div class="mt-8 space-y-3">
+                        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight gradient-text leading-[1.15]">
+                            Master Technical <br class="hidden sm:inline" />Interviews with <span class="gradient-text-accent">AI</span>
+                        </h1>
+                        <p class="text-base sm:text-lg text-slate-400 font-medium leading-relaxed max-w-md">
+                            Practice. Learn. Think like a Senior Engineer.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interactive AI Interview Showcase Artwork Card -->
+                <div class="glass-card rounded-2xl p-5 border border-slate-800/80 shadow-2xl relative overflow-hidden group hover:border-indigo-500/40 transition-colors duration-500">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all duration-500"></div>
+                    
+                    <!-- Top Status Bar -->
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-xs font-mono font-medium text-slate-300">Alex AI Mentor • Active Session</span>
+                        </div>
+                        <span class="px-2 py-0.5 text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md">
+                            98% FAANG Match
+                        </span>
+                    </div>
+
+                    <!-- Code Snippet & AI Output Preview -->
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 space-y-1">
+                            <div class="text-slate-500"># Current Problem: Dynamic Programming</div>
+                            <div><span class="text-purple-400">def</span> <span class="text-blue-400">maxSubArray</span>(nums: <span class="text-cyan-400">List[int]</span>) -> <span class="text-cyan-400">int</span>:</div>
+                            <div class="pl-4 text-emerald-400">max_sum = current = nums[0]</div>
+                            <div class="pl-4 text-slate-400"># AI evaluating space complexity...</div>
+                        </div>
+
+                        <!-- Live Audio Waveform Simulation -->
+                        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-indigo-200">
+                            <i data-lucide="mic" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
+                            <div class="flex-grow flex items-center gap-1 h-4">
+                                <span class="w-1 bg-indigo-400 h-2 rounded-full animate-pulse"></span>
+                                <span class="w-1 bg-indigo-400 h-4 rounded-full animate-pulse" style="animation-delay: 0.1s"></span>
+                                <span class="w-1 bg-indigo-400 h-3 rounded-full animate-pulse" style="animation-delay: 0.2s"></span>
+                                <span class="w-1 bg-indigo-400 h-4 rounded-full animate-pulse" style="animation-delay: 0.3s"></span>
+                                <span class="w-1 bg-indigo-400 h-2 rounded-full animate-pulse" style="animation-delay: 0.4s"></span>
+                            </div>
+                            <span class="text-[11px] font-sans font-medium text-indigo-300">Voice Analysis</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature List with Icons -->
+                <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm font-medium text-slate-300">
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>AI Interview Simulator</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>Alex AI Mentor</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>Monaco Coding Studio</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>Spaced Repetition</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>LeetCode + GFG Sync</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                        <span>Interview Analytics</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Social Proof / Testimonials -->
+                <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <!-- Avatar Overlap Stack -->
+                        <div class="flex -space-x-2">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 ring-2 ring-slate-950 flex items-center justify-center text-[10px] font-bold text-white">DE</div>
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 ring-2 ring-slate-950 flex items-center justify-center text-[10px] font-bold text-white">AR</div>
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 ring-2 ring-slate-950 flex items-center justify-center text-[10px] font-bold text-white">VS</div>
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-rose-500 to-orange-500 ring-2 ring-slate-950 flex items-center justify-center text-[10px] font-bold text-white">+5k</div>
+                        </div>
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-1 text-amber-400 text-xs">
+                                ★★★★★ <span class="text-slate-300 font-bold text-[11px] ml-1">5.0</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400">Trusted by engineers at FAANG</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= RIGHT SIDE (55%) AUTH CARD CONTAINER ================= -->
+            <div class="lg:col-span-7 flex justify-center w-full">
+                <div class="w-full max-w-[550px]">
+                    <div class="glass-card rounded-3xl p-6 sm:p-10 shadow-2xl border border-slate-800/80 relative overflow-hidden">
+                        <!-- Top Glowing Accent Bar -->
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400"></div>
+                        
+                        {% block auth_content %}
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer Copyright -->
+    <footer class="relative z-10 py-4 text-center text-xs text-slate-500">
+        &copy; {% now "Y" %} AlgoDSA AI Workstation. Built for senior software engineering candidates.
+    </footer>
+
+    <script>
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

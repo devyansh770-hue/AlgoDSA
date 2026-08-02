@@ -36,6 +36,12 @@ class CustomUserCreationForm(UserCreationForm):
             'placeholder': 'Confirm Password',
         })
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email address already exists.")
+        return email
+
 
 class UserProfileForm(forms.ModelForm):
     """Profile edit form."""
