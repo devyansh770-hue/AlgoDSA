@@ -165,14 +165,26 @@ def problem_detail(request, topic_slug, problem_slug):
 
 @login_required
 def learn_hub_view(request):
-    """DSA Learning & Notes Hub Overview Page."""
-    topics = Topic.objects.all().order_by('order')
-    user = request.user
-
+    """University Learning Hub Home Page with categorized topics and roadmap tree."""
+    from .models import Topic, Lesson, VideoResource
     from apps.submissions.models import Submission
-    from apps.progress.models import PatternMastery
+    from apps.progress.models import PatternMastery, SM2ReviewSchedule
+    from django.utils import timezone
 
-    # Solved problem IDs for current user
+    user = request.user
+    topics = Topic.objects.all().prefetch_related('patterns', 'lessons', 'problems').order_by('order')
+
+    # Categories grouping
+    categories = [
+        {'key': 'foundations', 'title': 'Foundations', 'icon': '📐', 'desc': 'Big-O, Memory, Recursion'},
+        {'key': 'linear', 'title': 'Linear Data Structures', 'icon': '📊', 'desc': 'Arrays, Strings, Hash Maps, Lists'},
+        {'key': 'algorithms', 'title': 'Searching & Algorithmic Techniques', 'icon': '⚡', 'desc': 'Binary Search, Two Pointer, Sliding Window'},
+        {'key': 'non_linear', 'title': 'Non-Linear Data Structures', 'icon': '🌳', 'desc': 'Trees, BST, Heap, Trie, Graph'},
+        {'key': 'advanced', 'title': 'Advanced Data Structures & DP', 'icon': '🧩', 'desc': 'Dynamic Programming, Segment Trees'},
+        {'key': 'math_bit', 'title': 'Math & Bit Manipulation', 'icon': '🔢', 'desc': 'Bitwise Tricks, Prime Sieve, GCD'},
+    ]
+
+    # User progress
     accepted_ids = set(Submission.objects.filter(
         user=user, status='accepted'
     ).values_list('problem_id', flat=True))
@@ -181,119 +193,279 @@ def learn_hub_view(request):
     total_solved = len(accepted_ids)
     overall_progress = int((total_solved / total_problems * 100) if total_problems > 0 else 0)
 
-    # Masteries & due reviews
-    from django.utils import timezone
+    # Due SM-2 reviews
     today = timezone.now().date()
-    masteries = PatternMastery.objects.filter(user=user)
-    due_reviews = [m for m in masteries if m.next_review and m.next_review <= today]
+    due_reviews = SM2ReviewSchedule.objects.filter(user=user, next_review__lte=today).count()
 
-    topic_data = []
-    for topic in topics:
-        topic_problems = topic.problems.filter(is_active=True)
-        total_p = topic_problems.count()
-        solved_p = sum(1 for p in topic_problems if p.id in accepted_ids)
-        progress_pct = int((solved_p / total_p * 100) if total_p > 0 else 0)
+    categorized_topics = []
+    for cat in categories:
+        cat_topics = [t for t in topics if t.category == cat['key'] or (cat['key'] == 'linear' and not t.category)]
+        topic_items = []
+        for t in cat_topics:
+            t_probs = t.problems.filter(is_active=True)
+            t_solved = sum(1 for p in t_probs if p.id in accepted_ids)
+            t_total = t_probs.count()
+            t_pct = int((t_solved / t_total * 100) if t_total > 0 else 0)
 
-        # Get mastery score for topic's patterns if available
-        p_mastery = masteries.filter(pattern__icontains=topic.slug).first()
-        mastery_score = p_mastery.mastery_score if p_mastery else (progress_pct * 0.9)
+            patterns = list(t.patterns.all())
+            lessons = list(t.lessons.all())
 
-        topic_data.append({
-            'topic': topic,
-            'total_problems': total_p,
-            'solved_problems': solved_p,
-            'progress': progress_pct,
-            'mastery_score': round(mastery_score, 0),
-            'total_patterns': topic.patterns.count(),
+            sub_concepts = [
+                {'name': 'Introduction & Memory', 'icon': '📖', 'url': f'/learn/{t.slug}/#sec-overview'},
+                {'name': 'Big-O Complexity', 'icon': '📈', 'url': f'/learn/{t.slug}/#sec-complexity'},
+                {'name': 'Operations & Code (6 Languages)', 'icon': '💻', 'url': f'/learn/{t.slug}/#sec-code'},
+                {'name': 'Common Mistakes', 'icon': '⚠️', 'url': f'/learn/{t.slug}/#sec-gotchas'},
+                {'name': 'Interview Tips', 'icon': '💡', 'url': f'/learn/{t.slug}/#sec-gotchas'},
+            ]
+
+            search_terms = [t.name.lower(), t.description.lower(), t.notes_content.lower(), t.real_world_analogy.lower(), t.category.lower(), 'introduction', 'complexity', 'operations', 'common mistakes', 'interview']
+
+            for p in patterns:
+                search_terms.append(p.name.lower())
+                search_terms.append(p.description.lower())
+                sub_concepts.append({
+                    'name': p.name,
+                    'icon': p.icon or '⚡',
+                    'url': f'/learn/{t.slug}/{p.slug}/'
+                })
+
+            for l in lessons:
+                search_terms.append(l.title.lower())
+                search_terms.append(l.overview.lower())
+                search_terms.append(l.when_use.lower())
+                p_slug = l.pattern.slug if l.pattern else (patterns[0].slug if patterns else '')
+                if p_slug:
+                    sub_concepts.append({
+                        'name': l.title,
+                        'icon': '📖',
+                        'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
+                    })
+
+            # Append topic specific key DSA terms so searching any concept brings up the topic card
+            if t.slug == 'arrays':
+                search_terms.extend(['prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access', 'operations'])
+            elif t.slug == 'strings':
+                search_terms.extend(['frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
+            elif t.slug == 'sliding-window':
+                search_terms.extend(['fixed window', 'variable window', 'subarray sum', 'max sum', 'min window', 'subarrays'])
+            elif t.slug == 'two-pointer':
+                search_terms.extend(['opposite direction', 'same direction', 'slow fast pointers', 'container with most water', '3sum', 'sorted array'])
+            elif t.slug == 'binary-search':
+                search_terms.extend(['logarithmic search', 'lower bound', 'upper bound', 'rotated sorted array', 'binary search on answer'])
+            elif t.slug == 'hash-maps':
+                search_terms.extend(['hashing', 'collision resolution', 'chaining', 'open addressing', 'subarray sum equals k'])
+            elif t.slug == 'linked-list':
+                search_terms.extend(['pointers', 'dummy node', 'slow fast pointers', 'floyd cycle', 'reversal'])
+            elif t.slug == 'stack':
+                search_terms.extend(['lifo', 'valid parentheses', 'monotonic stack', 'next greater element'])
+            elif t.slug == 'queue':
+                search_terms.extend(['fifo', 'deque', 'monotonic queue', 'sliding window max'])
+            elif t.slug == 'trees':
+                search_terms.extend(['dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'tree height', 'diameter', 'lca'])
+            elif t.slug == 'bst':
+                search_terms.extend(['binary search tree', 'inorder sorted', 'validate bst', 'kth smallest'])
+            elif t.slug == 'heap':
+                search_terms.extend(['priority queue', 'min heap', 'max heap', 'top k elements', 'median stream'])
+            elif t.slug == 'trie':
+                search_terms.extend(['prefix tree', 'autocomplete', 'word search'])
+            elif t.slug == 'graph':
+                search_terms.extend(['bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu', 'connected components'])
+            elif t.slug == 'greedy':
+                search_terms.extend(['interval scheduling', 'activity selection', 'fractional knapsack', 'jump game'])
+            elif t.slug == 'backtracking':
+                search_terms.extend(['subsets', 'combinations', 'permutations', 'n-queens', 'sudoku solver'])
+            elif t.slug == 'dynamic-programming':
+                search_terms.extend(['dp', 'memoization', 'tabulation', '0/1 knapsack', 'lcs', 'subproblems'])
+
+            topic_items.append({
+                'topic': t,
+                'solved_count': t_solved,
+                'total_count': t_total,
+                'progress_pct': t_pct,
+                'lesson_count': len(lessons) or len(patterns) or 1,
+                'sub_concepts': sub_concepts,
+                'search_text': ' '.join(search_terms)
+            })
+        categorized_topics.append({
+            'info': cat,
+            'topics': topic_items
         })
 
+
     context = {
-        'topic_data': topic_data,
+        'categorized_topics': categorized_topics,
         'topics': topics,
         'total_problems': total_problems,
         'total_solved': total_solved,
         'overall_progress': overall_progress,
-        'due_reviews_count': len(due_reviews),
-        'user_streak': user.streak,
+        'due_reviews_count': due_reviews,
+        'user_streak': getattr(user, 'streak', 1),
     }
     return render(request, 'problems/learn_hub.html', context)
 
 
 @login_required
 def learn_topic_view(request, topic_slug):
-    """Detailed Learning Guide & Custom Notes Page for a specific topic."""
-    topic = get_object_or_404(Topic, slug=topic_slug)
-    user = request.user
-    problems = list(topic.problems.filter(is_active=True))
-    patterns = topic.patterns.all()
-
+    """Topic University Course Page."""
+    from .models import Topic, Lesson, VideoResource
     from apps.submissions.models import Submission
-    from apps.progress.models import PatternMastery
+
+    topic = get_object_or_404(Topic.objects.prefetch_related('patterns', 'lessons', 'problems'), slug=topic_slug)
+    user = request.user
+
+    # Fetch patterns & lessons
+    patterns = topic.patterns.prefetch_related('lessons').all()
+    lessons = topic.lessons.all()
+    if not lessons.exists() and patterns.exists():
+        lessons = Lesson.objects.filter(pattern__in=patterns)
+
+    # First lesson if exists
+    active_lesson = lessons.first()
 
     accepted_ids = set(Submission.objects.filter(
         user=user, problem__topic=topic, status='accepted'
     ).values_list('problem_id', flat=True))
 
-    # Categorize problems into 5 Levels for the learning roadmap
-    level1_problems = [p for p in problems if p.difficulty == 'easy'][:3]
-    level2_problems = [p for p in problems if p.difficulty == 'easy'][3:] + [p for p in problems if p.difficulty == 'medium'][:2]
-    level3_problems = [p for p in problems if p.difficulty == 'medium'][2:5]
-    level4_problems = [p for p in problems if p.difficulty == 'medium'][5:] + [p for p in problems if p.difficulty == 'hard'][:2]
-    level5_problems = [p for p in problems if p.difficulty == 'hard'][2:]
+    problems = list(topic.problems.filter(is_active=True))
 
-    # Fallbacks if list division leaves some levels empty
-    if not level1_problems and problems:
-        level1_problems = problems[:2]
-    if not level3_problems and len(problems) > 2:
-        level3_problems = problems[2:5]
-    if not level5_problems and len(problems) > 4:
-        level5_problems = problems[4:]
+    # Categorize questions into 5 tiers
+    tier_concept = [p for p in problems if p.practice_tier == 'concept_building' or p.difficulty == 'easy']
+    tier_pattern = [p for p in problems if p.practice_tier == 'pattern_recognition' or p.difficulty == 'easy']
+    tier_mastery = [p for p in problems if p.practice_tier == 'pattern_mastery' or p.difficulty == 'medium']
+    tier_interview = [p for p in problems if p.practice_tier == 'interview_ready' or p.difficulty == 'medium']
+    tier_expert = [p for p in problems if p.practice_tier == 'expert' or p.difficulty == 'hard']
 
-    # Calculate Easy, Medium, Hard breakdown
-    easy_count = sum(1 for p in problems if p.difficulty == 'easy')
-    medium_count = sum(1 for p in problems if p.difficulty == 'medium')
-    hard_count = sum(1 for p in problems if p.difficulty == 'hard')
+    # Curated videos
+    videos = VideoResource.objects.filter(topic=topic).order_by('order')
 
-    # Spaced repetition status for this topic pattern
-    p_mastery = PatternMastery.objects.filter(user=user, pattern__icontains=topic.slug).first()
+    all_topics = Topic.objects.all().prefetch_related('patterns', 'lessons').order_by('order')
 
     context = {
         'topic': topic,
-        'problems': problems,
         'patterns': patterns,
+        'lessons': lessons,
+        'active_lesson': active_lesson,
+        'problems': problems,
         'accepted_ids': accepted_ids,
-        'easy_count': easy_count,
-        'medium_count': medium_count,
-        'hard_count': hard_count,
-        'level1_problems': level1_problems,
-        'level2_problems': level2_problems,
-        'level3_problems': level3_problems,
-        'level4_problems': level4_problems,
-        'level5_problems': level5_problems,
-        'p_mastery': p_mastery,
+        'tier_concept': tier_concept,
+        'tier_pattern': tier_pattern,
+        'tier_mastery': tier_mastery,
+        'tier_interview': tier_interview,
+        'tier_expert': tier_expert,
+        'videos': videos,
+        'all_topics': all_topics,
     }
     return render(request, 'problems/learn_topic.html', context)
 
 
-
 @login_required
 def learn_pattern_view(request, topic_slug, pattern_slug):
-    """21-section comprehensive study guide for a specific pattern."""
-    from .models import Pattern
+    """Pattern / Subtopic Lesson View."""
+    from .models import Topic, Pattern, Lesson, VideoResource
+    from apps.submissions.models import Submission
+
     topic = get_object_or_404(Topic, slug=topic_slug)
     pattern = get_object_or_404(Pattern, topic=topic, slug=pattern_slug)
-    
-    # Also fetch some practice problems for this pattern if we wanted to
-    # but the pattern data might just dictate the structure for now
-    problems = topic.problems.filter(is_active=True) # Could filter by pattern if mapping exists
-    
+
+    lessons = pattern.lessons.all()
+    active_lesson = lessons.first()
+
+    videos = VideoResource.objects.filter(pattern=pattern).order_by('order')
+    if not videos.exists():
+        videos = VideoResource.objects.filter(topic=topic).order_by('order')
+
+    problems = list(topic.problems.filter(is_active=True))
+    accepted_ids = set(Submission.objects.filter(
+        user=request.user, problem__topic=topic, status='accepted'
+    ).values_list('problem_id', flat=True))
+
+    all_topics = Topic.objects.all().prefetch_related('patterns', 'lessons').order_by('order')
+
     context = {
         'topic': topic,
         'pattern': pattern,
-        'data': pattern.content_json, # The 21 sections of JSON data
-        'problems': problems
+        'lessons': lessons,
+        'active_lesson': active_lesson,
+        'data': pattern.content_json,
+        'videos': videos,
+        'problems': problems,
+        'accepted_ids': accepted_ids,
+        'all_topics': all_topics,
     }
     return render(request, 'problems/learn_pattern.html', context)
+
+
+@login_required
+def learn_lesson_view(request, topic_slug, pattern_slug, lesson_slug):
+    """Specific Lesson Detail View."""
+    from .models import Topic, Pattern, Lesson, VideoResource
+    from apps.submissions.models import Submission
+
+    topic = get_object_or_404(Topic, slug=topic_slug)
+    pattern = get_object_or_404(Pattern, topic=topic, slug=pattern_slug)
+    lesson = get_object_or_404(Lesson, pattern=pattern, slug=lesson_slug)
+
+    videos = lesson.video_resources.all()
+    if not videos.exists():
+        videos = VideoResource.objects.filter(topic=topic).order_by('order')
+
+    problems = list(topic.problems.filter(is_active=True))
+    accepted_ids = set(Submission.objects.filter(
+        user=request.user, problem__topic=topic, status='accepted'
+    ).values_list('problem_id', flat=True))
+
+    all_topics = Topic.objects.all().prefetch_related('patterns', 'lessons').order_by('order')
+
+    context = {
+        'topic': topic,
+        'pattern': pattern,
+        'lesson': lesson,
+        'active_lesson': lesson,
+        'videos': videos,
+        'problems': problems,
+        'accepted_ids': accepted_ids,
+        'all_topics': all_topics,
+    }
+    return render(request, 'problems/learn_topic.html', context)
+
+
+@login_required
+def record_sm2_review(request):
+    """API endpoint to update SM-2 Spaced Repetition for a topic/pattern/lesson."""
+    from apps.progress.models import SM2ReviewSchedule
+    from django.utils import timezone
+    import datetime
+    import json
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            days = int(data.get('days', 1))
+            topic_id = data.get('topic_id')
+
+            topic = get_object_or_404(Topic, id=topic_id) if topic_id else None
+
+            next_date = timezone.now().date() + datetime.timedelta(days=days)
+            schedule, created = SM2ReviewSchedule.objects.update_or_create(
+                user=request.user,
+                topic=topic,
+                defaults={
+                    'interval_days': days,
+                    'next_review': next_date,
+                    'repetitions': 1 if days <= 3 else 2
+                }
+            )
+
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Review scheduled in {days} days ({next_date.strftime("%b %d, %Y")})',
+                'next_review': str(next_date)
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
 
 
 

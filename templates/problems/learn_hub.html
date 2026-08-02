@@ -4,7 +4,7 @@
 {% block title %}DSA Learning Ecosystem — AlgoDSA Interactive University{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ searchQuery: '', expandedTopic: 'arrays' }">
 
     <!-- ================= 1. HERO ECOSYSTEM BANNER ================= -->
     <div class="relative rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 p-6 sm:p-8 shadow-2xl overflow-hidden">
@@ -61,6 +61,41 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= GLOBAL SEARCH BAR ================= -->
+    <div class="p-6 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-0.5">
+                <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                    <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
+                    <span>Search Topics, Concepts & Patterns</span>
+                </h2>
+                <p class="text-xs text-slate-400 font-mono">Search any concept e.g. "array", "prefix sum", "sliding window", "complexity", "interview", "kadane"</p>
+            </div>
+
+            <div class="relative w-full sm:w-96">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </div>
+                <input type="text" x-model="searchQuery" placeholder="Type concept (e.g. prefix sum, sliding window)..."
+                       class="w-full pl-10 pr-9 py-3 rounded-2xl bg-slate-950 border border-slate-700/80 text-xs text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all font-mono shadow-inner">
+                <button type="button" x-show="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Filter Badges -->
+        <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span class="text-slate-400 font-medium font-mono text-[11px]">Quick Filters:</span>
+            <button type="button" @click="searchQuery = 'array'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">📊 Array</button>
+            <button type="button" @click="searchQuery = 'prefix sum'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">⚡ Prefix Sum</button>
+            <button type="button" @click="searchQuery = 'sliding window'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">🪟 Sliding Window</button>
+            <button type="button" @click="searchQuery = 'two pointer'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">👈👉 Two Pointer</button>
+            <button type="button" @click="searchQuery = 'complexity'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">📈 Complexity</button>
+            <button type="button" @click="searchQuery = 'interview'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">💡 Interview Notes</button>
         </div>
     </div>
 
@@ -144,46 +179,133 @@
         </div>
     </div>
 
-    <!-- ================= 3. TOPIC MODULES GRID ================= -->
-    <div class="space-y-4" x-data="{ searchQuery: '' }">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-            <div>
-                <h2 class="text-xl font-black text-white tracking-tight">Interactive Topic Courses</h2>
-                <span class="text-xs text-slate-400 font-mono">{{ topic_data|length }} Full Learning Modules</span>
-            </div>
-
-            <!-- Search Bar Input -->
-            <div class="relative w-full sm:w-72">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                    <i data-lucide="search" class="w-4 h-4"></i>
+    <!-- ================= 3. COMPLETE INTERACTIVE CURRICULUM TREE ================= -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                    <i data-lucide="folder-tree" class="w-5 h-5"></i>
                 </div>
-                <input type="text" x-model="searchQuery" placeholder="Search topics (e.g. Arrays, Trees)..."
-                       class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all font-mono">
+                <div>
+                    <h2 class="text-2xl font-black text-white tracking-tight">Complete University Curriculum Tree</h2>
+                    <p class="text-xs text-slate-400 font-mono">22 Topics • All Lessons & Patterns Expandable</p>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for item in topic_data %}
-            <a href="{% url 'learn_topic' item.topic.slug %}"
-               x-show="!searchQuery || '{{ item.topic.name|lower|escapejs }}'.includes(searchQuery.toLowerCase()) || '{{ item.topic.description|lower|escapejs }}'.includes(searchQuery.toLowerCase())"
-               class="block group">
-                <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 group-hover:border-indigo-500/50 group-hover:-translate-y-1 transition-all duration-300 relative overflow-hidden h-full flex flex-col justify-between">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/15 transition-all"></div>
+        <!-- 22 Topics Expandable Tree Accordion -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for t in topics %}
+            <div x-show="!searchQuery || '{{ t.name|lower|escapejs }}'.includes(searchQuery.toLowerCase()) || '{{ t.description|lower|escapejs }}'.includes(searchQuery.toLowerCase()) || 'array prefix sum sliding window two pointer kadane complexity common mistakes interview'.includes(searchQuery.toLowerCase())"
+                 class="rounded-2xl bg-slate-950/80 border border-slate-800/90 overflow-hidden transition-all duration-300">
+                
+                <!-- Topic Accordion Header -->
+                <button type="button" @click="expandedTopic = (expandedTopic === '{{ t.slug }}' ? null : '{{ t.slug }}')"
+                        class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">{{ t.icon }}</span>
+                        <div>
+                            <div class="font-extrabold text-white text-sm flex items-center gap-2">
+                                <span>{{ t.name }}</span>
+                                <span class="px-2 py-0.5 text-[10px] font-mono font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-full">
+                                    {{ t.lessons.count|default:t.patterns.count }} Lessons
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">{{ t.description }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="chevron-down" :class="searchQuery || expandedTopic === '{{ t.slug }}' ? 'rotate-180 text-indigo-400' : 'text-slate-500'" class="w-4 h-4 transition-transform"></i>
+                    </div>
+                </button>
+
+                <!-- Expanded Sub-Tree (Patterns & Lessons) -->
+                <div x-show="searchQuery !== '' || expandedTopic === '{{ t.slug }}'" class="p-4 pt-0 border-t border-slate-800/60 bg-slate-900/40 space-y-3">
+                    {% if t.patterns.exists %}
+                    {% for p in t.patterns.all %}
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between text-xs font-bold text-indigo-300">
+                            <a href="{% url 'learn_pattern' t.slug p.slug %}" class="flex items-center gap-1.5 hover:underline">
+                                <span>⚡</span>
+                                <span>{{ p.name }}</span>
+                            </a>
+                            <span class="text-[10px] text-slate-500 font-mono">Sub-Pattern</span>
+                        </div>
+
+                        <div class="pl-3 space-y-1 border-l border-indigo-500/30 text-xs">
+                            {% for l in p.lessons.all %}
+                            <a href="{% url 'learn_lesson' t.slug p.slug l.slug %}" class="flex items-center justify-between py-1 text-slate-300 hover:text-white group">
+                                <span class="font-medium group-hover:translate-x-1 transition-transform">📖 {{ l.title }}</span>
+                                <span class="text-[10px] font-mono text-slate-500 group-hover:text-indigo-400">Read Lesson →</span>
+                            </a>
+                            {% empty %}
+                            <a href="{% url 'learn_pattern' t.slug p.slug %}" class="block py-1 text-slate-400 hover:text-indigo-300 font-mono text-[11px]">
+                                📖 Main {{ p.name }} Study Guide →
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                        <span>📖 {{ t.name }} Comprehensive Study Guide</span>
+                        <a href="{% url 'learn_topic' t.slug %}" class="font-bold text-indigo-400 hover:text-indigo-300">Open Course →</a>
+                    </div>
+                    {% endif %}
+
+                    <div class="pt-2 text-right">
+                        <a href="{% url 'learn_topic' t.slug %}" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300">
+                            <span>Open Full {{ t.name }} Workspace</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ================= 4. INTERACTIVE TOPIC COURSES GRID ================= -->
+    <div class="space-y-8">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+                <h2 class="text-2xl font-black text-white tracking-tight">Interactive University Courses</h2>
+                <p class="text-xs text-slate-400 font-mono">22 Comprehensive Data Structures & Algorithms Tracks</p>
+            </div>
+        </div>
+
+        {% for cat_group in categorized_topics %}
+        {% if cat_group.topics %}
+        <div class="space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-2">
+                <span class="text-2xl">{{ cat_group.info.icon }}</span>
+                <div>
+                    <h3 class="text-lg font-black text-white tracking-tight">{{ cat_group.info.title }}</h3>
+                    <p class="text-xs text-slate-400 font-mono">{{ cat_group.info.desc }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in cat_group.topics %}
+                <div x-show="!searchQuery || '{{ item.search_text|escapejs }}'.includes(searchQuery.toLowerCase())"
+                     class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl hover:bg-indigo-500/15 transition-all"></div>
 
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl hover:scale-110 transition-transform">
                                 {{ item.topic.icon }}
                             </div>
                             <span class="px-2.5 py-0.5 text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-full uppercase tracking-wider font-mono">
-                                {{ item.total_patterns }} Patterns
+                                {{ item.lesson_count }} Lessons
                             </span>
                         </div>
 
                         <div>
-                            <h3 class="text-lg font-extrabold text-white group-hover:text-indigo-300 transition-colors">
+                            <a href="{% url 'learn_topic' item.topic.slug %}" class="text-lg font-extrabold text-white hover:text-indigo-300 transition-colors">
                                 {{ item.topic.name }}
-                            </h3>
+                            </a>
                             <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                                 {{ item.topic.description }}
                             </p>
@@ -195,30 +317,47 @@
                             <span class="text-slate-400 italic line-clamp-2">{{ item.topic.real_world_analogy }}</span>
                         </div>
                         {% endif %}
+
+                        <!-- SUB-CONCEPTS & LESSONS LINK BADGES -->
+                        <div class="pt-2 border-t border-slate-800/80 space-y-2">
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
+                                <span>Key Concepts & Sub-Topics</span>
+                                <span class="text-indigo-400 text-[10px] font-normal">Click for detailed reading →</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                                {% for concept in item.sub_concepts %}
+                                <a href="{{ concept.url }}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] text-slate-300 hover:text-white hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all font-medium">
+                                    <span>{{ concept.icon }}</span>
+                                    <span>{{ concept.name }}</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="space-y-3 pt-3 border-t border-slate-800/80">
+                    <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
                         <div class="flex items-center justify-between text-xs">
                             <span class="text-slate-400 font-medium">Topic Completion</span>
-                            <span class="font-mono font-bold text-slate-200">{{ item.solved_problems }} / {{ item.total_problems }} Solved</span>
+                            <span class="font-mono font-bold text-slate-200">{{ item.solved_count }} / {{ item.total_count }} Solved</span>
                         </div>
                         <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style="width: {{ item.progress }}%;"></div>
+                            <div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style="width: {{ item.progress_pct }}%;"></div>
                         </div>
 
-                        <div class="flex items-center justify-between text-xs font-bold text-indigo-400 group-hover:text-indigo-300 pt-1">
-                            <span>Start Interactive Course</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                        </div>
+                        <a href="{% url 'learn_topic' item.topic.slug %}" class="flex items-center justify-between text-xs font-bold text-indigo-400 hover:text-indigo-300 pt-1">
+                            <span>Open Main {{ item.topic.name }} Workspace</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 hover:translate-x-1 transition-transform"></i>
+                        </a>
                     </div>
                 </div>
-            </a>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
+        {% endif %}
+        {% endfor %}
     </div>
 
-
-    <!-- ================= 4. MASTER SOLVING WORKFLOW GUIDE ================= -->
+    <!-- ================= 5. MASTER SOLVING WORKFLOW GUIDE ================= -->
     <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
         <div class="flex items-center gap-2.5 border-b border-slate-800 pb-3">
             <div class="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center">

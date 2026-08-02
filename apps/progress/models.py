@@ -79,3 +79,57 @@ class TopicProgress(models.Model):
         if total == 0:
             return 0
         return int(self.problems_solved / total * 100)
+
+
+class LessonProgress(models.Model):
+    """Tracks user completion and quiz scores for specific lessons."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='lesson_progresses'
+    )
+    lesson = models.ForeignKey(
+        'problems.Lesson',
+        on_delete=models.CASCADE,
+        related_name='progresses'
+    )
+    is_completed = models.BooleanField(default=False)
+    video_watched = models.BooleanField(default=False)
+    quiz_score = models.PositiveSmallIntegerField(default=0)
+    last_accessed = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'lesson_progress'
+        unique_together = ['user', 'lesson']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title}: {'Completed' if self.is_completed else 'In Progress'}"
+
+
+class SM2ReviewSchedule(models.Model):
+    """Spaced repetition schedule (SM-2 algorithm) for topics, patterns, or lessons."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sm2_schedules'
+    )
+    topic = models.ForeignKey('problems.Topic', on_delete=models.CASCADE, null=True, blank=True)
+    pattern = models.ForeignKey('problems.Pattern', on_delete=models.CASCADE, null=True, blank=True)
+    lesson = models.ForeignKey('problems.Lesson', on_delete=models.CASCADE, null=True, blank=True)
+
+    ease_factor = models.FloatField(default=2.5)
+    interval_days = models.PositiveIntegerField(default=1)
+    repetitions = models.PositiveIntegerField(default=0)
+    next_review = models.DateField(null=True, blank=True)
+    last_reviewed = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'sm2_review_schedule'
+        ordering = ['next_review']
+
+    def __str__(self):
+        item = self.lesson or self.pattern or self.topic
+        return f"SM-2 Schedule for {self.user.username} - {item}"
+
