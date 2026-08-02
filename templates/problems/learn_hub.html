@@ -64,22 +64,23 @@
         </div>
     </div>
 
-    <!-- ================= 2. SEARCH & MAJOR TOPIC QUICK FILTERS ================= -->
-    <div class="p-6 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-4">
+    <!-- ================= 2. GEEKSFORGEEKS-STYLE SEARCH BAR & QUICK FILTERS ================= -->
+    <div class="relative p-6 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="space-y-0.5">
                 <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
                     <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
-                    <span>Search Topics, Concepts & Patterns</span>
+                    <span>Search DSA Topics, Patterns & Sub-Concepts</span>
                 </h2>
-                <p class="text-xs text-slate-400 font-mono">Type any concept e.g. "prefix sum", "sliding window", "binary search", "complexity", "interview"</p>
+                <p class="text-xs text-slate-400 font-mono">Instant search like GeeksforGeeks e.g. "array", "prefix sum", "sliding window", "binary search", "tree", "dp"</p>
             </div>
 
+            <!-- Search Input Box -->
             <div class="relative w-full sm:w-96">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="search" class="w-4 h-4"></i>
                 </div>
-                <input type="text" id="hub-search-input" placeholder="Type concept (e.g. prefix sum, sliding window)..."
+                <input type="text" id="hub-search-input" autocomplete="off" placeholder="Search topic or concept (e.g. array, prefix sum)..."
                        class="w-full pl-10 pr-9 py-3 rounded-2xl bg-slate-950 border border-slate-700/80 text-xs text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all font-mono shadow-inner">
                 <button type="button" id="clear-search-btn" style="display: none;" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -87,7 +88,7 @@
             </div>
         </div>
 
-        <!-- Major Topic Quick Filter Bar -->
+        <!-- Major Topic Quick Filters Bar -->
         <div class="space-y-2 pt-2 border-t border-slate-800/80">
             <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                 Major Topic Quick Filters:
@@ -106,6 +107,21 @@
                 <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="graph">🕸️ Graph</button>
                 <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="dynamic programming">🧩 Dynamic Programming</button>
                 <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="math">💻 Bit & Math</button>
+            </div>
+        </div>
+
+        <!-- GEEKSFORGEEKS INSTANT DROPDOWN SEARCH RESULTS PANEL -->
+        <div id="search-results-dropdown" style="display: none;" class="mt-3 p-4 rounded-2xl bg-slate-950 border border-indigo-500/50 shadow-2xl space-y-3 z-30 relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 text-xs font-mono">
+                <span class="text-indigo-400 font-bold flex items-center gap-1.5">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    <span>Matching Topics & Sub-Concepts</span>
+                </span>
+                <span id="search-results-count" class="text-slate-400">0 Results Found</span>
+            </div>
+
+            <div id="search-results-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                <!-- Dynamic search items populated by JS -->
             </div>
         </div>
     </div>
@@ -220,9 +236,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for item in cat_group.topics %}
                 <div class="topic-card-item p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between"
-                     data-search-text="{{ item.search_text|lower }}"
-                     data-topic-name="{{ item.topic.name|lower }}"
-                     data-topic-category="{{ item.topic.category|lower }}">
+                     data-search-text="{{ item.search_text }}"
+                     data-topic-name="{{ item.topic.name }}"
+                     data-topic-category="{{ item.topic.category }}">
                     
                     <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl hover:bg-indigo-500/15 transition-all"></div>
 
@@ -309,8 +325,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for t in topics %}
             <div class="tree-accordion-item rounded-2xl bg-slate-950/80 border border-slate-800/90 overflow-hidden transition-all duration-300"
-                 data-search-text="{{ t.name|lower }} {{ t.description|lower }} {{ t.notes_content|lower }} arrays prefix sum sliding window two pointer binary search tree graph dp"
-                 data-topic-name="{{ t.name|lower }}">
+                 data-search-text="{{ t.name }} {{ t.description }} {{ t.notes_content }} arrays prefix sum sliding window two pointer binary search tree graph dp"
+                 data-topic-name="{{ t.name }}">
                 
                 <!-- Topic Accordion Header -->
                 <button type="button" onclick="toggleTreeAccordion('tree-content-{{ t.slug }}', this)"
@@ -421,8 +437,10 @@
 
 </div>
 
-<!-- Vanilla JS Filtering & Accordion Script -->
+<!-- Vanilla JS Search Index & Accordion Engine -->
 <script>
+const SEARCH_INDEX = {{ search_index_json|safe }};
+
 function toggleTreeAccordion(contentId, btnEl) {
     const content = document.getElementById(contentId);
     const icon = btnEl.querySelector('.chevron-icon');
@@ -442,16 +460,21 @@ function toggleTreeAccordion(contentId, btnEl) {
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('hub-search-input');
     const clearBtn = document.getElementById('clear-search-btn');
+    const dropdown = document.getElementById('search-results-dropdown');
+    const dropdownList = document.getElementById('search-results-list');
+    const dropdownCount = document.getElementById('search-results-count');
     const filterButtons = document.querySelectorAll('.quick-filter-btn');
 
     function applyFilter(query) {
         query = (query || '').toLowerCase().trim();
+
         if (searchInput && searchInput.value !== query) {
             searchInput.value = query;
         }
+
         if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
 
-        // 1. Highlight active Quick Filter button
+        // 1. Highlight Quick Filter buttons
         filterButtons.forEach(btn => {
             const filterVal = (btn.getAttribute('data-filter-value') || '').toLowerCase().trim();
             if ((filterVal === 'all' && !query) || (filterVal !== 'all' && query.includes(filterVal))) {
@@ -461,7 +484,53 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // 2. Filter Topic Cards in Courses Grid
+        // 2. Render GeeksforGeeks Instant Search Results Dropdown
+        if (!query) {
+            if (dropdown) dropdown.style.display = 'none';
+        } else {
+            const matches = SEARCH_INDEX.filter(item => {
+                const k = item.keywords || '';
+                const t = (item.title || '').toLowerCase();
+                return k.includes(query) || t.includes(query) || query.includes(t);
+            });
+
+            if (dropdownList) {
+                dropdownList.innerHTML = '';
+                if (matches.length === 0) {
+                    dropdownList.innerHTML = `
+                        <div class="col-span-full py-4 text-center text-xs text-slate-400">
+                            No instant dropdown matches. Check filtered course cards below.
+                        </div>
+                    `;
+                } else {
+                    matches.slice(0, 9).forEach(item => {
+                        const card = document.createElement('a');
+                        card.href = item.url;
+                        card.className = 'flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/80 transition-all text-xs group';
+                        
+                        const badgeText = item.type === 'topic' ? 'Topic Course' : (item.type === 'pattern' ? 'Sub-Pattern' : 'Lesson');
+                        const badgeColor = item.type === 'topic' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300';
+                        
+                        card.innerHTML = `
+                            <div class="flex items-center gap-2.5 truncate">
+                                <span class="text-base">${item.icon || '📖'}</span>
+                                <div class="truncate">
+                                    <div class="font-bold text-slate-100 group-hover:text-indigo-300 truncate">${item.title}</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">${item.parent_topic || ''}</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-mono font-bold ${badgeColor} rounded-full uppercase shrink-0">${badgeText}</span>
+                        `;
+                        dropdownList.appendChild(card);
+                    });
+                }
+            }
+
+            if (dropdownCount) dropdownCount.textContent = `${matches.length} Results Found`;
+            if (dropdown) dropdown.style.display = 'block';
+        }
+
+        // 3. Filter Topic Cards in Courses Section
         const topicCards = document.querySelectorAll('.topic-card-item');
         let visibleTopicCount = 0;
 
@@ -469,13 +538,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchData = (card.getAttribute('data-search-text') || '').toLowerCase();
             const topicName = (card.getAttribute('data-topic-name') || '').toLowerCase();
 
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query);
+            // Match query against keywords
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || query.includes(topicName);
 
             if (isMatch) {
                 card.style.display = 'flex';
                 visibleTopicCount++;
 
-                // Highlight sub-concept pills matching search query
+                // Highlight concept pills
                 const conceptPills = card.querySelectorAll('.concept-pill');
                 conceptPills.forEach(pill => {
                     const pillText = (pill.textContent || '').toLowerCase();
@@ -490,19 +560,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Hide category groups with zero visible topics
+        // Hide empty category group headers
         document.querySelectorAll('.topic-category-group').forEach(group => {
             const visibleCards = group.querySelectorAll('.topic-card-item:not([style*="display: none"])');
             group.style.display = (visibleCards.length > 0) ? 'block' : 'none';
         });
 
-        // 3. Filter Curriculum Tree Accordion Items
+        // 4. Filter Curriculum Tree Accordion Items
         const treeItems = document.querySelectorAll('.tree-accordion-item');
         treeItems.forEach(item => {
             const searchData = (item.getAttribute('data-search-text') || '').toLowerCase();
             const topicName = (item.getAttribute('data-topic-name') || '').toLowerCase();
 
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query);
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || query.includes(topicName);
 
             if (isMatch) {
                 item.style.display = 'block';
@@ -515,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // 4. Toggle No Results Display
+        // 5. Toggle No Results Display
         const noResultsMsg = document.getElementById('search-no-results');
         if (noResultsMsg) {
             noResultsMsg.style.display = (query && visibleTopicCount === 0) ? 'block' : 'none';

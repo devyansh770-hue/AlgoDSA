@@ -198,6 +198,8 @@ def learn_hub_view(request):
     due_reviews = SM2ReviewSchedule.objects.filter(user=user, next_review__lte=today).count()
 
     categorized_topics = []
+    search_index = []
+
     for cat in categories:
         cat_topics = [t for t in topics if t.category == cat['key'] or (cat['key'] == 'linear' and not t.category)]
         topic_items = []
@@ -210,6 +212,7 @@ def learn_hub_view(request):
             patterns = list(t.patterns.all())
             lessons = list(t.lessons.all())
 
+            # Built-in concepts
             sub_concepts = [
                 {'name': 'Introduction & Memory', 'icon': '📖', 'url': f'/learn/{t.slug}/#sec-overview'},
                 {'name': 'Big-O Complexity', 'icon': '📈', 'url': f'/learn/{t.slug}/#sec-complexity'},
@@ -218,21 +221,40 @@ def learn_hub_view(request):
                 {'name': 'Interview Tips', 'icon': '💡', 'url': f'/learn/{t.slug}/#sec-gotchas'},
             ]
 
-            search_terms = [t.name.lower(), t.description.lower(), t.notes_content.lower(), t.real_world_analogy.lower(), t.category.lower(), 'introduction', 'complexity', 'operations', 'common mistakes', 'interview']
+            # Primary topic keywords
+            keywords = [t.name.lower(), t.slug.lower(), t.description.lower(), cat['title'].lower(), 'introduction', 'complexity', 'operations', 'common mistakes', 'interview']
+
+            # Append singular/plural variants
+            if 'arrays' in t.slug or t.slug == 'arrays':
+                keywords.extend(['array', 'arrays', 'prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access'])
+            elif t.slug == 'strings':
+                keywords.extend(['string', 'strings', 'frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
+            elif t.slug == 'trees':
+                keywords.extend(['tree', 'trees', 'binary tree', 'dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'height', 'diameter', 'lca'])
+            elif t.slug == 'graphs':
+                keywords.extend(['graph', 'graphs', 'bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu'])
 
             for p in patterns:
-                search_terms.append(p.name.lower())
-                search_terms.append(p.description.lower())
+                keywords.append(p.name.lower())
+                keywords.append(p.slug.lower())
                 sub_concepts.append({
                     'name': p.name,
                     'icon': p.icon or '⚡',
                     'url': f'/learn/{t.slug}/{p.slug}/'
                 })
+                # Add to search index
+                search_index.append({
+                    'type': 'pattern',
+                    'title': p.name,
+                    'parent_topic': t.name,
+                    'icon': p.icon or '⚡',
+                    'keywords': f"{p.name} {p.slug} {t.name} {t.slug}".lower(),
+                    'url': f'/learn/{t.slug}/{p.slug}/'
+                })
 
             for l in lessons:
-                search_terms.append(l.title.lower())
-                search_terms.append(l.overview.lower())
-                search_terms.append(l.when_use.lower())
+                keywords.append(l.title.lower())
+                keywords.append(l.slug.lower())
                 p_slug = l.pattern.slug if l.pattern else (patterns[0].slug if patterns else '')
                 if p_slug:
                     sub_concepts.append({
@@ -240,44 +262,26 @@ def learn_hub_view(request):
                         'icon': '📖',
                         'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
                     })
+                    search_index.append({
+                        'type': 'lesson',
+                        'title': l.title,
+                        'parent_topic': t.name,
+                        'icon': '📖',
+                        'keywords': f"{l.title} {l.slug} {p.name} {t.name} {l.overview}".lower(),
+                        'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
+                    })
 
-            # Append topic specific key DSA terms so searching any concept brings up the topic card
-            if t.slug == 'arrays':
-                search_terms.extend(['prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access', 'operations'])
-            elif t.slug == 'strings':
-                search_terms.extend(['frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
-            elif t.slug == 'sliding-window':
-                search_terms.extend(['fixed window', 'variable window', 'subarray sum', 'max sum', 'min window', 'subarrays'])
-            elif t.slug == 'two-pointer':
-                search_terms.extend(['opposite direction', 'same direction', 'slow fast pointers', 'container with most water', '3sum', 'sorted array'])
-            elif t.slug == 'binary-search':
-                search_terms.extend(['logarithmic search', 'lower bound', 'upper bound', 'rotated sorted array', 'binary search on answer'])
-            elif t.slug == 'hash-maps':
-                search_terms.extend(['hashing', 'collision resolution', 'chaining', 'open addressing', 'subarray sum equals k'])
-            elif t.slug == 'linked-list':
-                search_terms.extend(['pointers', 'dummy node', 'slow fast pointers', 'floyd cycle', 'reversal'])
-            elif t.slug == 'stack':
-                search_terms.extend(['lifo', 'valid parentheses', 'monotonic stack', 'next greater element'])
-            elif t.slug == 'queue':
-                search_terms.extend(['fifo', 'deque', 'monotonic queue', 'sliding window max'])
-            elif t.slug == 'trees':
-                search_terms.extend(['dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'tree height', 'diameter', 'lca'])
-            elif t.slug == 'bst':
-                search_terms.extend(['binary search tree', 'inorder sorted', 'validate bst', 'kth smallest'])
-            elif t.slug == 'heap':
-                search_terms.extend(['priority queue', 'min heap', 'max heap', 'top k elements', 'median stream'])
-            elif t.slug == 'trie':
-                search_terms.extend(['prefix tree', 'autocomplete', 'word search'])
-            elif t.slug == 'graph':
-                search_terms.extend(['bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu', 'connected components'])
-            elif t.slug == 'greedy':
-                search_terms.extend(['interval scheduling', 'activity selection', 'fractional knapsack', 'jump game'])
-            elif t.slug == 'backtracking':
-                search_terms.extend(['subsets', 'combinations', 'permutations', 'n-queens', 'sudoku solver'])
-            elif t.slug == 'dynamic-programming':
-                search_terms.extend(['dp', 'memoization', 'tabulation', '0/1 knapsack', 'lcs', 'subproblems'])
+            search_keywords_str = ' '.join(set(keywords))
 
-            search_text_str = ' '.join(search_terms).replace('"', "'").replace('\n', ' ')
+            # Add Topic to Search Index
+            search_index.append({
+                'type': 'topic',
+                'title': t.name,
+                'parent_topic': cat['title'],
+                'icon': t.icon or '📊',
+                'keywords': search_keywords_str,
+                'url': f'/learn/{t.slug}/'
+            })
 
             topic_items.append({
                 'topic': t,
@@ -286,17 +290,19 @@ def learn_hub_view(request):
                 'progress_pct': t_pct,
                 'lesson_count': len(lessons) or len(patterns) or 1,
                 'sub_concepts': sub_concepts,
-                'search_text': search_text_str
+                'search_text': search_keywords_str
             })
+
         categorized_topics.append({
             'info': cat,
             'topics': topic_items
         })
 
-
+    import json
     context = {
         'categorized_topics': categorized_topics,
         'topics': topics,
+        'search_index_json': json.dumps(search_index),
         'total_problems': total_problems,
         'total_solved': total_solved,
         'overall_progress': overall_progress,
