@@ -167,6 +167,7 @@ def problem_detail(request, topic_slug, problem_slug):
 def learn_hub_view(request):
     """University Learning Hub Home Page with categorized topics and roadmap tree."""
     from .models import Topic, Lesson, VideoResource
+    import re, json
     from apps.submissions.models import Submission
     from apps.progress.models import PatternMastery, SM2ReviewSchedule
     from django.utils import timezone
@@ -226,47 +227,52 @@ def learn_hub_view(request):
             # Primary keywords
             t_kw = [t.name.lower(), t.slug.lower(), t.description.lower(), cat['title'].lower(), 'introduction', 'logic', 'complexity', 'operations', 'common mistakes', 'remember', 'interview', 'questions']
 
-            # Topic specific keywords expansion
-            if t.slug == 'arrays':
-                t_kw.extend(['array', 'arrays', 'prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access'])
-            elif t.slug == 'strings':
-                t_kw.extend(['string', 'strings', 'frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation'])
-            elif t.slug == 'sliding-window':
-                t_kw.extend(['sliding window', 'window', 'fixed window', 'variable window', 'subarray sum', 'max sum', 'min window'])
-            elif t.slug == 'two-pointer':
-                t_kw.extend(['two pointer', 'two pointers', 'opposite direction', 'same direction', 'slow fast pointers', 'container with most water', '3sum'])
-            elif t.slug == 'binary-search':
-                t_kw.extend(['binary search', 'search', 'logarithmic search', 'lower bound', 'upper bound', 'rotated sorted array', 'binary search on answer'])
-            elif t.slug == 'linked-list':
-                t_kw.extend(['linked list', 'list', 'pointers', 'dummy node', 'slow fast pointers', 'floyd cycle', 'reversal'])
-            elif t.slug == 'stack':
-                t_kw.extend(['stack', 'lifo', 'valid parentheses', 'monotonic stack', 'next greater element'])
-            elif t.slug == 'queue':
-                t_kw.extend(['queue', 'fifo', 'deque', 'monotonic queue', 'sliding window max'])
-            elif t.slug == 'trees':
+            # Topic specific keywords expansion (singular + plural + aliases)
+            if t.slug in ['arrays', 'array']:
+                t_kw.extend(['array', 'arrays', 'prefix sum', 'difference array', 'sliding window', 'two pointer', 'two pointers', 'kadane', 'subarrays', 'insertion', 'deletion', 'access', 'vector'])
+            elif t.slug in ['strings', 'string']:
+                t_kw.extend(['string', 'strings', 'frequency hash map', 'anagrams', 'palindromes', 'kmp', 'z-algorithm', 'string manipulation', 'pattern matching'])
+            elif t.slug in ['sliding-window', 'sliding_window']:
+                t_kw.extend(['sliding window', 'sliding', 'window', 'fixed window', 'variable window', 'subarray sum', 'max sum', 'min window'])
+            elif t.slug in ['two-pointer', 'two_pointer', 'two-pointers']:
+                t_kw.extend(['two pointer', 'two pointers', 'pointers', 'opposite direction', 'same direction', 'slow fast pointers', 'container with most water', '3sum'])
+            elif t.slug in ['binary-search', 'binary_search']:
+                t_kw.extend(['binary search', 'binary', 'search', 'logarithmic search', 'lower bound', 'upper bound', 'rotated sorted array', 'binary search on answer'])
+            elif t.slug in ['linked-list', 'linked_list']:
+                t_kw.extend(['linked list', 'linked', 'list', 'lists', 'pointers', 'dummy node', 'slow fast pointers', 'floyd cycle', 'reversal'])
+            elif t.slug in ['stack']:
+                t_kw.extend(['stack', 'stacks', 'lifo', 'valid parentheses', 'monotonic stack', 'next greater element'])
+            elif t.slug in ['queue']:
+                t_kw.extend(['queue', 'queues', 'fifo', 'deque', 'monotonic queue', 'sliding window max'])
+            elif t.slug in ['trees', 'tree']:
                 t_kw.extend(['tree', 'trees', 'binary tree', 'dfs', 'bfs', 'inorder', 'preorder', 'postorder', 'height', 'diameter', 'lca'])
-            elif t.slug == 'bst':
+            elif t.slug in ['bst']:
                 t_kw.extend(['bst', 'binary search tree', 'inorder sorted', 'validate bst', 'kth smallest'])
-            elif t.slug == 'heap':
-                t_kw.extend(['heap', 'priority queue', 'min heap', 'max heap', 'top k elements', 'median stream'])
-            elif t.slug == 'trie':
-                t_kw.extend(['trie', 'prefix tree', 'autocomplete', 'word search'])
-            elif t.slug == 'graph':
+            elif t.slug in ['heap']:
+                t_kw.extend(['heap', 'heaps', 'priority queue', 'min heap', 'max heap', 'top k elements', 'median stream'])
+            elif t.slug in ['trie']:
+                t_kw.extend(['trie', 'tries', 'prefix tree', 'autocomplete', 'word search'])
+            elif t.slug in ['graph', 'graphs']:
                 t_kw.extend(['graph', 'graphs', 'bfs', 'dfs', 'adjacency list', 'topological sort', 'dijkstra', 'dsu', 'connected components'])
-            elif t.slug == 'greedy':
+            elif t.slug in ['greedy']:
                 t_kw.extend(['greedy', 'interval scheduling', 'activity selection', 'fractional knapsack', 'jump game'])
-            elif t.slug == 'backtracking':
+            elif t.slug in ['backtracking']:
                 t_kw.extend(['backtracking', 'subsets', 'combinations', 'permutations', 'n-queens', 'sudoku solver'])
-            elif t.slug == 'dynamic-programming':
+            elif t.slug in ['dynamic-programming', 'dp']:
                 t_kw.extend(['dynamic programming', 'dp', 'memoization', 'tabulation', '0/1 knapsack', 'lcs', 'subproblems'])
-            elif t.slug == 'segment-tree':
+            elif t.slug in ['segment-tree']:
                 t_kw.extend(['segment tree', 'segment', 'range query', 'point update', 'lazy propagation'])
-            elif t.slug == 'fenwick-tree':
+            elif t.slug in ['fenwick-tree']:
                 t_kw.extend(['fenwick tree', 'fenwick', 'bit', 'binary indexed tree', 'prefix sum query'])
-            elif t.slug == 'bit-manipulation':
+            elif t.slug in ['bit-manipulation', 'bit']:
                 t_kw.extend(['bit manipulation', 'bit', 'bitwise', 'binary', 'xor', 'single number', 'kernighan', 'bitmask'])
-            elif t.slug == 'math':
-                t_kw.extend(['math', 'mathematics', 'number theory', 'prime sieve', 'gcd', 'euclidean', 'exponentiation', 'modular arithmetic', 'prime', 'primes', 'bit & math'])
+            elif t.slug in ['math', 'mathematics']:
+                t_kw.extend(['math', 'mathematics', 'number theory', 'prime sieve', 'gcd', 'euclidean', 'exponentiation', 'modular arithmetic', 'prime', 'primes', 'bit math'])
+
+            # Extract pure alphanumeric lowercase words to avoid HTML entity encoding bugs
+            clean_text = re.sub(r'[^a-zA-Z0-9\s]', ' ', ' '.join(t_kw)).lower()
+            raw_words = [w for w in clean_text.split() if len(w) > 1]
+            search_keywords_str = ' '.join(set(raw_words))
 
             # 1. Main Topic Entry in Search Index
             search_index.append({
@@ -274,7 +280,7 @@ def learn_hub_view(request):
                 'title': f"{t.name} (Full Workspace)",
                 'parent_topic': cat['title'],
                 'icon': t.icon or '📊',
-                'keywords': ' '.join(set(t_kw)),
+                'keywords': search_keywords_str,
                 'url': f'/learn/{t.slug}/'
             })
 
@@ -289,13 +295,16 @@ def learn_hub_view(request):
                 ('🧠 Interview Questions (5 Tiers)', f'/learn/{t.slug}/#sec-practice', f"{t.name} interview questions practice concept pattern mastery expert easy medium hard"),
             ]
 
+            def clean_kw(str_input):
+                return ' '.join(set([w for w in re.sub(r'[^a-zA-Z0-9\s]', ' ', str_input).lower().split() if len(w) > 1]))
+
             for opt_title, opt_url, opt_kw in topic_options:
                 search_index.append({
                     'type': 'subconcept',
                     'title': f"{t.name} — {opt_title}",
                     'parent_topic': t.name,
                     'icon': t.icon or '📚',
-                    'keywords': f"{opt_kw} {' '.join(t_kw)}".lower(),
+                    'keywords': clean_kw(f"{opt_kw} {' '.join(t_kw)}"),
                     'url': opt_url
                 })
 
@@ -312,7 +321,7 @@ def learn_hub_view(request):
                     'title': f"{p.name} Pattern",
                     'parent_topic': t.name,
                     'icon': p.icon or '⚡',
-                    'keywords': f"{p.name} {p.slug} {t.name} {' '.join(t_kw)}".lower(),
+                    'keywords': clean_kw(f"{p.name} {p.slug} {t.name} {' '.join(t_kw)}"),
                     'url': f'/learn/{t.slug}/{p.slug}/'
                 })
 
@@ -330,7 +339,7 @@ def learn_hub_view(request):
                         'title': f"Lesson: {l.title}",
                         'parent_topic': t.name,
                         'icon': '📖',
-                        'keywords': f"{l.title} {l.slug} {p.name} {t.name} {l.overview} {' '.join(t_kw)}".lower(),
+                        'keywords': clean_kw(f"{l.title} {l.slug} {p.name} {t.name} {l.overview} {' '.join(t_kw)}"),
                         'url': f'/learn/{t.slug}/{p_slug}/{l.slug}/'
                     })
 

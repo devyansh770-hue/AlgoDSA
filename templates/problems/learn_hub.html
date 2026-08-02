@@ -478,6 +478,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropdownCount = document.getElementById('search-results-count');
     const filterButtons = document.querySelectorAll('.quick-filter-btn');
 
+    function isMatch(text, query) {
+        if (!query) return true;
+        if (!text) return false;
+        text = text.toLowerCase();
+        query = query.toLowerCase().trim();
+        if (text.includes(query)) return true;
+
+        // Singular / Plural matching
+        const querySingular = query.endsWith('s') ? query.slice(0, -1) : query;
+        const queryPlural = query.endsWith('s') ? query : query + 's';
+        if (text.includes(querySingular) || text.includes(queryPlural)) return true;
+
+        // Split multi-word query into tokens
+        const tokens = query.split(/\s+/).filter(w => w.length > 0);
+        if (tokens.length > 1) {
+            return tokens.every(tok => text.includes(tok));
+        }
+
+        return false;
+    }
+
     function applyFilter(query) {
         query = (query || '').toLowerCase().trim();
 
@@ -502,10 +523,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dropdown) dropdown.style.display = 'none';
         } else {
             const matches = SEARCH_INDEX.filter(item => {
-                const k = (item.keywords || '').toLowerCase();
-                const t = (item.title || '').toLowerCase();
-                const p = (item.parent_topic || '').toLowerCase();
-                return k.includes(query) || t.includes(query) || p.includes(query) || query.includes(t) || query.includes(p);
+                const searchHaystack = ((item.keywords || '') + ' ' + (item.title || '') + ' ' + (item.parent_topic || '') + ' ' + (item.url || '')).toLowerCase();
+                return isMatch(searchHaystack, query);
             });
 
             if (dropdownList) {
@@ -558,10 +577,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const topicSlug = (card.getAttribute('data-topic-slug') || '').toLowerCase();
             const topicCat = (card.getAttribute('data-topic-category') || '').toLowerCase();
 
-            // Match query against search keywords, name, or slug
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || topicSlug.includes(query) || topicCat.includes(query) || query.includes(topicName) || query.includes(topicSlug);
+            const fullHaystack = (searchData + ' ' + topicName + ' ' + topicSlug + ' ' + topicCat).toLowerCase();
+            const cardMatch = isMatch(fullHaystack, query);
 
-            if (isMatch) {
+            if (cardMatch) {
                 card.style.display = 'flex';
                 visibleTopicCount++;
 
@@ -569,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const conceptPills = card.querySelectorAll('.concept-pill');
                 conceptPills.forEach(pill => {
                     const pillText = (pill.textContent || '').toLowerCase();
-                    if (query && (pillText.includes(query) || query.includes(pillText))) {
+                    if (query && isMatch(pillText, query)) {
                         pill.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-600/40', 'text-white', 'font-bold');
                     } else {
                         pill.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-600/40', 'text-white', 'font-bold');
@@ -593,9 +612,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const topicName = (item.getAttribute('data-topic-name') || '').toLowerCase();
             const topicSlug = (item.getAttribute('data-topic-slug') || '').toLowerCase();
 
-            const isMatch = !query || searchData.includes(query) || topicName.includes(query) || topicSlug.includes(query) || query.includes(topicName);
+            const fullHaystack = (searchData + ' ' + topicName + ' ' + topicSlug).toLowerCase();
+            const treeMatch = isMatch(fullHaystack, query);
 
-            if (isMatch) {
+            if (treeMatch) {
                 item.style.display = 'block';
                 const content = item.querySelector('.tree-accordion-content');
                 if (content && query) {
