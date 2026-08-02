@@ -81,26 +81,70 @@ def profile_view(request):
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Profile updated! ✅')
+            messages.success(request, 'Profile updated successfully! 🚀')
             return redirect('profile')
     else:
         form = UserProfileForm(instance=request.user)
 
-    # Get user stats
+    from django.utils import timezone
+    from django.db.models import Avg
     from apps.submissions.models import Submission
     from apps.progress.models import PatternMastery
 
+    user = request.user
     recent_submissions = Submission.objects.filter(
-        user=request.user
-    ).order_by('-created_at')[:10]
+        user=user
+    ).select_related('problem').order_by('-created_at')[:10]
 
     masteries = PatternMastery.objects.filter(
-        user=request.user
+        user=user
     ).order_by('-mastery_score')
+
+    total_submissions = Submission.objects.filter(user=user).count()
+    accepted_submissions = Submission.objects.filter(user=user, status='accepted').count()
+    acceptance_rate = round((accepted_submissions / total_submissions * 100), 1) if total_submissions > 0 else 0.0
+
+    avg_mastery_dict = masteries.aggregate(Avg('mastery_score'))
+    avg_mastery = round(avg_mastery_dict['mastery_score__avg'] or 0.0, 1)
+
+    today = timezone.now().date()
+    due_reviews = [m for m in masteries if m.next_review and m.next_review <= today]
+
+    # Calculate FAANG Readiness Score
+    solved_metric = min(100, (user.total_platform_solved / 50.0) * 40)
+    mastery_metric = (avg_mastery / 100.0) * 40
+    streak_metric = min(20, user.streak * 2)
+    readiness_score = int(min(99, solved_metric + mastery_metric + streak_metric))
+    if readiness_score == 0 and user.total_platform_solved > 0:
+        readiness_score = 45
+
+    # 28-day practice activity heatmap data
+    import datetime
+    heatmap_days = []
+    for i in range(27, -1, -1):
+        day_date = today - datetime.timedelta(days=i)
+        sub_count = Submission.objects.filter(
+            user=user,
+            created_at__date=day_date
+        ).count()
+        heatmap_days.append({
+            'date': day_date.strftime('%b %d'),
+            'count': sub_count,
+            'level': 0 if sub_count == 0 else (1 if sub_count == 1 else (2 if sub_count <= 3 else 3))
+        })
 
     context = {
         'form': form,
         'recent_submissions': recent_submissions,
         'masteries': masteries,
+        'total_submissions': total_submissions,
+        'accepted_submissions': accepted_submissions,
+        'acceptance_rate': acceptance_rate,
+        'avg_mastery': avg_mastery,
+        'due_reviews': due_reviews,
+        'due_reviews_count': len(due_reviews),
+        'readiness_score': readiness_score,
+        'heatmap_days': heatmap_days,
     }
     return render(request, 'users/profile.html', context)
+

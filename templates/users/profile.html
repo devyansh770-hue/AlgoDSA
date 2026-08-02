@@ -1,86 +1,600 @@
 {% extends 'base.html' %}
-{% block title %}Profile — AlgoDSA{% endblock %}
+{% load static %}
+
+{% block title %}{{ user.username }} — Developer Profile & Stats — AlgoDSA{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem; padding-bottom: 3rem;">
-    <div class="profile-header">
-        <div class="profile-avatar-large">{{ user.username|first|upper }}</div>
-        <div class="profile-info">
-            <h1>{{ user.username }}</h1>
-            <p>{{ user.bio|default:"No bio yet. Tell us about yourself!" }}</p>
-            <div class="d-flex gap-md mt-sm">
-                <span class="badge badge-pattern">🔥 {{ user.streak }} streak</span>
-                <span class="badge badge-solved">✅ {{ user.solved_count }} solved</span>
-                <span class="badge badge-medium">⚡ {{ user.xp }} XP</span>
-                <span class="badge badge-easy">💻 {{ user.get_preferred_language_display }}</span>
+<div x-data="{ showModal: false }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- ================= 1. HERO PROFILE CARD ================= -->
+    <div class="relative rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 p-6 sm:p-8 shadow-2xl overflow-hidden">
+        <!-- Glowing Ambient Background Blobs -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            
+            <!-- Left Profile Info -->
+            <div class="flex items-start md:items-center gap-5">
+                <!-- 80px Glowing Avatar -->
+                <div class="relative flex-shrink-0">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-indigo-500 via-purple-600 to-cyan-400 p-[2.5px] shadow-xl shadow-indigo-500/25">
+                        <div class="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center text-3xl font-black text-white">
+                            {{ user.username|first|upper }}
+                        </div>
+                    </div>
+                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-slate-950 rounded-full" title="Status: Online & Ready"></span>
+                </div>
+
+                <!-- Info Block -->
+                <div class="space-y-1.5 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ user.username }}</h1>
+                        <span class="px-2.5 py-0.5 text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full flex items-center gap-1">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            <span>Senior Candidate</span>
+                        </span>
+                        <span class="px-2.5 py-0.5 text-xs font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full">
+                            Level {{ user.level }}
+                        </span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-500"></i>
+                            <span>{{ user.email|default:"No email set" }}</span>
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-500"></i>
+                            <span>Joined {{ user.created_at|date:"F Y"|default:"2026" }}</span>
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="code-2" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            <span class="font-semibold text-slate-300">{{ user.get_preferred_language_display }}</span>
+                        </span>
+                    </div>
+
+                    <!-- Bio Snippet -->
+                    <p class="text-xs sm:text-sm text-slate-300 max-w-2xl pt-1 leading-relaxed">
+                        {{ user.bio|default:"No bio set yet. Click 'Edit Profile' below to share your background and interview goals!" }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Action Buttons -->
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/80">
+                <button type="button" @click="showModal = true"
+                        class="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    <span>Edit Profile</span>
+                </button>
+
+                {% if user.leetcode_username %}
+                <form method="post" action="{% url 'sync_leetcode' %}" class="flex-1 md:flex-none">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="w-full px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/90 border border-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-amber-500"></i>
+                        <span>Sync LeetCode</span>
+                    </button>
+                </form>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="dashboard-content">
-        <div>
-            <div class="card mb-lg">
-                <h2 class="section-title">✏️ Edit Profile</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label class="form-label">Bio</label>
-                        {{ form.bio }}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Preferred Language</label>
-                        {{ form.preferred_language }}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">LeetCode Username</label>
-                        {{ form.leetcode_username }}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">GeeksforGeeks Username / Handle</label>
-                        {{ form.gfg_username }}
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </form>
-            </div>
-
-            {% if recent_submissions %}
-            <div class="card">
-                <h2 class="section-title">📝 Recent Submissions</h2>
-                <div class="submission-list">
-                    {% for sub in recent_submissions %}
-                    <a href="{% url 'submission_detail' sub.id %}" class="submission-item" style="text-decoration: none; color: inherit;">
-                        <span>{{ sub.status_icon }}</span>
-                        <span class="problem-title-cell">{{ sub.problem.title }}</span>
-                        <span class="badge badge-{{ sub.problem.difficulty }}">{{ sub.problem.get_difficulty_display }}</span>
-                        <span class="text-muted text-sm font-mono">{{ sub.runtime_ms|floatformat:0 }}ms</span>
-                        <span class="text-muted text-sm">{{ sub.created_at|timesince }} ago</span>
-                    </a>
-                    {% endfor %}
+    <!-- ================= 2. HIGH-IMPACT STATS GRID (8 CARDS) ================= -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Card 1: Streak -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-amber-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Current Streak</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="flame" class="w-5 h-5"></i>
                 </div>
             </div>
-            {% endif %}
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ user.streak }}</span>
+                <span class="text-xs text-amber-400 font-semibold">Days</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">Record: {{ user.longest_streak }} Days</div>
         </div>
 
-        <div>
-            {% if masteries %}
-            <div class="card">
-                <h2 class="section-title">📈 Pattern Mastery</h2>
-                <div class="mastery-list">
+        <!-- Card 2: Total XP -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-indigo-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Experience</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ user.xp }}</span>
+                <span class="text-xs text-indigo-400 font-semibold">XP</span>
+            </div>
+            <!-- Progress to next level -->
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style="width: {{ user.level_progress }}%"></div>
+            </div>
+        </div>
+
+        <!-- Card 3: Solved Problems -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Solved</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ user.total_platform_solved }}</span>
+                <span class="text-xs text-emerald-400 font-semibold">Problems</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">AlgoDSA: {{ user.solved_count }} | LC: {{ user.leetcode_total_solved }}</div>
+        </div>
+
+        <!-- Card 4: Avg Pattern Mastery -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-purple-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pattern Mastery</span>
+                <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ avg_mastery }}%</span>
+                <span class="text-xs text-purple-400 font-semibold">Avg</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">{{ masteries|length }} Active Patterns Tracked</div>
+        </div>
+
+        <!-- Card 5: Reviews Due Today -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-cyan-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Reviews Due</span>
+                <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ due_reviews_count }}</span>
+                <span class="text-xs text-cyan-400 font-semibold">Due Today</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">Spaced Repetition Engine</div>
+        </div>
+
+        <!-- Card 6: Acceptance Rate -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-blue-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Acceptance Rate</span>
+                <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="target" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ acceptance_rate }}%</span>
+                <span class="text-xs text-blue-400 font-semibold">Accuracy</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">{{ accepted_submissions }} / {{ total_submissions }} Accepted</div>
+        </div>
+
+        <!-- Card 7: FAANG Interview Readiness -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">FAANG Readiness</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="briefcase" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">{{ readiness_score }}%</span>
+                <span class="text-xs text-emerald-400 font-semibold">Ready</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">Algorithmic & System Score</div>
+        </div>
+
+        <!-- Card 8: Connected Platforms -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-lg space-y-2 relative overflow-hidden group hover:border-indigo-500/40 transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Connected Accounts</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="link-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl sm:text-3xl font-black text-white font-mono">
+                    {% if user.leetcode_username and user.gfg_username %}3{% elif user.leetcode_username or user.gfg_username %}2{% else %}1{% endif %}
+                </span>
+                <span class="text-xs text-indigo-400 font-semibold">Active</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-medium">LeetCode • GFG • AlgoDSA</div>
+        </div>
+
+    </div>
+
+    <!-- ================= 3. TWO-COLUMN MAIN DASHBOARD ================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- ================= LEFT COLUMN (60% / 7 cols) ================= -->
+        <div class="lg:col-span-7 space-y-8">
+            
+            <!-- A. PATTERN MASTERY CARDS -->
+            <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-white tracking-tight">Pattern Mastery Breakdown</h2>
+                    </div>
+                    <span class="text-xs text-slate-400 font-mono">{{ masteries|length }} Patterns Tracked</span>
+                </div>
+
+                {% if masteries %}
+                <div class="space-y-4">
                     {% for m in masteries %}
-                    <div class="mastery-item">
-                        <span class="mastery-label">{{ m.pattern_display }}</span>
-                        <div class="mastery-bar-container">
-                            <div class="mastery-bar">
-                                <div class="mastery-bar-fill" style="width: {{ m.mastery_score }}%; background: {{ m.mastery_color }};"></div>
+                    <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-2 hover:border-slate-700/80 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-slate-100">{{ m.pattern_display }}</span>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full"
+                                      style="background: {{ m.mastery_color }}20; color: {{ m.mastery_color }}; border: 1px solid {{ m.mastery_color }}40;">
+                                    {% if m.mastery_score >= 80 %}Mastered{% elif m.mastery_score >= 50 %}Intermediate{% else %}Improving{% endif %}
+                                </span>
                             </div>
-                            <span class="mastery-score" style="color: {{ m.mastery_color }};">{{ m.mastery_score|floatformat:0 }}%</span>
+                            <span class="font-mono text-sm font-black" style="color: {{ m.mastery_color }};">
+                                {{ m.mastery_score|floatformat:0 }}%
+                            </span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500" style="width: {{ m.mastery_score }}%; background: {{ m.mastery_color }};"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5 font-mono">
+                            <span>Solved: {{ m.correct }} / {{ m.attempts }} Attempts</span>
+                            <span>Ease Factor: {{ m.ease_factor|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 text-center space-y-3">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-sm font-bold text-slate-200">No Pattern Mastery Recorded Yet</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto">Solve problems in the Monaco Studio to automatically calculate your pattern mastery scores!</p>
+                    </div>
+                    <a href="{% url 'learn_hub' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-500 transition-colors">
+                        <span>Explore Learning Hub</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- B. PRACTICE ACTIVITY HEATMAP (28 DAYS) -->
+            <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                        </div>
+                        <h2 class="text-base font-bold text-white tracking-tight">Daily Practice Activity (Last 28 Days)</h2>
+                    </div>
+                    <span class="text-xs text-emerald-400 font-semibold font-mono">🔥 Active Streak: {{ user.streak }}d</span>
+                </div>
+
+                <!-- 28 Grid Squares -->
+                <div class="grid grid-cols-7 sm:grid-cols-14 gap-2 pt-2">
+                    {% for day in heatmap_days %}
+                    <div class="flex flex-col items-center gap-1 group relative">
+                        <div class="w-full h-8 sm:h-9 rounded-lg border transition-all duration-200 cursor-pointer flex items-center justify-center text-[10px] font-mono font-bold
+                                    {% if day.level == 0 %}bg-slate-950/80 border-slate-800/80 text-slate-600
+                                    {% elif day.level == 1 %}bg-emerald-950/60 border-emerald-500/30 text-emerald-400
+                                    {% elif day.level == 2 %}bg-emerald-600/40 border-emerald-500/60 text-emerald-200
+                                    {% else %}bg-emerald-500 border-emerald-400 text-slate-950 font-black shadow-lg shadow-emerald-500/30{% endif %}">
+                            {% if day.count > 0 %}{{ day.count }}{% endif %}
+                        </div>
+                        <span class="text-[9px] text-slate-500 font-mono hidden sm:inline">{{ day.date|slice:":6" }}</span>
+
+                        <!-- Tooltip on Hover -->
+                        <div class="absolute bottom-full mb-2 hidden group-hover:block z-30 px-2.5 py-1 rounded-lg bg-slate-950 text-slate-200 text-[10px] font-mono shadow-xl border border-slate-800 whitespace-nowrap pointer-events-none">
+                            {{ day.date }}: {{ day.count }} submissions
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
+
+            <!-- C. RECENT SUBMISSIONS TABLE -->
+            <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center">
+                            <i data-lucide="file-code" class="w-4 h-4"></i>
+                        </div>
+                        <h2 class="text-base font-bold text-white tracking-tight">Recent Submissions</h2>
+                    </div>
+                    <a href="{% url 'submission_history' %}" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View All ↗</a>
+                </div>
+
+                {% if recent_submissions %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
+                                <th class="py-2.5 px-3">Status</th>
+                                <th class="py-2.5 px-3">Problem</th>
+                                <th class="py-2.5 px-3">Language</th>
+                                <th class="py-2.5 px-3">Runtime</th>
+                                <th class="py-2.5 px-3 text-right">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                            {% for sub in recent_submissions %}
+                            <tr class="hover:bg-slate-800/40 transition-colors group cursor-pointer">
+                                <td class="py-3 px-3">
+                                    {% if sub.status == 'accepted' %}
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-semibold">
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Accepted
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-semibold">
+                                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> {{ sub.get_status_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3 font-semibold text-slate-100 group-hover:text-indigo-400 transition-colors">
+                                    <a href="{% url 'submission_detail' sub.id %}" class="hover:underline">
+                                        {{ sub.problem.title }}
+                                    </a>
+                                </td>
+                                <td class="py-3 px-3 font-mono text-slate-400 uppercase text-[11px]">{{ sub.language }}</td>
+                                <td class="py-3 px-3 font-mono text-slate-400 text-[11px]">{{ sub.runtime_ms|floatformat:0|default:"--" }} ms</td>
+                                <td class="py-3 px-3 text-right text-slate-500 font-mono text-[11px]">{{ sub.created_at|timesince }} ago</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-6 text-center text-xs text-slate-400 space-y-1">
+                    <p>No recent code submissions found.</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- ================= RIGHT COLUMN (40% / 5 cols) ================= -->
+        <div class="lg:col-span-5 space-y-8">
+            
+            <!-- A. ALEX AI MENTOR ASSISTANT CARD -->
+            <div class="p-6 rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900/90 border border-indigo-500/40 shadow-2xl relative overflow-hidden space-y-4">
+                <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl"></div>
+
+                <div class="flex items-center justify-between border-b border-indigo-500/20 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 p-[1.5px] shadow-lg shadow-indigo-500/30">
+                            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                                <i data-lucide="bot" class="w-5 h-5 text-cyan-300"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-white">Alex AI Mentor</h3>
+                            <span class="text-[10px] text-indigo-300 font-mono">Real-Time Interview Tutor</span>
+                        </div>
+                    </div>
+                    <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" title="Alex AI Online"></span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-indigo-500/20 text-xs text-slate-200 leading-relaxed space-y-2">
+                    <p class="font-medium">
+                        "Good evening <span class="font-bold text-indigo-300">{{ user.username }}</span>. You're maintaining a <span class="font-bold text-amber-400">{{ user.streak }}-day streak</span>!
+                    </p>
+                    <p class="text-slate-300">
+                        Based on your {{ readiness_score }}% FAANG readiness, I recommend reviewing <span class="font-bold text-cyan-300">Dynamic Programming & Sliding Window</span> patterns today.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <a href="{% url 'learn_hub' %}" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-colors">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                        <span>Start Session</span>
+                    </a>
+                    <a href="{% url 'mock_interview' %}" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-700 transition-colors">
+                        <i data-lucide="mic" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span>Ask Alex</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- B. SPACED REPETITION REVIEW QUEUE -->
+            <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
+                            <i data-lucide="brain" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-white tracking-tight">Review Queue Today</h3>
+                    </div>
+                    <span class="px-2 py-0.5 text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full">
+                        {{ due_reviews_count }} Due
+                    </span>
+                </div>
+
+                {% if due_reviews %}
+                <div class="space-y-2.5">
+                    {% for rev in due_reviews %}
+                    <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between group hover:border-cyan-500/40 transition-colors">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-xs text-slate-100 group-hover:text-cyan-300 transition-colors">{{ rev.pattern_display }}</span>
+                            <div class="text-[10px] text-slate-400 font-mono">Est: 10 mins • Mastery: {{ rev.mastery_score|floatformat:0 }}%</div>
+                        </div>
+                        <a href="{% url 'learn_hub' %}" class="px-3 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all">
+                            Review →
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-center space-y-2">
+                    <i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-400 mx-auto"></i>
+                    <p class="text-xs font-semibold text-slate-200">No reviews due today!</p>
+                    <p class="text-[11px] text-slate-400">All spaced repetition cards are up to date. Keep solving new problems!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- C. CONNECTED ACCOUNTS SHOWCASE -->
+            <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                            <i data-lucide="link-2" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-white tracking-tight">Connected Accounts</h3>
+                    </div>
+                    <button type="button" @click="showModal = true" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">
+                        Manage ↗
+                    </button>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <!-- LeetCode Card -->
+                    <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                                <i data-lucide="globe" class="w-4 h-4"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-100">LeetCode</span>
+                                <span class="text-[11px] font-mono text-slate-400">
+                                    {% if user.leetcode_username %}@{{ user.leetcode_username }} ({{ user.leetcode_total_solved }} Solved){% else %}Not Connected{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="w-2.5 h-2.5 rounded-full {% if user.leetcode_username %}bg-emerald-500{% else %}bg-slate-600{% endif %}" title="{% if user.leetcode_username %}Connected{% else %}Not Connected{% endif %}"></span>
+                    </div>
+
+                    <!-- GeeksforGeeks Card -->
+                    <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                                <i data-lucide="code" class="w-4 h-4"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-100">GeeksforGeeks</span>
+                                <span class="text-[11px] font-mono text-slate-400">
+                                    {% if user.gfg_username %}@{{ user.gfg_username }}{% else %}Not Connected{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="w-2.5 h-2.5 rounded-full {% if user.gfg_username %}bg-emerald-500{% else %}bg-slate-600{% endif %}" title="{% if user.gfg_username %}Connected{% else %}Not Connected{% endif %}"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= 4. INTERACTIVE EDIT PROFILE GLASSMORPHIC MODAL ================= -->
+    <div x-show="showModal"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
+
+        <div @click.outside="showModal = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 relative overflow-hidden text-slate-100">
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="text-lg font-extrabold text-white">Edit Profile & Connections</h3>
+                </div>
+                <button type="button" @click="showModal = false" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Edit Form -->
+            <form method="post" action="{% url 'profile' %}" class="space-y-4" x-data="{ bioText: '{{ user.bio|escapejs }}' }">
+                {% csrf_token %}
+
+                <!-- Bio -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <label for="id_bio" class="font-semibold text-slate-300 uppercase tracking-wider">Bio / About Me</label>
+                        <span class="text-slate-500 font-mono" x-text="`${bioText.length}/500`"></span>
+                    </div>
+                    <textarea name="bio" id="id_bio" rows="3" x-model="bioText" maxlength="500"
+                              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                              placeholder="Describe your background and target tech companies..."></textarea>
+                </div>
+
+                <!-- Preferred Programming Language -->
+                <div class="space-y-1.5">
+                    <label for="id_preferred_language" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Preferred Language</label>
+                    <div class="relative">
+                        {{ form.preferred_language }}
+                    </div>
+                </div>
+
+                <!-- LeetCode Username -->
+                <div class="space-y-1.5">
+                    <label for="id_leetcode_username" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">LeetCode Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-500">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" name="leetcode_username" id="id_leetcode_username" value="{{ user.leetcode_username }}"
+                               class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                               placeholder="e.g. leetcode_user123">
+                    </div>
+                </div>
+
+                <!-- GeeksforGeeks Username -->
+                <div class="space-y-1.5">
+                    <label for="id_gfg_username" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">GeeksforGeeks Handle</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-500">
+                            <i data-lucide="code" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" name="gfg_username" id="id_gfg_username" value="{{ user.gfg_username }}"
+                               class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                               placeholder="e.g. gfg_handle_123">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" @click="showModal = false"
+                            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
 </div>
 {% endblock %}
