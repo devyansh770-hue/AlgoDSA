@@ -277,6 +277,8 @@ def learn_hub_view(request):
             elif t.slug == 'dynamic-programming':
                 search_terms.extend(['dp', 'memoization', 'tabulation', '0/1 knapsack', 'lcs', 'subproblems'])
 
+            search_text_str = ' '.join(search_terms).replace('"', "'").replace('\n', ' ')
+
             topic_items.append({
                 'topic': t,
                 'solved_count': t_solved,
@@ -284,7 +286,7 @@ def learn_hub_view(request):
                 'progress_pct': t_pct,
                 'lesson_count': len(lessons) or len(patterns) or 1,
                 'sub_concepts': sub_concepts,
-                'search_text': ' '.join(search_terms)
+                'search_text': search_text_str
             })
         categorized_topics.append({
             'info': cat,

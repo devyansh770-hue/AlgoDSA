@@ -4,7 +4,7 @@
 {% block title %}DSA Learning Ecosystem — AlgoDSA Interactive University{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" x-data="{ searchQuery: '', expandedTopic: 'arrays' }">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
     <!-- ================= 1. HERO ECOSYSTEM BANNER ================= -->
     <div class="relative rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 p-6 sm:p-8 shadow-2xl overflow-hidden">
@@ -64,42 +64,60 @@
         </div>
     </div>
 
-    <!-- ================= GLOBAL SEARCH BAR ================= -->
-    <div class="p-6 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-3">
+    <!-- ================= 2. SEARCH & MAJOR TOPIC QUICK FILTERS ================= -->
+    <div class="p-6 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-4">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="space-y-0.5">
                 <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
                     <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
                     <span>Search Topics, Concepts & Patterns</span>
                 </h2>
-                <p class="text-xs text-slate-400 font-mono">Search any concept e.g. "array", "prefix sum", "sliding window", "complexity", "interview", "kadane"</p>
+                <p class="text-xs text-slate-400 font-mono">Type any concept e.g. "prefix sum", "sliding window", "binary search", "complexity", "interview"</p>
             </div>
 
             <div class="relative w-full sm:w-96">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="search" class="w-4 h-4"></i>
                 </div>
-                <input type="text" x-model="searchQuery" placeholder="Type concept (e.g. prefix sum, sliding window)..."
+                <input type="text" id="hub-search-input" placeholder="Type concept (e.g. prefix sum, sliding window)..."
                        class="w-full pl-10 pr-9 py-3 rounded-2xl bg-slate-950 border border-slate-700/80 text-xs text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all font-mono shadow-inner">
-                <button type="button" x-show="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                <button type="button" id="clear-search-btn" style="display: none;" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Quick Filter Badges -->
-        <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span class="text-slate-400 font-medium font-mono text-[11px]">Quick Filters:</span>
-            <button type="button" @click="searchQuery = 'array'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">📊 Array</button>
-            <button type="button" @click="searchQuery = 'prefix sum'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">⚡ Prefix Sum</button>
-            <button type="button" @click="searchQuery = 'sliding window'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">🪟 Sliding Window</button>
-            <button type="button" @click="searchQuery = 'two pointer'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">👈👉 Two Pointer</button>
-            <button type="button" @click="searchQuery = 'complexity'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">📈 Complexity</button>
-            <button type="button" @click="searchQuery = 'interview'" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500/50 text-[11px] transition-all">💡 Interview Notes</button>
+        <!-- Major Topic Quick Filter Bar -->
+        <div class="space-y-2 pt-2 border-t border-slate-800/80">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                Major Topic Quick Filters:
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-indigo-600 text-white border border-indigo-400 text-xs font-bold transition-all shadow-md" data-filter-value="all">🌐 All Topics</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="array">📊 Arrays</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="string">🔤 Strings</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="hash">🗺️ Hash Maps</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="sliding window">🪟 Sliding Window</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="two pointer">👈👉 Two Pointers</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="binary search">🔍 Binary Search</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="linked list">🔗 Linked List</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="stack">🥞 Stack & Queue</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="tree">🌳 Trees & BST</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="graph">🕸️ Graph</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="dynamic programming">🧩 Dynamic Programming</button>
+                <button type="button" class="quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all" data-filter-value="math">💻 Bit & Math</button>
+            </div>
         </div>
     </div>
 
-    <!-- ================= 2. BIG-O TIME & SPACE COMPLEXITY CHEAT SHEET ================= -->
+    <!-- No Search Results Notification -->
+    <div id="search-no-results" style="display: none;" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 text-center space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto text-xl">🔍</div>
+        <h3 class="text-lg font-bold text-white">No Matching Topics Found</h3>
+        <p class="text-xs text-slate-400">Try searching for terms like "array", "prefix sum", "sliding window", "tree", "bfs", or "dp".</p>
+    </div>
+
+    <!-- ================= 3. BIG-O TIME & SPACE COMPLEXITY CHEAT SHEET ================= -->
     <div class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <div class="flex items-center gap-2.5">
@@ -179,7 +197,101 @@
         </div>
     </div>
 
-    <!-- ================= 3. COMPLETE INTERACTIVE CURRICULUM TREE ================= -->
+    <!-- ================= 4. INTERACTIVE TOPIC COURSES GRID ================= -->
+    <div class="space-y-8">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+                <h2 class="text-2xl font-black text-white tracking-tight">Interactive University Courses</h2>
+                <p class="text-xs text-slate-400 font-mono">22 Comprehensive Data Structures & Algorithms Tracks</p>
+            </div>
+        </div>
+
+        {% for cat_group in categorized_topics %}
+        {% if cat_group.topics %}
+        <div class="space-y-4 topic-category-group">
+            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-2">
+                <span class="text-2xl">{{ cat_group.info.icon }}</span>
+                <div>
+                    <h3 class="text-lg font-black text-white tracking-tight">{{ cat_group.info.title }}</h3>
+                    <p class="text-xs text-slate-400 font-mono">{{ cat_group.info.desc }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in cat_group.topics %}
+                <div class="topic-card-item p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between"
+                     data-search-text="{{ item.search_text|lower }}"
+                     data-topic-name="{{ item.topic.name|lower }}"
+                     data-topic-category="{{ item.topic.category|lower }}">
+                    
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl hover:bg-indigo-500/15 transition-all"></div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl hover:scale-110 transition-transform">
+                                {{ item.topic.icon }}
+                            </div>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-full uppercase tracking-wider font-mono">
+                                {{ item.lesson_count }} Lessons
+                            </span>
+                        </div>
+
+                        <div>
+                            <a href="{% url 'learn_topic' item.topic.slug %}" class="text-lg font-extrabold text-white hover:text-indigo-300 transition-colors">
+                                {{ item.topic.name }}
+                            </a>
+                            <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                                {{ item.topic.description }}
+                            </p>
+                        </div>
+
+                        {% if item.topic.real_world_analogy %}
+                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-0.5">
+                            <span class="font-bold text-indigo-300 block">💡 Real-World Intuition:</span>
+                            <span class="text-slate-400 italic line-clamp-2">{{ item.topic.real_world_analogy }}</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- SUB-CONCEPTS & LESSONS LINK BADGES -->
+                        <div class="pt-3 border-t border-slate-800/80 space-y-2">
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
+                                <span>Key Concepts & Sub-Topics</span>
+                                <span class="text-indigo-400 text-[10px] font-normal">Click to read →</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                                {% for concept in item.sub_concepts %}
+                                <a href="{{ concept.url }}" class="concept-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] text-slate-300 hover:text-white hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all font-medium">
+                                    <span>{{ concept.icon }}</span>
+                                    <span>{{ concept.name }}</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-400 font-medium">Topic Completion</span>
+                            <span class="font-mono font-bold text-slate-200">{{ item.solved_count }} / {{ item.total_count }} Solved</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style="width: {{ item.progress_pct }}%;"></div>
+                        </div>
+
+                        <a href="{% url 'learn_topic' item.topic.slug %}" class="flex items-center justify-between text-xs font-bold text-indigo-400 hover:text-indigo-300 pt-1">
+                            <span>Open Main {{ item.topic.name }} Workspace</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- ================= 5. COMPLETE INTERACTIVE CURRICULUM TREE ================= -->
     <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/90 shadow-2xl space-y-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div class="flex items-center gap-3">
@@ -196,11 +308,12 @@
         <!-- 22 Topics Expandable Tree Accordion -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for t in topics %}
-            <div x-show="!searchQuery || '{{ t.name|lower|escapejs }}'.includes(searchQuery.toLowerCase()) || '{{ t.description|lower|escapejs }}'.includes(searchQuery.toLowerCase()) || 'array prefix sum sliding window two pointer kadane complexity common mistakes interview'.includes(searchQuery.toLowerCase())"
-                 class="rounded-2xl bg-slate-950/80 border border-slate-800/90 overflow-hidden transition-all duration-300">
+            <div class="tree-accordion-item rounded-2xl bg-slate-950/80 border border-slate-800/90 overflow-hidden transition-all duration-300"
+                 data-search-text="{{ t.name|lower }} {{ t.description|lower }} {{ t.notes_content|lower }} arrays prefix sum sliding window two pointer binary search tree graph dp"
+                 data-topic-name="{{ t.name|lower }}">
                 
                 <!-- Topic Accordion Header -->
-                <button type="button" @click="expandedTopic = (expandedTopic === '{{ t.slug }}' ? null : '{{ t.slug }}')"
+                <button type="button" onclick="toggleTreeAccordion('tree-content-{{ t.slug }}', this)"
                         class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors">
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">{{ t.icon }}</span>
@@ -216,12 +329,12 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <i data-lucide="chevron-down" :class="searchQuery || expandedTopic === '{{ t.slug }}' ? 'rotate-180 text-indigo-400' : 'text-slate-500'" class="w-4 h-4 transition-transform"></i>
+                        <i data-lucide="chevron-down" class="chevron-icon w-4 h-4 text-slate-500 transition-transform"></i>
                     </div>
                 </button>
 
                 <!-- Expanded Sub-Tree (Patterns & Lessons) -->
-                <div x-show="searchQuery !== '' || expandedTopic === '{{ t.slug }}'" class="p-4 pt-0 border-t border-slate-800/60 bg-slate-900/40 space-y-3">
+                <div id="tree-content-{{ t.slug }}" class="tree-accordion-content p-4 pt-0 border-t border-slate-800/60 bg-slate-900/40 space-y-3" style="display: none;">
                     {% if t.patterns.exists %}
                     {% for p in t.patterns.all %}
                     <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
@@ -266,98 +379,7 @@
         </div>
     </div>
 
-    <!-- ================= 4. INTERACTIVE TOPIC COURSES GRID ================= -->
-    <div class="space-y-8">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div>
-                <h2 class="text-2xl font-black text-white tracking-tight">Interactive University Courses</h2>
-                <p class="text-xs text-slate-400 font-mono">22 Comprehensive Data Structures & Algorithms Tracks</p>
-            </div>
-        </div>
-
-        {% for cat_group in categorized_topics %}
-        {% if cat_group.topics %}
-        <div class="space-y-4">
-            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-2">
-                <span class="text-2xl">{{ cat_group.info.icon }}</span>
-                <div>
-                    <h3 class="text-lg font-black text-white tracking-tight">{{ cat_group.info.title }}</h3>
-                    <p class="text-xs text-slate-400 font-mono">{{ cat_group.info.desc }}</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for item in cat_group.topics %}
-                <div x-show="!searchQuery || '{{ item.search_text|escapejs }}'.includes(searchQuery.toLowerCase())"
-                     class="p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 shadow-xl space-y-4 hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl hover:bg-indigo-500/15 transition-all"></div>
-
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl hover:scale-110 transition-transform">
-                                {{ item.topic.icon }}
-                            </div>
-                            <span class="px-2.5 py-0.5 text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-full uppercase tracking-wider font-mono">
-                                {{ item.lesson_count }} Lessons
-                            </span>
-                        </div>
-
-                        <div>
-                            <a href="{% url 'learn_topic' item.topic.slug %}" class="text-lg font-extrabold text-white hover:text-indigo-300 transition-colors">
-                                {{ item.topic.name }}
-                            </a>
-                            <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                                {{ item.topic.description }}
-                            </p>
-                        </div>
-
-                        {% if item.topic.real_world_analogy %}
-                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-0.5">
-                            <span class="font-bold text-indigo-300 block">💡 Real-World Intuition:</span>
-                            <span class="text-slate-400 italic line-clamp-2">{{ item.topic.real_world_analogy }}</span>
-                        </div>
-                        {% endif %}
-
-                        <!-- SUB-CONCEPTS & LESSONS LINK BADGES -->
-                        <div class="pt-2 border-t border-slate-800/80 space-y-2">
-                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center justify-between">
-                                <span>Key Concepts & Sub-Topics</span>
-                                <span class="text-indigo-400 text-[10px] font-normal">Click for detailed reading →</span>
-                            </div>
-                            <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                                {% for concept in item.sub_concepts %}
-                                <a href="{{ concept.url }}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] text-slate-300 hover:text-white hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all font-medium">
-                                    <span>{{ concept.icon }}</span>
-                                    <span>{{ concept.name }}</span>
-                                </a>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-400 font-medium">Topic Completion</span>
-                            <span class="font-mono font-bold text-slate-200">{{ item.solved_count }} / {{ item.total_count }} Solved</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style="width: {{ item.progress_pct }}%;"></div>
-                        </div>
-
-                        <a href="{% url 'learn_topic' item.topic.slug %}" class="flex items-center justify-between text-xs font-bold text-indigo-400 hover:text-indigo-300 pt-1">
-                            <span>Open Main {{ item.topic.name }} Workspace</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 hover:translate-x-1 transition-transform"></i>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-
-    <!-- ================= 5. MASTER SOLVING WORKFLOW GUIDE ================= -->
+    <!-- ================= 6. MASTER SOLVING WORKFLOW GUIDE ================= -->
     <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
         <div class="flex items-center gap-2.5 border-b border-slate-800 pb-3">
             <div class="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center">
@@ -398,4 +420,126 @@
     </div>
 
 </div>
+
+<!-- Vanilla JS Filtering & Accordion Script -->
+<script>
+function toggleTreeAccordion(contentId, btnEl) {
+    const content = document.getElementById(contentId);
+    const icon = btnEl.querySelector('.chevron-icon');
+    if (content) {
+        const isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        if (icon) {
+            if (isHidden) {
+                icon.classList.add('rotate-180', 'text-indigo-400');
+            } else {
+                icon.classList.remove('rotate-180', 'text-indigo-400');
+            }
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('hub-search-input');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const filterButtons = document.querySelectorAll('.quick-filter-btn');
+
+    function applyFilter(query) {
+        query = (query || '').toLowerCase().trim();
+        if (searchInput && searchInput.value !== query) {
+            searchInput.value = query;
+        }
+        if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+
+        // 1. Highlight active Quick Filter button
+        filterButtons.forEach(btn => {
+            const filterVal = (btn.getAttribute('data-filter-value') || '').toLowerCase().trim();
+            if ((filterVal === 'all' && !query) || (filterVal !== 'all' && query.includes(filterVal))) {
+                btn.className = 'quick-filter-btn px-3 py-1.5 rounded-xl bg-indigo-600 text-white border border-indigo-400 text-xs font-bold transition-all shadow-md';
+            } else {
+                btn.className = 'quick-filter-btn px-3 py-1.5 rounded-xl bg-slate-950 text-slate-300 border border-slate-800 hover:border-indigo-500/60 hover:text-white text-xs font-medium transition-all';
+            }
+        });
+
+        // 2. Filter Topic Cards in Courses Grid
+        const topicCards = document.querySelectorAll('.topic-card-item');
+        let visibleTopicCount = 0;
+
+        topicCards.forEach(card => {
+            const searchData = (card.getAttribute('data-search-text') || '').toLowerCase();
+            const topicName = (card.getAttribute('data-topic-name') || '').toLowerCase();
+
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query);
+
+            if (isMatch) {
+                card.style.display = 'flex';
+                visibleTopicCount++;
+
+                // Highlight sub-concept pills matching search query
+                const conceptPills = card.querySelectorAll('.concept-pill');
+                conceptPills.forEach(pill => {
+                    const pillText = (pill.textContent || '').toLowerCase();
+                    if (query && (pillText.includes(query) || query.includes(pillText))) {
+                        pill.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-600/40', 'text-white', 'font-bold');
+                    } else {
+                        pill.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-600/40', 'text-white', 'font-bold');
+                    }
+                });
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Hide category groups with zero visible topics
+        document.querySelectorAll('.topic-category-group').forEach(group => {
+            const visibleCards = group.querySelectorAll('.topic-card-item:not([style*="display: none"])');
+            group.style.display = (visibleCards.length > 0) ? 'block' : 'none';
+        });
+
+        // 3. Filter Curriculum Tree Accordion Items
+        const treeItems = document.querySelectorAll('.tree-accordion-item');
+        treeItems.forEach(item => {
+            const searchData = (item.getAttribute('data-search-text') || '').toLowerCase();
+            const topicName = (item.getAttribute('data-topic-name') || '').toLowerCase();
+
+            const isMatch = !query || searchData.includes(query) || topicName.includes(query);
+
+            if (isMatch) {
+                item.style.display = 'block';
+                const content = item.querySelector('.tree-accordion-content');
+                if (content && query) {
+                    content.style.display = 'block';
+                }
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // 4. Toggle No Results Display
+        const noResultsMsg = document.getElementById('search-no-results');
+        if (noResultsMsg) {
+            noResultsMsg.style.display = (query && visibleTopicCount === 0) ? 'block' : 'none';
+        }
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            applyFilter(e.target.value);
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            applyFilter('');
+        });
+    }
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const val = btn.getAttribute('data-filter-value') || '';
+            applyFilter(val === 'all' ? '' : val);
+        });
+    });
+});
+</script>
 {% endblock %}
