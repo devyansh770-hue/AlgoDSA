@@ -14,6 +14,10 @@ def topic_list(request):
 @login_required
 def problem_list(request, topic_slug):
     """List problems for a specific topic with filter options & per-topic difficulty breakdown."""
+    from django.shortcuts import redirect
+    if topic_slug.lower() in ['learn', 'hub', 'learn_hub', 'index', 'courses']:
+        return redirect('learn_hub')
+
     topic = get_object_or_404(Topic, slug=topic_slug)
     problems = topic.problems.filter(is_active=True)
 
@@ -516,6 +520,10 @@ def global_search_api(request):
 @login_required
 def learn_topic_view(request, topic_slug):
     """Topic University Course Page."""
+    from django.shortcuts import redirect
+    if topic_slug.lower() in ['learn', 'hub', 'learn_hub', 'index', 'courses']:
+        return redirect('learn_hub')
+
     from .models import Topic, Lesson, VideoResource
     from apps.submissions.models import Submission
 

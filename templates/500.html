@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error (500) — AlgoDSA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
+    <div class="w-20 h-20 rounded-3xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto text-3xl shadow-xl">
+        ⚠️
+    </div>
+    <h1 class="text-3xl font-black text-white tracking-tight">System Error (500)</h1>
+    <p class="text-slate-300 text-sm max-w-md mx-auto leading-relaxed">
+        Something unexpected occurred while processing your request. Don't worry, your progress and data are completely safe!
+    </p>
+
+    <div class="pt-4 flex flex-wrap items-center justify-center gap-3">
+        <a href="{% url 'learn_hub' %}" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition-all">
+            Return to Learning Hub →
+        </a>
+        <a href="{% url 'landing' %}" class="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-bold text-xs transition-all">
+            Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}
