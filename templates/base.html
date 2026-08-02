@@ -57,7 +57,7 @@
                     <i data-lucide="layout-dashboard" class="icon-sm"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{% url 'topic_list' %}" class="nav-link {% if request.resolver_match.url_name == 'topic_list' or request.resolver_match.url_name == 'problem_list' %}active{% endif %}">
+                <a href="{% url 'learn_hub' %}" class="nav-link {% if request.resolver_match.url_name == 'learn_hub' or request.resolver_match.url_name == 'topic_list' or request.resolver_match.url_name == 'problem_list' or request.resolver_match.url_name == 'learn_topic' %}active{% endif %}">
                     <i data-lucide="layers" class="icon-sm"></i>
                     <span>Learning Hub</span>
                 </a>

@@ -298,9 +298,9 @@
              data-solved="{{ item.solved }}"
              data-mastery="{{ item.mastery_level }}"
              x-show="
-                (search === '' || $el.dataset.name.includes(search.toLowerCase()) || $el.dataset.desc.includes(search.toLowerCase())) &&
-                (statusFilter === '' || (statusFilter === 'completed' && $el.dataset.progress == 100) || (statusFilter === 'in_progress' && $el.dataset.progress > 0 && $el.dataset.progress < 100) || (statusFilter === 'unstarted' && $el.dataset.progress == 0)) &&
-                (masteryFilter === '' || $el.dataset.mastery === masteryFilter)
+                (!search || ($el.dataset.name || '').includes(search.toLowerCase()) || ($el.dataset.desc || '').includes(search.toLowerCase())) &&
+                (!statusFilter || (statusFilter === 'completed' && $el.dataset.progress == 100) || (statusFilter === 'in_progress' && $el.dataset.progress > 0 && $el.dataset.progress < 100) || (statusFilter === 'unstarted' && $el.dataset.progress == 0)) &&
+                (!masteryFilter || $el.dataset.mastery === masteryFilter)
              ">
 
             <!-- Card Header: Icon, Title, Mastery Badge -->
