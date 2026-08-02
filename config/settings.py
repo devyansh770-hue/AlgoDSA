@@ -120,10 +120,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # WhiteNoise static storage configuration
 STORAGES = {
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if _TESTING
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if (DEBUG or _TESTING)
                    else 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
+
 
 # Media files
 MEDIA_URL = 'media/'
