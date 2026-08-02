@@ -178,16 +178,6 @@ def learn_hub_view(request):
 
     topics = Topic.objects.all().prefetch_related('patterns', 'lessons', 'problems').order_by('order')
 
-    # Auto-seed guarantee for fresh / empty database
-    if not topics.exists():
-        try:
-            from django.core.management import call_command
-            call_command('seed_full_dsa_pattern_curriculum')
-            call_command('seed_problems')
-            topics = Topic.objects.all().prefetch_related('patterns', 'lessons', 'problems').order_by('order')
-        except Exception as e:
-            print("Auto-seed error:", e)
-
     # Categories grouping
     categories = [
         {'key': 'foundations', 'title': 'Foundations', 'icon': '📐', 'desc': 'Big-O, Memory, Recursion'},
@@ -453,15 +443,6 @@ def global_search_api(request):
     """
     from django.db.models import Q
     from .models import Topic, Pattern, Lesson, Problem
-
-    # Auto-seed check for search API
-    if not Topic.objects.exists():
-        try:
-            from django.core.management import call_command
-            call_command('seed_full_dsa_pattern_curriculum')
-            call_command('seed_problems')
-        except Exception as e:
-            print("Auto-seed search error:", e)
 
     query = request.GET.get('q', '').strip()
     if not query or len(query) < 2:
