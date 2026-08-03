@@ -552,7 +552,7 @@
         <div class="inspector-body">
             <!-- TAB 1: VARIABLES WATCH -->
             <div x-show="activeTab === 'variables'">
-                <div x-show="currentStep && Object.keys(currentStep.variables || {}).length > 0">
+                <div x-show="Object.keys(currentStep?.variables || {}).length > 0">
                     <table class="variable-watch-table">
                         <thead>
                             <tr>
@@ -563,45 +563,45 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <template x-for="(obj, name) in (currentStep ? (currentStep.variables || {}) : {})" :key="name">
-                                <tr :class="obj.changed ? 'var-row-changed' : ''">
-                                    <td class="font-mono text-[10px] text-slate-500" x-text="obj.address"></td>
+                            <template x-for="(obj, name) in (currentStep?.variables || {})" :key="name">
+                                <tr :class="obj?.changed ? 'var-row-changed' : ''">
+                                    <td class="font-mono text-[10px] text-slate-500" x-text="obj?.address || ''"></td>
                                     <td class="font-bold text-slate-100" x-text="name"></td>
-                                    <td class="text-[10px] text-slate-500" x-text="obj.type"></td>
-                                    <td class="font-mono font-bold text-emerald-400" x-text="JSON.stringify(obj.value)"></td>
+                                    <td class="text-[10px] text-slate-500" x-text="obj?.type || ''"></td>
+                                    <td class="font-mono font-bold text-emerald-400" x-text="JSON.stringify(obj?.value)"></td>
                                 </tr>
                             </template>
                         </tbody>
                     </table>
                 </div>
-                <div x-show="!currentStep || Object.keys(currentStep.variables || {}).length === 0" class="text-center text-slate-500 text-xs p-4">
+                <div x-show="Object.keys(currentStep?.variables || {}).length === 0" class="text-center text-slate-500 text-xs p-4">
                     No active scope variables at this step.
                 </div>
             </div>
 
             <!-- TAB 2: EXPRESSION BREAKDOWN -->
             <div x-show="activeTab === 'breakdown'">
-                <div x-show="currentStep && (currentStep.expression || currentStep.condition)">
+                <div x-show="currentStep?.expression || currentStep?.condition">
                     <div class="font-bold text-slate-300 text-sm mb-2 pb-1 border-b border-slate-800">Step Expression Evaluation</div>
-                    <template x-if="currentStep && currentStep.expression">
+                    <template x-if="currentStep?.expression">
                         <div class="expression-box">
                             <div class="text-xs text-slate-500 mb-1">Sub-expressions:</div>
-                            <template x-for="p in currentStep.expression.parts">
+                            <template x-for="p in (currentStep?.expression?.parts || [])">
                                 <div class="text-xs text-slate-300 font-mono">• <span x-text="p"></span></div>
                             </template>
-                            <div class="mt-2 p-2 bg-indigo-500/15 rounded-md text-indigo-400 font-bold text-xs" x-text="currentStep.expression.result"></div>
+                            <div class="mt-2 p-2 bg-indigo-500/15 rounded-md text-indigo-400 font-bold text-xs" x-text="currentStep?.expression?.result || ''"></div>
                         </div>
                     </template>
 
-                    <template x-if="currentStep && currentStep.condition">
+                    <template x-if="currentStep?.condition">
                         <div class="expression-box border-amber-500/30">
                             <div class="text-xs text-amber-500 font-bold mb-1">Condition Check:</div>
-                            <div class="text-xs font-mono text-slate-200" x-text="currentStep.condition.expression"></div>
-                            <div class="text-xs font-bold mt-1 text-emerald-400" x-text="currentStep.condition.result"></div>
+                            <div class="text-xs font-mono text-slate-200" x-text="currentStep?.condition?.expression || ''"></div>
+                            <div class="text-xs font-bold mt-1 text-emerald-400" x-text="currentStep?.condition?.result || ''"></div>
                         </div>
                     </template>
                 </div>
-                <div x-show="!currentStep || (!currentStep?.expression && !currentStep?.condition)" class="text-center text-slate-500 text-xs p-4">
+                <div x-show="!currentStep?.expression && !currentStep?.condition" class="text-center text-slate-500 text-xs p-4">
                     No complex expression breakdown for this line.
                 </div>
             </div>
@@ -629,17 +629,19 @@
                 </div>
             </div>
 
-
             <!-- TAB 3: CALL STACK -->
             <div x-show="activeTab === 'stack'">
                 <div class="font-bold text-slate-300 text-sm mb-2 pb-1 border-b border-slate-800">Active Frames</div>
-                <div class="flex flex-col gap-1" x-show="currentStep && currentStep.callStack">
-                    <template x-for="(frame, idx) in (currentStep ? currentStep.callStack : [])">
+                <div class="flex flex-col gap-1" x-show="(currentStep?.callStack || []).length > 0">
+                    <template x-for="(frame, idx) in (currentStep?.callStack || [])">
                         <div class="p-2 text-xs font-mono bg-slate-800/20 border border-slate-700/50 rounded flex justify-between">
                             <span x-text="frame"></span>
                             <span class="text-[10px] text-slate-500" x-text="'#' + (idx + 1)"></span>
                         </div>
                     </template>
+                </div>
+                <div x-show="(currentStep?.callStack || []).length === 0" class="text-center text-slate-500 text-xs p-4">
+                    Global scope execution.
                 </div>
             </div>
 
@@ -647,7 +649,7 @@
             <div x-show="activeTab === 'edge_cases'">
                 <div class="font-bold text-slate-300 text-sm mb-2 pb-1 border-b border-slate-800">Automated Boundary Testing</div>
                 <div class="flex flex-col gap-2">
-                    <template x-for="item in edgeCaseReport">
+                    <template x-for="item in (edgeCaseReport || [])">
                         <div class="p-2 text-xs bg-slate-800/20 border border-slate-700/50 rounded-lg">
                             <div class="flex justify-between items-center mb-1">
                                 <strong class="text-slate-200" x-text="item.case"></strong>
@@ -665,28 +667,31 @@
                     <div>
                         <div class="p-3 mb-3 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
                             <strong class="text-xs text-indigo-400 block mb-1">🧠 Execution Summary</strong>
-                            <p class="text-xs text-slate-300" x-text="aiReport.summary"></p>
+                            <p class="text-xs text-slate-300" x-text="aiReport?.summary || ''"></p>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-3">
                             <div class="p-2 bg-slate-800/30 rounded-lg border border-slate-700/30">
                                 <span class="text-[10px] text-slate-500 block">Time Complexity</span>
-                                <strong class="text-xs text-emerald-400 font-mono" x-text="aiReport.timeComplexity"></strong>
+                                <strong class="text-xs text-emerald-400 font-mono" x-text="aiReport?.timeComplexity || ''"></strong>
                             </div>
                             <div class="p-2 bg-slate-800/30 rounded-lg border border-slate-700/30">
                                 <span class="text-[10px] text-slate-500 block">Space Complexity</span>
-                                <strong class="text-xs text-emerald-400 font-mono" x-text="aiReport.spaceComplexity"></strong>
+                                <strong class="text-xs text-emerald-400 font-mono" x-text="aiReport?.spaceComplexity || ''"></strong>
                             </div>
                         </div>
                         <div class="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg">
                             <strong class="text-[10px] text-rose-400 block mb-1">⚠️ Common Mistakes to Watch</strong>
                             <ul class="pl-4 text-[10px] text-slate-400 mb-0 list-disc">
-                                <template x-for="tip in aiReport.keyMistakesToAvoid">
+                                <template x-for="tip in (aiReport?.keyMistakesToAvoid || [])">
                                     <li x-text="tip"></li>
                                 </template>
                             </ul>
                         </div>
                     </div>
                 </template>
+                <div x-show="!aiReport" class="text-center text-slate-500 text-xs p-4">
+                    Click "▶ Visual Execute" to generate AI Analysis.
+                </div>
             </div>
         </div>
     </div>
@@ -704,9 +709,9 @@
         <div class="timeline-scrubber-wrapper">
             <div class="step-explanation-banner">
                 <span class="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-[10px] text-slate-300 font-mono"
-                      x-show="currentStep && currentStep.line > 0"
-                      x-text="'Line ' + (currentStep ? currentStep.line : 0)"></span>
-                <span x-text="(currentStep && currentStep.explanation) ? currentStep.explanation : (traceSteps.length > 0 ? 'Step ' + (currentStepIndex + 1) + ' of ' + traceSteps.length : 'Ready to execute. Click Visual Execute.')"></span>
+                      x-show="currentStep?.line > 0"
+                      x-text="'Line ' + (currentStep?.line || 0)"></span>
+                <span x-text="(currentStep?.explanation) ? currentStep.explanation : (traceSteps.length > 0 ? 'Step ' + (currentStepIndex + 1) + ' of ' + traceSteps.length : 'Ready to execute. Click Visual Execute.')"></span>
             </div>
             <input type="range" class="scrubber-slider" min="0" :max="Math.max(0, traceSteps.length - 1)"
                    :value="currentStepIndex" @input="jumpToStep(parseInt($event.target.value))">
