@@ -552,7 +552,7 @@
         <div class="inspector-body">
             <!-- TAB 1: VARIABLES WATCH -->
             <div x-show="activeTab === 'variables'">
-                <div x-show="currentStep && Object.keys(currentStep.variables).length > 0">
+                <div x-show="currentStep && Object.keys(currentStep.variables || {}).length > 0">
                     <table class="variable-watch-table">
                         <thead>
                             <tr>
@@ -563,7 +563,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <template x-for="(obj, name) in (currentStep ? currentStep.variables : {})" :key="name">
+                            <template x-for="(obj, name) in (currentStep ? (currentStep.variables || {}) : {})" :key="name">
                                 <tr :class="obj.changed ? 'var-row-changed' : ''">
                                     <td class="font-mono text-[10px] text-slate-500" x-text="obj.address"></td>
                                     <td class="font-bold text-slate-100" x-text="name"></td>
@@ -574,7 +574,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div x-show="!currentStep || Object.keys(currentStep.variables).length === 0" class="text-center text-slate-500 text-xs p-4">
+                <div x-show="!currentStep || Object.keys(currentStep.variables || {}).length === 0" class="text-center text-slate-500 text-xs p-4">
                     No active scope variables at this step.
                 </div>
             </div>
@@ -601,7 +601,7 @@
                         </div>
                     </template>
                 </div>
-                <div x-show="!currentStep || (!currentStep.expression && !currentStep.condition)" class="text-center text-slate-500 text-xs p-4">
+                <div x-show="!currentStep || (!currentStep?.expression && !currentStep?.condition)" class="text-center text-slate-500 text-xs p-4">
                     No complex expression breakdown for this line.
                 </div>
             </div>
@@ -609,22 +609,22 @@
             <!-- TAB: METRICS -->
             <div x-show="activeTab === 'metrics'">
                 <div class="font-bold text-slate-300 text-sm mb-2 pb-1 border-b border-slate-800">Live Complexity & Operations</div>
-                <div class="flex flex-col gap-2" x-show="currentStep">
+                <div class="flex flex-col gap-2">
                     <div class="p-2 bg-slate-800/30 border border-slate-700/50 rounded-lg">
                         <div class="text-[10px] text-slate-500 font-bold mb-1">TOTAL OPERATION COUNT</div>
-                        <div class="font-mono text-xl font-bold text-slate-100" x-text="currentStep.complexity.opCount"></div>
+                        <div class="font-mono text-xl font-bold text-slate-100" x-text="currentStep?.complexity?.opCount ?? 0"></div>
                     </div>
                     <div class="p-2 bg-slate-800/30 border border-slate-700/50 rounded-lg">
                         <div class="text-[10px] text-slate-500 font-bold mb-1">COMPARISONS EVALUATED</div>
-                        <div class="font-mono text-xl font-bold text-amber-400" x-text="currentStep.complexity.comparisons"></div>
+                        <div class="font-mono text-xl font-bold text-amber-400" x-text="currentStep?.complexity?.comparisons ?? 0"></div>
                     </div>
                     <div class="p-2 bg-slate-800/30 border border-slate-700/50 rounded-lg">
                         <div class="text-[10px] text-slate-500 font-bold mb-1">ELEMENT SWAPS / WRITES</div>
-                        <div class="font-mono text-xl font-bold text-emerald-400" x-text="currentStep.complexity.swaps"></div>
+                        <div class="font-mono text-xl font-bold text-emerald-400" x-text="currentStep?.complexity?.swaps ?? 0"></div>
                     </div>
                     <div class="p-2 bg-slate-800/30 border border-slate-700/50 rounded-lg">
                         <div class="text-[10px] text-slate-500 font-bold mb-1">MAX RECURSION DEPTH</div>
-                        <div class="font-mono text-xl font-bold text-indigo-400" x-text="currentStep.complexity.depth"></div>
+                        <div class="font-mono text-xl font-bold text-indigo-400" x-text="currentStep?.complexity?.depth ?? 0"></div>
                     </div>
                 </div>
             </div>
@@ -703,8 +703,10 @@
 
         <div class="timeline-scrubber-wrapper">
             <div class="step-explanation-banner">
-                <span class="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-[10px] text-slate-300 font-mono" x-show="currentStep" x-text="'Line ' + (currentStep ? currentStep.line : 1)"></span>
-                <span x-text="currentStep ? currentStep.explanation : 'Ready to execute. Click Visual Execute.'"></span>
+                <span class="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-[10px] text-slate-300 font-mono"
+                      x-show="currentStep && currentStep.line > 0"
+                      x-text="'Line ' + (currentStep ? currentStep.line : 0)"></span>
+                <span x-text="(currentStep && currentStep.explanation) ? currentStep.explanation : (traceSteps.length > 0 ? 'Step ' + (currentStepIndex + 1) + ' of ' + traceSteps.length : 'Ready to execute. Click Visual Execute.')"></span>
             </div>
             <input type="range" class="scrubber-slider" min="0" :max="Math.max(0, traceSteps.length - 1)"
                    :value="currentStepIndex" @input="jumpToStep(parseInt($event.target.value))">

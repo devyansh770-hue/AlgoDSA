@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import json
 from .models import Topic, Problem, Hint
-from django.views.decorators.csrf import csrf_exempt
 from .services.tracer import generate_trace
+
+
+
 @login_required
 def topic_list(request):
     """List all DSA topics (delegates to the redesigned learn_hub_view)."""
@@ -738,7 +740,6 @@ def visual_execution_lab(request):
     return render(request, 'lab/execution_lab.html')
 
 
-@csrf_exempt
 @login_required
 def api_generate_trace(request):
     """API endpoint to generate an execution trace for the AI Code Lab without blocking the browser."""
@@ -747,7 +748,7 @@ def api_generate_trace(request):
             data = json.loads(request.body)
             code = data.get('code', '')
             language = data.get('language', 'python')
-            
+
             trace_result = generate_trace(code, language)
             return JsonResponse(trace_result)
         except Exception as e:
