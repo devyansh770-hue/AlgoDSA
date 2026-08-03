@@ -517,11 +517,15 @@
         </div>
     </header>
 
-    <!-- ── 2. LEFT PANEL: MONACO SOURCE CODE ── -->
     <div id="panel-left-editor">
         <div class="panel-header">
-            <span>💻 Source Code</span>
-            <span class="text-xs text-slate-500 font-mono" x-text="selectedLanguage.toUpperCase()"></span>
+            <div class="flex items-center gap-2">
+                <span>💻 Source Code</span>
+                <span class="text-xs text-slate-500 font-mono" x-text="selectedLanguage.toUpperCase()"></span>
+            </div>
+            <button type="button" class="px-2 py-0.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 rounded text-[11px] font-bold transition-colors flex items-center gap-1" @click="pasteCodeFromClipboard()" title="Paste code from clipboard and run visual execute">
+                📋 Paste & Execute
+            </button>
         </div>
         <div id="monaco-lab-editor"></div>
     </div>
