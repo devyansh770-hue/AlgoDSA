@@ -1,9 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+import json
 from .models import Topic, Problem, Hint
-
-
+from django.views.decorators.csrf import csrf_exempt
+from .services.tracer import generate_trace
 @login_required
 def topic_list(request):
     """List all DSA topics (delegates to the redesigned learn_hub_view)."""
@@ -735,6 +736,23 @@ def algorithm_simulator(request):
 def visual_execution_lab(request):
     """AI Visual Code Execution Lab — Step-by-Step Educational Execution Engine."""
     return render(request, 'lab/execution_lab.html')
+
+
+@csrf_exempt
+@login_required
+def api_generate_trace(request):
+    """API endpoint to generate an execution trace for the AI Code Lab without blocking the browser."""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '')
+            language = data.get('language', 'python')
+            
+            trace_result = generate_trace(code, language)
+            return JsonResponse(trace_result)
+        except Exception as e:
+            return JsonResponse({'error': f"Failed to generate trace: {str(e)}"}, status=500)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 

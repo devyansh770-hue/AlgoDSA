@@ -19,13 +19,29 @@ function visualLabController() {
         deltaDecorations: [],
 
         // Execution Engine & Renderers
-        engine: null,
         renderers: null,
         traceSteps: [],
         currentStepIndex: 0,
         isPlaying: false,
-        playInterval: null,
+        isLoading: false,
+        playLoop: null,
+        lastFrameTime: 0,
         playbackSpeed: 1,
+
+        presetTemplates: {
+            python: {
+                binary_search: `# Binary Search Example\ndef binary_search(arr, target):\n    left = 0\n    right = len(arr) - 1\n    \n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n            \n    return -1\n\narr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]\ntarget = 23\nresult = binary_search(arr, target)`
+            },
+            javascript: {
+                binary_search: `// JavaScript Binary Search\nfunction binarySearch(arr, target) {\n    let left = 0;\n    let right = arr.length - 1;\n    while (left <= right) {\n        let mid = Math.floor((left + right) / 2);\n        if (arr[mid] === target) return mid;\n        if (arr[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}\n\nconst arr = [10, 20, 30, 40, 50, 60, 70];\nbinarySearch(arr, 50);`
+            },
+            cpp: {
+                binary_search: `// C++ Binary Search\n#include <vector>\nusing namespace std;\nint main() {\n    return 0;\n}`
+            },
+            java: {
+                binary_search: `// Java Binary Search\nclass Solution {\n    public static void main(String[] args) {\n    }\n}`
+            }
+        },
 
         // Inspector & UI Tabs
         activeTab: 'variables', // 'variables', 'breakdown', 'stack', 'metrics', 'edge_cases', 'ai_teacher'
@@ -35,7 +51,6 @@ function visualLabController() {
 
         // Init Lifecycle
         init() {
-            this.engine = new CodeExecutionEngine();
             this.loadPresetCode();
             this.initMonaco();
             this.$nextTick(() => {
@@ -45,7 +60,7 @@ function visualLabController() {
         },
 
         loadPresetCode() {
-            const presets = this.engine.presetTemplates[this.selectedLanguage] || {};
+            const presets = this.presetTemplates[this.selectedLanguage] || {};
             this.code = presets[this.selectedPreset] || presets['binary_search'] || '# Write code here\n';
             if (this.monacoEditor) {
                 this.monacoEditor.setValue(this.code);
@@ -53,7 +68,7 @@ function visualLabController() {
         },
 
         onLanguageChange() {
-            const presets = this.engine.presetTemplates[this.selectedLanguage] || {};
+            const presets = this.presetTemplates[this.selectedLanguage] || {};
             const keys = Object.keys(presets);
             if (keys.length > 0) {
                 this.selectedPreset = keys[0];
@@ -118,17 +133,52 @@ function visualLabController() {
         /**
          * Action: Execute Visual Code
          */
-        executeVisualCode() {
+        async executeVisualCode() {
             this.pausePlayback();
+            this.isLoading = true;
+            this.traceSteps = [];
+            this.currentStepIndex = 0;
+            this.currentStep = null;
+            this.aiReport = null;
+            this.edgeCaseReport = [];
+            
             const currentCode = this.monacoEditor ? this.monacoEditor.getValue() : this.code;
 
-            // Generate trace steps
-            this.traceSteps = this.engine.generateTrace(currentCode, this.selectedLanguage, this.customInput);
-            this.edgeCaseReport = this.engine.analyzeEdgeCases(currentCode, this.selectedLanguage);
-            this.aiReport = this.engine.generateAITeacherReport(currentCode, this.selectedLanguage, this.traceSteps);
+            try {
+                const response = await fetch('/api/trace/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: currentCode,
+                        language: this.selectedLanguage,
+                        preset: this.selectedPreset
+                    })
+                });
 
-            this.currentStepIndex = 0;
-            this.jumpToStep(0);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Execution Error:\n" + data.error);
+                }
+
+                this.traceSteps = data.frames || [];
+                
+                // AI teacher mocked response for now
+                this.aiReport = {
+                    summary: `Executed ${this.traceSteps.length} steps securely on the backend.`,
+                    timeComplexity: "O(log N)",
+                    spaceComplexity: "O(1)",
+                    keyMistakesToAvoid: ["Off-by-one errors in while condition", "Integer overflow when calculating mid"]
+                };
+
+                if (this.traceSteps.length > 0) {
+                    this.jumpToStep(0);
+                }
+            } catch (err) {
+                alert("Execution Request Failed: " + err.message);
+            } finally {
+                this.isLoading = false;
+            }
         },
 
         /**
@@ -180,27 +230,37 @@ function visualLabController() {
         startPlayback() {
             if (this.traceSteps.length === 0) {
                 this.executeVisualCode();
+                return;
             }
             if (this.currentStepIndex >= this.traceSteps.length - 1) {
                 this.currentStepIndex = 0;
             }
             this.isPlaying = true;
-            const delayMs = Math.round(900 / this.playbackSpeed);
+            this.lastFrameTime = performance.now();
+            this.playLoop = requestAnimationFrame(this.playbackStep.bind(this));
+        },
 
-            this.playInterval = setInterval(() => {
+        playbackStep(timestamp) {
+            if (!this.isPlaying) return;
+            
+            const delayMs = Math.round(900 / this.playbackSpeed);
+            if (timestamp - this.lastFrameTime >= delayMs) {
                 if (this.currentStepIndex < this.traceSteps.length - 1) {
                     this.stepForward();
+                    this.lastFrameTime = timestamp;
                 } else {
                     this.pausePlayback();
+                    return;
                 }
-            }, delayMs);
+            }
+            this.playLoop = requestAnimationFrame(this.playbackStep.bind(this));
         },
 
         pausePlayback() {
             this.isPlaying = false;
-            if (this.playInterval) {
-                clearInterval(this.playInterval);
-                this.playInterval = null;
+            if (this.playLoop) {
+                cancelAnimationFrame(this.playLoop);
+                this.playLoop = null;
             }
         },
 
