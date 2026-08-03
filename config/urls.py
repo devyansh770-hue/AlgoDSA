@@ -23,7 +23,6 @@ urlpatterns = [
     path('interview/', problem_views.mock_interview, name='mock_interview'),
 
     path('mistakes/', submission_views.mistake_library, name='mistake_library'),
-    path('career/', progress_views.career_readiness, name='career_readiness'),
 
     # Feature Apps
     path('submissions/', include('apps.submissions.urls')),

@@ -48,8 +48,3 @@ class ProgressTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('topic_progresses', response.context)
-
-    def test_career_readiness_view(self):
-        response = self.client.get(reverse('career_readiness'))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('company_readiness', response.context)

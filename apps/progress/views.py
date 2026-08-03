@@ -343,28 +343,6 @@ def _get_topic_mastery_breakdown_data(user):
     return topic_list
 
 
-@login_required
-def career_readiness(request):
-    """FAANG Career Readiness & Company Interview Scorecard Dashboard (Feature: Career Dashboard)."""
-    user = request.user
-    accepted_count = Submission.objects.filter(user=user, status='accepted').values('problem').distinct().count()
-    
-    company_readiness = [
-        {'name': 'Google', 'score': min(100, int(accepted_count * 2.5 + 15)), 'logo': '🔴🔵🟡🟢', 'target_topics': 'DP, Graphs, Trees'},
-        {'name': 'Amazon', 'score': min(100, int(accepted_count * 2.8 + 20)), 'logo': '📦', 'target_topics': 'Arrays, Hash Map, Heap'},
-        {'name': 'Meta', 'score': min(100, int(accepted_count * 2.4 + 10)), 'logo': '♾️', 'target_topics': 'Two Pointers, Sliding Window, Trees'},
-        {'name': 'Microsoft', 'score': min(100, int(accepted_count * 3.0 + 25)), 'logo': '🪟', 'target_topics': 'Linked Lists, Strings, DFS'},
-        {'name': 'Apple', 'score': min(100, int(accepted_count * 2.2 + 15)), 'logo': '🍎', 'target_topics': 'Arrays, Bit Manipulation, DP'},
-    ]
-
-    context = {
-        'company_readiness': company_readiness,
-        'accepted_count': accepted_count,
-        'resume_score': min(100, int(accepted_count * 2 + 40)),
-    }
-    return render(request, 'progress/career.html', context)
-
-
 def _group_recent_activity(submissions, max_entries=10):
     """
     Group consecutive submissions for the same problem into single entries.
