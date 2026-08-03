@@ -65,6 +65,11 @@
                     <i data-lucide="play-circle" class="icon-sm"></i>
                     <span>Simulator</span>
                 </a>
+                <a href="{% url 'visual_execution_lab' %}" class="nav-link {% if request.resolver_match.url_name == 'visual_execution_lab' %}active{% endif %}">
+                    <i data-lucide="cpu" class="icon-sm"></i>
+                    <span>AI Code Lab</span>
+                </a>
+
                 <a href="{% url 'mistake_library' %}" class="nav-link {% if request.resolver_match.url_name == 'mistake_library' %}active{% endif %}">
                     <i data-lucide="shield-alert" class="icon-sm"></i>
                     <span>Mistakes</span>

@@ -18,7 +18,9 @@ urlpatterns = [
 
     # Core Features
     path('simulator/', problem_views.algorithm_simulator, name='algorithm_simulator'),
+    path('lab/', problem_views.visual_execution_lab, name='visual_execution_lab'),
     path('interview/', problem_views.mock_interview, name='mock_interview'),
+
     path('mistakes/', submission_views.mistake_library, name='mistake_library'),
     path('career/', progress_views.career_readiness, name='career_readiness'),
 

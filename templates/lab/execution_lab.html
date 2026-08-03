@@ -1,0 +1,676 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}AI Visual Code Execution Lab — AlgoDSA{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --lab-bg: #09090b;
+    --lab-panel: #0d0d12;
+    --lab-panel2: #121218;
+    --lab-border: rgba(255,255,255,0.08);
+    --lab-border-glow: rgba(99,102,241,0.3);
+    --lab-primary: #6366f1;
+    --lab-primary-light: #818cf8;
+    --lab-success: #10b981;
+    --lab-warning: #f59e0b;
+    --lab-error: #ef4444;
+    --lab-text: #f8fafc;
+    --lab-muted: #64748b;
+  }
+
+  body { background: var(--lab-bg) !important; overflow: hidden; }
+
+  /* 4-Panel Layout Container */
+  #execution-lab-layout {
+    display: grid;
+    grid-template-columns: 32% 40% 28%;
+    grid-template-rows: 52px calc(100vh - 56px - 52px - 64px) 64px;
+    height: calc(100vh - 56px);
+    width: 100vw;
+    background: var(--lab-bg);
+  }
+
+  /* ─── 1. TOP BAR CONTROLS ─── */
+  #lab-topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    background: #111116;
+    border-bottom: 1px solid var(--lab-border);
+    z-index: 10;
+  }
+
+  /* ─── 2. LEFT PANEL: MONACO EDITOR ─── */
+  #panel-left-editor {
+    grid-column: 1;
+    grid-row: 2;
+    background: var(--lab-panel);
+    border-right: 1px solid var(--lab-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #15151c;
+    border-bottom: 1px solid var(--lab-border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--lab-text);
+  }
+
+  #monaco-lab-editor {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Monaco Executing Line Glow */
+  .monaco-executing-line-bg {
+    background: rgba(99, 102, 241, 0.22) !important;
+    border-left: 3px solid var(--lab-primary-light);
+  }
+  .monaco-executing-glyph {
+    background: #6366f1;
+    width: 8px !important;
+    border-radius: 50%;
+  }
+
+  /* ─── 3. CENTER PANEL: VISUALIZATION CANVAS ─── */
+  #panel-center-canvas {
+    grid-column: 2;
+    grid-row: 2;
+    background: #08080c;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--lab-border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  #visualization-canvas {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    overflow: auto;
+  }
+
+  /* Data Structure Rendering Wrappers & Animations */
+  .lab-empty-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .ds-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .ds-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .ds-title { font-size: 0.85rem; color: var(--lab-text); }
+  .ds-meta { font-size: 0.72rem; color: var(--lab-muted); }
+
+  /* Array Grid Renderer */
+  .array-grid-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+  }
+
+  .array-cell-box {
+    position: relative;
+    width: 58px;
+    height: 64px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .array-cell-box .cell-index {
+    font-size: 0.65rem;
+    color: var(--lab-muted);
+    position: absolute;
+    top: 4px;
+  }
+
+  .array-cell-box .cell-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--lab-text);
+    margin-top: 10px;
+  }
+
+  .array-cell-box.highlighted {
+    border-color: var(--lab-primary-light);
+    background: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.3);
+    transform: translateY(-4px);
+  }
+
+  .array-cell-box.comparing {
+    border-color: var(--lab-warning);
+    background: rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+    transform: scale(1.05);
+  }
+
+  .array-cell-box.swapping {
+    border-color: var(--lab-success);
+    background: rgba(16, 185, 129, 0.18);
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+    animation: swapPulse 0.4s ease;
+  }
+
+  @keyframes swapPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15) rotate(3deg); }
+    100% { transform: scale(1); }
+  }
+
+  /* Pointer Tags */
+  .pointer-tag {
+    position: absolute;
+    bottom: -24px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .pointer-left, .pointer-i { background: #38bdf8; color: #000; }
+  .pointer-right, .pointer-j { background: #f43f5e; color: #fff; }
+  .pointer-mid, .pointer-k { background: #f59e0b; color: #000; }
+
+  /* Barchart Renderer */
+  .barchart-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    height: 220px;
+    width: 100%;
+    padding: 10px;
+  }
+  .barchart-bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--lab-primary-light), var(--lab-primary));
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4px;
+    transition: all 0.2s ease;
+  }
+  .barchart-bar .bar-val { font-size: 0.7rem; font-weight: 700; color: #fff; }
+  .barchart-bar.comparing { background: linear-gradient(180deg, #fbbf24, #d97706); }
+  .barchart-bar.swapping { background: linear-gradient(180deg, #34d399, #059669); transform: translateY(-6px); }
+
+  /* Stack Renderer */
+  .stack-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 240px;
+    margin: 0 auto;
+  }
+  .stack-frame-item {
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--lab-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+  .stack-frame-item.top-frame { border-color: var(--lab-primary-light); background: rgba(99,102,241,0.12); }
+
+  /* DP Matrix Table */
+  .dp-matrix-container { overflow-x: auto; margin: 0 auto; }
+  .dp-matrix-table { border-collapse: collapse; margin: 0 auto; }
+  .dp-matrix-cell {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--lab-border);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .dp-matrix-cell.active-dp-cell { background: rgba(99,102,241,0.25); border-color: var(--lab-primary-light); font-weight: 700; color: #fff; }
+
+  /* Hash Map KV Cards */
+  .hashmap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .hashmap-kv-card {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--lab-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+  .hashmap-key { color: var(--lab-primary-light); font-weight: 700; }
+  .hashmap-arrow { color: var(--lab-muted); }
+  .hashmap-val { color: var(--lab-success); }
+
+  /* Memory Stack Cards */
+  .memory-cards-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .memory-card-item {
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--lab-border);
+    border-radius: 8px;
+  }
+  .memory-card-item.changed-mem { border-color: var(--lab-primary-light); background: rgba(99,102,241,0.08); }
+  .mem-addr { font-size: 0.65rem; color: var(--lab-muted); }
+  .mem-name { font-size: 0.8rem; font-weight: 700; color: var(--lab-text); }
+  .mem-type { font-size: 0.68rem; color: var(--lab-muted); font-weight: 400; }
+  .mem-val { font-size: 0.9rem; color: var(--lab-success); font-weight: 700; margin-top: 2px; }
+
+  /* ─── 4. RIGHT PANEL: EXECUTION INSPECTOR ─── */
+  #panel-right-inspector {
+    grid-column: 3;
+    grid-row: 2;
+    background: var(--lab-panel);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .inspector-tabs {
+    display: flex;
+    background: #121218;
+    border-bottom: 1px solid var(--lab-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .inspector-tab-btn {
+    padding: 9px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--lab-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .inspector-tab-btn:hover { color: var(--lab-text); }
+  .inspector-tab-btn.active { color: var(--lab-primary-light); border-bottom-color: var(--lab-primary-light); }
+
+  .inspector-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+  }
+
+  .variable-watch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .variable-watch-table th {
+    text-align: left;
+    padding: 6px 8px;
+    color: var(--lab-muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--lab-border);
+  }
+  .variable-watch-table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .var-row-changed { background: rgba(99, 102, 241, 0.12); }
+
+  .expression-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--lab-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  /* ─── 5. BOTTOM PANEL: INTERACTIVE TIMELINE ─── */
+  #panel-bottom-timeline {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    background: #111116;
+    border-top: 1px solid var(--lab-border);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    gap: 1rem;
+    z-index: 10;
+  }
+
+  .timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timeline-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--lab-border);
+    color: var(--lab-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .timeline-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--lab-primary-light); }
+  .timeline-btn.primary { background: var(--lab-primary); border-color: var(--lab-primary); color: #fff; }
+  .timeline-btn.primary:hover { background: #4f46e5; }
+
+  .timeline-scrubber-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .scrubber-slider {
+    width: 100%;
+    accent-color: var(--lab-primary-light);
+    cursor: pointer;
+  }
+
+  .step-explanation-banner {
+    font-size: 0.78rem;
+    color: var(--lab-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .speed-pill-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,0,0,0.3);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid var(--lab-border);
+  }
+  .speed-pill {
+    padding: 3px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--lab-muted);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .speed-pill.active { background: var(--lab-primary); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="execution-lab-layout" x-data="visualLabController()">
+
+    <!-- ── 1. TOP BAR ── -->
+    <header id="lab-topbar">
+        <div class="d-flex align-center gap-sm">
+            <i data-lucide="cpu" class="icon-md" style="color: var(--lab-primary-light);"></i>
+            <h2 style="font-size: 1.05rem; font-weight: 800; color: var(--lab-text); margin: 0;">AI Visual Code Execution Lab</h2>
+            <span class="badge badge-pattern text-2xs">Educational Trace Engine</span>
+        </div>
+
+        <div class="d-flex align-center gap-sm">
+            <!-- Language Selector -->
+            <select class="form-select" style="width: auto; padding: 4px 24px 4px 10px; font-size: 0.78rem;"
+                    x-model="selectedLanguage" @change="onLanguageChange()">
+                <option value="python">Python 3</option>
+                <option value="javascript">JavaScript (Node)</option>
+                <option value="cpp">C++ (GCC)</option>
+                <option value="java">Java (OpenJDK)</option>
+            </select>
+
+            <!-- Preset Algorithm Code Selector -->
+            <select class="form-select" style="width: auto; padding: 4px 24px 4px 10px; font-size: 0.78rem;"
+                    x-model="selectedPreset" @change="loadPresetCode()">
+                <option value="binary_search">Algorithm: Binary Search</option>
+                <option value="bubble_sort">Algorithm: Bubble / Selection Sort</option>
+                <option value="two_pointer">Algorithm: Two Pointer Swap</option>
+                <option value="recursion_fib">Algorithm: Fibonacci Recursion</option>
+            </select>
+
+            <button type="button" class="btn btn-success btn-sm font-bold" @click="executeVisualCode()">
+                ▶ Visual Execute
+            </button>
+
+            <button type="button" class="btn btn-ghost btn-sm" @click="exportReport()" title="Export Trace JSON">
+                💾 Export
+            </button>
+        </div>
+    </header>
+
+    <!-- ── 2. LEFT PANEL: MONACO SOURCE CODE ── -->
+    <div id="panel-left-editor">
+        <div class="panel-header">
+            <span>💻 Source Code</span>
+            <span class="text-xs text-muted font-mono" x-text="selectedLanguage.toUpperCase()"></span>
+        </div>
+        <div id="monaco-lab-editor"></div>
+    </div>
+
+    <!-- ── 3. CENTER PANEL: VISUALIZATION CANVAS ── -->
+    <div id="panel-center-canvas">
+        <div class="panel-header">
+            <span>🎨 Dynamic Visualization Canvas</span>
+            <span class="text-xs text-muted" x-show="currentStep" x-text="'Step ' + (currentStepIndex + 1) + ' of ' + traceSteps.length"></span>
+        </div>
+        <div id="visualization-canvas">
+            <!-- Rendered SVG / Canvas elements inserted via VisualLabRenderers -->
+        </div>
+    </div>
+
+    <!-- ── 4. RIGHT PANEL: EXECUTION INSPECTOR ── -->
+    <div id="panel-right-inspector">
+        <div class="inspector-tabs">
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'variables' && 'active'" @click="activeTab = 'variables'">📊 Variables</button>
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'breakdown' && 'active'" @click="activeTab = 'breakdown'">🔍 Expression</button>
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'stack' && 'active'" @click="activeTab = 'stack'">🥞 Call Stack</button>
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'edge_cases' && 'active'" @click="activeTab = 'edge_cases'">🧪 Edge Cases</button>
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'ai_teacher' && 'active'" @click="activeTab = 'ai_teacher'">🤖 AI Teacher</button>
+        </div>
+
+        <div class="inspector-body">
+            <!-- TAB 1: VARIABLES WATCH -->
+            <div x-show="activeTab === 'variables'">
+                <div x-show="currentStep && Object.keys(currentStep.variables).length > 0">
+                    <table class="variable-watch-table">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Variable</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(obj, name) in (currentStep ? currentStep.variables : {})" :key="name">
+                                <tr :class="obj.changed ? 'var-row-changed' : ''">
+                                    <td class="font-mono text-2xs text-muted" x-text="obj.address"></td>
+                                    <td class="font-bold text-bright" x-text="name"></td>
+                                    <td class="text-2xs text-muted" x-text="obj.type"></td>
+                                    <td class="font-mono font-bold" style="color: var(--lab-success);" x-text="JSON.stringify(obj.value)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div x-show="!currentStep || Object.keys(currentStep.variables).length === 0" class="text-center text-muted text-xs p-md">
+                    No active scope variables at this step.
+                </div>
+            </div>
+
+            <!-- TAB 2: EXPRESSION BREAKDOWN -->
+            <div x-show="activeTab === 'breakdown'">
+                <div x-show="currentStep && (currentStep.expression || currentStep.condition)">
+                    <div class="section-title">Step Expression Evaluation</div>
+                    <template x-if="currentStep && currentStep.expression">
+                        <div class="expression-box">
+                            <div class="text-xs text-muted mb-xs">Sub-expressions:</div>
+                            <template x-for="p in currentStep.expression.parts">
+                                <div class="text-xs text-secondary font-mono">• <span x-text="p"></span></div>
+                            </template>
+                            <div class="mt-sm p-xs" style="background: rgba(99,102,241,0.15); border-radius: 6px; color: var(--lab-primary-light); font-weight:700;" x-text="currentStep.expression.result"></div>
+                        </div>
+                    </template>
+
+                    <template x-if="currentStep && currentStep.condition">
+                        <div class="expression-box" style="border-color: rgba(245,158,11,0.3);">
+                            <div class="text-xs text-warning font-bold mb-xs">Condition Check:</div>
+                            <div class="text-xs font-mono" x-text="currentStep.condition.expression"></div>
+                            <div class="text-xs font-bold mt-xs" style="color: #4ade80;" x-text="currentStep.condition.result"></div>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="!currentStep || (!currentStep.expression && !currentStep.condition)" class="text-center text-muted text-xs p-md">
+                    No complex expression breakdown for this line.
+                </div>
+            </div>
+
+            <!-- TAB 3: CALL STACK -->
+            <div x-show="activeTab === 'stack'">
+                <div class="section-title">Active Frames</div>
+                <div class="d-flex flex-col gap-xs" x-show="currentStep && currentStep.callStack">
+                    <template x-for="(frame, idx) in (currentStep ? currentStep.callStack : [])">
+                        <div class="p-xs text-xs font-mono" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 6px; display: flex; justify-content: space-between;">
+                            <span x-text="frame"></span>
+                            <span class="text-2xs text-muted" x-text="'#' + (idx + 1)"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- TAB 4: EDGE CASE REPORT -->
+            <div x-show="activeTab === 'edge_cases'">
+                <div class="section-title">Automated Boundary Testing</div>
+                <div class="d-flex flex-col gap-xs">
+                    <template x-for="item in edgeCaseReport">
+                        <div class="p-xs text-xs" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 6px;">
+                            <div class="d-flex justify-between align-center mb-2xs">
+                                <strong class="text-bright" x-text="item.case"></strong>
+                                <span class="badge badge-easy text-2xs" x-text="item.status"></span>
+                            </div>
+                            <div class="text-2xs text-muted" x-text="item.note"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- TAB 5: AI TEACHER ANALYSIS -->
+            <div x-show="activeTab === 'ai_teacher'">
+                <template x-if="aiReport">
+                    <div>
+                        <div class="p-xs mb-sm" style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); border-radius: 8px;">
+                            <strong class="text-xs text-primary d-block mb-xs">🧠 Execution Summary</strong>
+                            <p class="text-xs text-secondary" x-text="aiReport.summary"></p>
+                        </div>
+                        <div class="grid-2 gap-xs mb-sm">
+                            <div class="p-xs" style="background: rgba(255,255,255,0.025); border-radius: 6px;">
+                                <span class="text-2xs text-muted d-block">Time Complexity</span>
+                                <strong class="text-xs text-success font-mono" x-text="aiReport.timeComplexity"></strong>
+                            </div>
+                            <div class="p-xs" style="background: rgba(255,255,255,0.025); border-radius: 6px;">
+                                <span class="text-2xs text-muted d-block">Space Complexity</span>
+                                <strong class="text-xs text-success font-mono" x-text="aiReport.spaceComplexity"></strong>
+                            </div>
+                        </div>
+                        <div class="p-xs" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 6px;">
+                            <strong class="text-2xs text-error d-block mb-xs">⚠️ Common Mistakes to Watch</strong>
+                            <ul class="pl-sm text-2xs text-muted mb-0" style="padding-left: 1rem;">
+                                <template x-for="tip in aiReport.keyMistakesToAvoid">
+                                    <li x-text="tip"></li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 5. BOTTOM PANEL: INTERACTIVE TIMELINE CONTROLS ── -->
+    <footer id="panel-bottom-timeline">
+        <div class="timeline-controls">
+            <button type="button" class="timeline-btn" @click="stepBackward()" title="Step Back (Left Arrow)">⏮</button>
+            <button type="button" class="timeline-btn primary" @click="togglePlayPause()" title="Play / Pause (Spacebar)">
+                <span x-text="isPlaying ? '⏸' : '▶'"></span>
+            </button>
+            <button type="button" class="timeline-btn" @click="stepForward()" title="Step Forward (Right Arrow)">⏭</button>
+        </div>
+
+        <div class="timeline-scrubber-wrapper">
+            <div class="step-explanation-banner">
+                <span class="badge badge-pattern text-2xs" x-show="currentStep" x-text="'Line ' + (currentStep ? currentStep.line : 1)"></span>
+                <span x-text="currentStep ? currentStep.explanation : 'Ready to execute. Click Visual Execute.'"></span>
+            </div>
+            <input type="range" class="scrubber-slider" min="0" :max="Math.max(0, traceSteps.length - 1)"
+                   :value="currentStepIndex" @input="jumpToStep(parseInt($event.target.value))">
+        </div>
+
+        <div class="speed-pill-group">
+            <span class="speed-pill" :class="playbackSpeed === 0.5 && 'active'" @click="setSpeed(0.5)">0.5x</span>
+            <span class="speed-pill" :class="playbackSpeed === 1 && 'active'" @click="setSpeed(1)">1x</span>
+            <span class="speed-pill" :class="playbackSpeed === 2 && 'active'" @click="setSpeed(2)">2x</span>
+            <span class="speed-pill" :class="playbackSpeed === 4 && 'active'" @click="setSpeed(4)">4x</span>
+        </div>
+    </footer>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Monaco Editor CDN Loader -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<!-- Execution Engine Scripts -->
+<script src="{% static 'js/lab/execution_engine.js' %}"></script>
+<script src="{% static 'js/lab/lab_renderers.js' %}"></script>
+<script src="{% static 'js/lab/lab_ui.js' %}"></script>
+{% endblock %}

@@ -732,6 +732,13 @@ def algorithm_simulator(request):
 
 
 @login_required
+def visual_execution_lab(request):
+    """AI Visual Code Execution Lab — Step-by-Step Educational Execution Engine."""
+    return render(request, 'lab/execution_lab.html')
+
+
+
+@login_required
 def mock_interview(request):
     """FAANG AI Mock Interviewer Workstation (Feature: Interview Mode)."""
     problem_id = request.GET.get('problem_id')
