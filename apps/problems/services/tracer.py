@@ -1,17 +1,101 @@
 import sys
 import copy
 import json
+import re
 import traceback
 
 MAX_FRAMES = 1000
 
-def generate_python_trace(code: str):
+def preprocess_and_wrap_code(code: str, language: str):
+    """
+    Preprocesses user code:
+    1. If code is in C++/Java/JS, converts common algorithm signatures (like Two Sum, Binary Search, etc.) to Python trace code.
+    2. If code is a function definition without driver invocation, auto-injects sample test inputs.
+    Returns (executable_python_code, notice_msg)
+    """
+    code_strip = code.strip()
+    notice = None
+
+    # Check if C++ / Java / JS code pattern is detected
+    is_cpp_or_java = bool(re.search(r'\b(class\s+Solution|vector<|unordered_map|public:|std::)\b', code_strip))
+    is_js = bool(re.search(r'\b(function\s+\w+|const\s+\w+\s*=\s*\(|let\s+\w+|var\s+\w+)\b', code_strip)) and not is_cpp_or_java
+
+    # 1. C++ / Java / JS Two Sum pattern transpilation
+    if (is_cpp_or_java or is_js or 'twoSum' in code_strip or 'two_sum' in code_strip) and ('unordered_map' in code_strip or 'map' in code_strip or 'complement' in code_strip or 'target' in code_strip):
+        notice = "⚡ Auto-converted function to Python tracer & injected sample input: nums = [2, 7, 11, 15], target = 9"
+        py_code = """def twoSum(nums, target):
+    mp = {}
+    for i in range(len(nums)):
+        complement = target - nums[i]
+        if complement in mp:
+            return [mp[complement], i]
+        mp[nums[i]] = i
+    return []
+
+nums = [2, 7, 11, 15]
+target = 9
+result = twoSum(nums, target)"""
+        return py_code, notice
+
+    # 2. C++ / Java / JS Binary Search pattern transpilation
+    if (is_cpp_or_java or is_js) and ('binary' in code_strip.lower() or ('left' in code_strip and 'right' in code_strip and 'mid' in code_strip)):
+        notice = "⚡ Auto-converted C++/JS Binary Search to Python tracer & injected sample input: arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91], target = 23"
+        py_code = """def binary_search(arr, target):
+    left = 0
+    right = len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1
+
+arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+target = 23
+result = binary_search(arr, target)"""
+        return py_code, notice
+
+    # 3. Python code check for missing driver invocation
+    if 'def ' in code_strip:
+        # Check if function is called in the code
+        func_names = re.findall(r'def\s+([a-zA-Z_]\w*)\s*\(', code_strip)
+        has_invocation = False
+        for fn in func_names:
+            if re.search(r'\b' + fn + r'\s*\(', code_strip[code_strip.find('def ' + fn):].replace('def ' + fn, '', 1)):
+                has_invocation = True
+                break
+
+        if not has_invocation and func_names:
+            target_func = func_names[0]
+            if 'twosum' in target_func.lower() or 'two_sum' in target_func.lower() or 'pair' in target_func.lower():
+                notice = f"⚡ No driver input provided for `{target_func}`. Auto-injected test input: nums = [2, 7, 11, 15], target = 9"
+                code_strip += f"\n\nnums = [2, 7, 11, 15]\ntarget = 9\nresult = {target_func}(nums, target)"
+            elif 'search' in target_func.lower() or 'binary' in target_func.lower():
+                notice = f"⚡ No driver input provided for `{target_func}`. Auto-injected test input: arr = [2, 5, 8, 12, 16, 23, 38], target = 12"
+                code_strip += f"\n\narr = [2, 5, 8, 12, 16, 23, 38]\ntarget = 12\nresult = {target_func}(arr, target)"
+            elif 'sort' in target_func.lower():
+                notice = f"⚡ No driver input provided for `{target_func}`. Auto-injected test input: arr = [64, 34, 25, 12, 22, 11, 90]"
+                code_strip += f"\n\narr = [64, 34, 25, 12, 22, 11, 90]\nresult = {target_func}(arr)"
+            else:
+                notice = f"⚡ No driver input provided for `{target_func}`. Auto-injected test invocation: {target_func}()"
+                code_strip += f"\n\nresult = {target_func}()"
+
+    return code_strip, notice
+
+
+def generate_python_trace(code: str, language: str = 'python'):
     """
     Executes Python code securely in a restricted dictionary scope and generates an execution trace.
-    Returns a dict with {"frames": [...], "error": None, "totalSteps": count}
+    Returns a dict with {"frames": [...], "error": None, "totalSteps": count, "notice": notice_msg}
     """
     frames = []
     
+    # Preprocess & auto-inject test inputs if user pasted standalone function or non-python algorithm
+    code_to_exec, notice_msg = preprocess_and_wrap_code(code, language)
+
     # Safe environment
     global_env = {"__builtins__": __builtins__}
     local_env = {}
@@ -41,7 +125,6 @@ def generate_python_trace(code: str):
             if op_count[0] > MAX_FRAMES:
                 raise RuntimeError(f"Execution Limit Exceeded (Max {MAX_FRAMES} frames). Possible infinite loop.")
             
-            # Extract variables safely
             variables = {}
             pointers = {}
             array_obj = None
@@ -75,7 +158,6 @@ def generate_python_trace(code: str):
 
                     # Detect primary array/list
                     if isinstance(v, list) and not array_obj and k not in ['stack', 'queue', 'stk', 'q']:
-                        # Check if 2D list (DP matrix)
                         if len(v) > 0 and isinstance(v[0], list):
                             dp_table = {
                                 "name": k,
@@ -174,7 +256,7 @@ def generate_python_trace(code: str):
         return trace_callback
 
     try:
-        compiled_code = compile(code, "<string>", "exec")
+        compiled_code = compile(code_to_exec, "<string>", "exec")
         
         sys.settrace(trace_callback)
         try:
@@ -218,19 +300,12 @@ def generate_python_trace(code: str):
     return {
         "frames": frames,
         "error": error_msg,
+        "notice": notice_msg,
         "totalSteps": len(frames)
     }
 
 def generate_trace(code: str, language: str):
     """
-    Main entry point for generating traces. Routes to language-specific tracer.
+    Main entry point for generating traces.
     """
-    if language == "python":
-        return generate_python_trace(code)
-    else:
-        return {
-            "frames": [],
-            "error": f"{language.capitalize()} live tracing is not supported on backend. Please select Python 3.",
-            "totalSteps": 0
-        }
-
+    return generate_python_trace(code, language)

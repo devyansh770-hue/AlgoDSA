@@ -299,12 +299,22 @@ binarySearch(arr, 50);`
 
                 // Generate Edge Case Test Report
                 this.edgeCaseReport = this.generateEdgeCaseSuite(currentCode);
+                if (data.notice) {
+                    this.edgeCaseReport.unshift({
+                        case: 'Driver Input Injected',
+                        status: 'AUTO-SYNTHESIZED',
+                        note: data.notice
+                    });
+                }
 
                 // Generate AI Summary Report
-                this.aiReport = this.generateAIReport(this.traceSteps.length);
+                this.aiReport = this.generateAIReport(this.traceSteps.length, currentCode, data.notice);
 
                 if (this.traceSteps.length > 0) {
                     this.jumpToStep(0);
+                    if (data.notice) {
+                        this.currentStep.explanation = `${data.notice} | ${this.currentStep.explanation}`;
+                    }
                 } else {
                     this.currentStep = { ...EMPTY_STEP, explanation: 'Code executed cleanly with no traceable line steps.' };
                 }
@@ -467,22 +477,29 @@ binarySearch(arr, 50);`
         },
 
         // ── AI Execution Summary Generator ─────────────────────────────────────
-        generateAIReport(totalSteps) {
+        generateAIReport(totalSteps, code = '', notice = null) {
             let tc = 'O(log N)';
             let sc = 'O(1)';
-            if (this.selectedPreset === 'bubble_sort') {
-                tc = 'O(N²)';
-                sc = 'O(1)';
-            } else if (this.selectedPreset === 'recursion_fib') {
+            const lower = (code || '').toLowerCase();
+
+            if (lower.includes('twosum') || lower.includes('two_sum') || lower.includes('unordered_map') || lower.includes('complement')) {
                 tc = 'O(N)';
                 sc = 'O(N)';
-            } else if (this.selectedPreset === 'two_pointer') {
-                tc = 'O(N)';
+            } else if (lower.includes('bubble') || lower.includes('swapped')) {
+                tc = 'O(N²)';
                 sc = 'O(1)';
+            } else if (lower.includes('fib') || lower.includes('memo')) {
+                tc = 'O(N)';
+                sc = 'O(N)';
+            }
+
+            let summaryMsg = `Backend traced ${totalSteps} execution steps. Variable scopes were continuously inspected frame-by-frame.`;
+            if (notice) {
+                summaryMsg = `${notice}. ${summaryMsg}`;
             }
 
             return {
-                summary:            `Backend traced ${totalSteps} execution steps. Variable scopes were continuously inspected frame-by-frame.`,
+                summary:            summaryMsg,
                 timeComplexity:     tc,
                 spaceComplexity:    sc,
                 keyMistakesToAvoid: [
