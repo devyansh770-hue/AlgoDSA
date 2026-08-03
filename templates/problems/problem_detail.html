@@ -3,179 +3,452 @@
 
 {% block content %}
 <div class="split-pane" x-data="problemPage()">
-    <!-- Left Panel: Problem Description -->
+    <!-- Left Panel: Problem Description — Premium Sidebar -->
     <div class="split-left">
+
+        <!-- ── Problem Header ── -->
         <div class="problem-header">
             <div class="d-flex align-center gap-sm mb-md" style="justify-content: space-between; flex-wrap: wrap;">
                 <a href="{% url 'problem_list' topic.slug %}" class="btn btn-ghost btn-sm">← {{ topic.name }}</a>
                 <div class="d-flex gap-xs">
-                    <a href="{{ problem.leetcode_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #f59e0b;" title="Solve on LeetCode">
-                        🟠 Open on LeetCode ↗
-                    </a>
-                    <a href="{{ problem.gfg_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(16, 185, 129, 0.4); color: #10b981;" title="Solve on GeeksforGeeks">
-                        🟢 Open on GFG ↗
-                    </a>
+                    <a href="{{ problem.leetcode_url }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(245,158,11,0.4); color:#f59e0b;" title="Solve on LeetCode">🟠 LeetCode ↗</a>
+                    <a href="{{ problem.gfg_url }}"      target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="border-color: rgba(16,185,129,0.4);  color:#10b981;" title="Solve on GeeksforGeeks">🟢 GFG ↗</a>
                 </div>
             </div>
             <h1 class="problem-title">{{ problem.title }}</h1>
             <div class="problem-meta">
                 <span class="badge badge-{{ problem.difficulty }}">{{ problem.get_difficulty_display }}</span>
                 <span class="badge badge-pattern">{{ problem.get_pattern_display }}</span>
-                {% if is_solved %}
-                <span class="badge badge-solved">✅ Solved</span>
-                {% endif %}
+                {% if is_solved %}<span class="badge badge-solved">✅ Solved</span>{% endif %}
             </div>
         </div>
 
-        <div class="problem-description">
-            {{ problem.description|linebreaksbr }}
+        <div class="sidebar-section-divider"></div>
+
+        <!-- ══════════════════════════════════════
+             📘 SECTION 1: PROBLEM
+             ══════════════════════════════════════ -->
+        <div class="sidebar-section-group" x-data="{ openCards: { desc: true, examples: false, constraints: false } }">
+            <div class="sidebar-section-label">
+                <span class="section-icon">📘</span> Problem
+            </div>
+
+            <!-- Card: Description -->
+            <div class="prem-card" :class="openCards.desc && 'expanded'">
+                <button class="prem-card-header" @click="openCards.desc = !openCards.desc" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon purple">📄</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Description</div>
+                            <div class="prem-card-subtitle">Problem statement</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~2 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.desc" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <div class="prem-description">{{ problem.description|linebreaksbr }}</div>
+                    </div>
+                </div>
+            </div>
 
             {% if problem.examples %}
-            <h3>Examples</h3>
-            <pre>{{ problem.examples }}</pre>
+            <!-- Card: Examples -->
+            <div class="prem-card" :class="openCards.examples && 'expanded'">
+                <button class="prem-card-header" @click="openCards.examples = !openCards.examples" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon cyan">💡</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Examples</div>
+                            <div class="prem-card-subtitle">Input / Output walkthroughs</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~1 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.examples" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <pre class="prem-examples-block">{{ problem.examples }}</pre>
+                    </div>
+                </div>
+            </div>
             {% endif %}
 
             {% if problem.constraints %}
-            <h3>Constraints</h3>
-            <pre>{{ problem.constraints }}</pre>
-            {% endif %}
-        </div>
-
-        <!-- Sample Test Cases -->
-        {% if sample_cases %}
-        <div class="mt-xl">
-            <h3 class="section-title">🧪 Sample Test Cases</h3>
-            {% for tc in sample_cases %}
-            <div class="test-case-result" style="margin-bottom: 0.5rem;">
-                <div><strong>Input:</strong> <code>{{ tc.input_data }}</code></div>
-                <div><strong>Output:</strong> <code>{{ tc.expected_output }}</code></div>
-                {% if tc.explanation %}
-                <div class="mt-sm text-muted text-sm">{{ tc.explanation }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- AI Hints (LeetCode Accordion Style) -->
-        <div class="hints-panel">
-            <h3 class="section-title">🤖 AI Hints</h3>
-            <div class="hints-accordion d-flex" style="flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
-                <template x-for="hint in hints" :key="hint.id">
-                    <div class="hint-accordion-item"
-                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-card); transition: all 0.2s ease;"
-                         :style="hint.isOpen ? 'border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.04);' : ''">
-                        <!-- Accordion Header -->
-                        <button type="button"
-                                class="hint-accordion-header"
-                                @click="toggleHint(hint.level)"
-                                :disabled="hint.loading"
-                                style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: transparent; border: none; color: var(--text-bright); font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s ease;">
-                            <div class="d-flex align-center gap-xs">
-                                <span style="display: inline-block; font-size: 0.7rem; transition: transform 0.2s ease; opacity: 0.7; width: 14px; text-align: center;"
-                                      :style="hint.isOpen ? 'transform: rotate(90deg); color: var(--primary-light); opacity: 1;' : ''">▶</span>
-                                <span><span x-text="hint.icon"></span> <strong x-text="hint.title"></strong> <span class="text-xs text-muted" x-text="'(' + hint.subtitle + ')'"></span></span>
-                            </div>
-                            <div class="d-flex align-center gap-xs">
-                                <template x-if="hint.loading">
-                                    <span class="text-xs text-muted">⏳ Loading...</span>
-                                </template>
-                                <template x-if="!hint.loading && hint.isLoaded">
-                                    <span class="badge" :class="hint.isOpen ? 'badge-pattern' : ''" style="font-size: 0.7rem; padding: 2px 8px;" x-text="hint.isOpen ? 'Expanded' : 'Collapsed'"></span>
-                                </template>
-                            </div>
-                        </button>
-
-                        <!-- Accordion Body (Collapsible Content) -->
-                        <div class="hint-accordion-body"
-                             x-show="hint.isOpen"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 transform -translate-y-1"
-                             x-transition:enter-end="opacity-100 transform translate-y-0"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100 transform translate-y-0"
-                             x-transition:leave-end="opacity-0 transform -translate-y-1"
-                             style="padding: 12px 14px 14px 34px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.88rem; line-height: 1.6; color: var(--text-primary); background: rgba(0,0,0,0.2);">
-                            <div x-text="hint.content"></div>
+            <!-- Card: Constraints -->
+            <div class="prem-card" :class="openCards.constraints && 'expanded'">
+                <button class="prem-card-header" @click="openCards.constraints = !openCards.constraints" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon amber">⚠️</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Constraints</div>
+                            <div class="prem-card-subtitle">Input bounds & edge cases</div>
                         </div>
                     </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Explain It Back -->
-        <div class="explain-section">
-            <h3>📝 Explain It Back</h3>
-            <p class="text-muted text-sm mb-md">
-                Explain the solution approach in your own words to unlock the editorial.
-            </p>
-            <textarea class="explain-textarea" x-model="explanation"
-                placeholder="This problem uses... because... The time complexity is... because..."></textarea>
-            <div class="d-flex gap-sm mt-md">
-                <button class="btn btn-primary" @click="submitExplanation()" :disabled="explanationLoading || !explanation.trim()">
-                    <span x-text="explanationLoading ? '⏳ Checking...' : '🧠 Submit Explanation'"></span>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~30s</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
                 </button>
-            </div>
-
-            <template x-if="explanationFeedback">
-                <div class="ai-feedback" :class="explanationApproved ? 'approved' : 'rejected'">
-                    <div x-text="explanationFeedback"></div>
-                    <div class="mt-sm text-sm" x-show="explanationScore > 0">
-                        Score: <strong x-text="explanationScore + '%'"></strong>
+                <div class="prem-card-body" x-show="openCards.constraints" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <pre class="prem-examples-block" style="border-color: rgba(245,158,11,0.15); background: rgba(245,158,11,0.04);">{{ problem.constraints }}</pre>
                     </div>
                 </div>
-            </template>
-        </div>
-
-        <!-- Editorial -->
-        <div class="editorial-section mt-xl">
-            <h3 class="section-title">📖 Editorial</h3>
-            {% if editorial_unlocked %}
-            <div class="problem-description">
-                {{ problem.editorial|linebreaksbr }}
             </div>
-            {% else %}
-            <div class="editorial-locked" x-show="!editorialContent">
-                <div class="lock-icon">🔒</div>
-                <p>Submit a valid explanation above to unlock the editorial.</p>
-            </div>
-            <template x-if="editorialContent">
-                <div class="problem-description" x-text="editorialContent"></div>
-            </template>
             {% endif %}
         </div>
 
-        <!-- Recent Submissions for this Problem (LeetCode Style) -->
-        <div class="mt-xl" id="submissions-history-section">
-            <div class="d-flex align-center justify-between mb-sm">
-                <h3 class="section-title" style="margin-bottom: 0;">📋 Your Submissions</h3>
-                <span class="text-xs text-muted font-mono" x-show="userSubmissions.length > 0" x-text="userSubmissions.length + ' total'"></span>
-            </div>
-            
-            <div class="submission-list" x-show="userSubmissions.length > 0">
-                <template x-for="sub in userSubmissions" :key="sub.id">
-                    <div class="submission-item clickable-submission-row"
-                         @click="openSubmissionModal(sub.id)"
-                         style="grid-template-columns: auto 1fr auto auto; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease;">
-                        <span><span x-text="sub.status_icon"></span></span>
-                        <div class="d-flex align-center gap-xs">
-                            <span class="text-sm font-bold" :style="'color: ' + sub.status_color" x-text="sub.status_display"></span>
-                            <span class="badge badge-pattern" style="font-size: 0.65rem; padding: 1px 6px;" x-text="sub.language_display"></span>
-                        </div>
-                        <span class="text-muted text-sm font-mono" x-text="sub.runtime_ms !== null && sub.runtime_ms !== undefined ? sub.runtime_ms.toFixed(0) + 'ms' : ''"></span>
-                        <div class="d-flex align-center gap-xs">
-                            <span class="text-muted text-xs" x-text="sub.created_at_relative"></span>
-                            <span style="color: var(--primary-light); font-size: 0.75rem; font-weight: 600; opacity: 0.85;">🔍 View</span>
-                        </div>
-                    </div>
-                </template>
+        <div class="sidebar-section-divider"></div>
+
+        <!-- ══════════════════════════════════════
+             🧠 SECTION 2: LEARN
+             ══════════════════════════════════════ -->
+        <div class="sidebar-section-group" x-data="{ openCards: { pattern: false, complexity: false, mistakes: false, tips: false } }">
+            <div class="sidebar-section-label">
+                <span class="section-icon">🧠</span> Learn
             </div>
 
-            <div x-show="userSubmissions.length === 0" class="empty-state" style="padding: 1.5rem; text-align: center; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
-                <p class="text-muted text-xs" style="margin: 0;">No submissions yet. Write your code and click Submit!</p>
+            <!-- Card: Pattern Used -->
+            <div class="prem-card" :class="openCards.pattern && 'expanded'">
+                <button class="prem-card-header" @click="openCards.pattern = !openCards.pattern" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon violet">🗺️</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Pattern Used</div>
+                            <div class="prem-card-subtitle">Algorithmic technique</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~1 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.pattern" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <span class="pattern-badge-learn">🗺️ {{ problem.get_pattern_display }}</span>
+                        <p class="text-sm text-secondary mt-sm" style="line-height: 1.6; margin-top: 10px;">
+                            Recognizing this pattern lets you apply the optimal strategy rather than brute-forcing the solution.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Complexity -->
+            <div class="prem-card" :class="openCards.complexity && 'expanded'">
+                <button class="prem-card-header" @click="openCards.complexity = !openCards.complexity" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon green">📊</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Complexity</div>
+                            <div class="prem-card-subtitle">Time & Space analysis</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~1 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.complexity" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <table class="complexity-table">
+                            <tr><td>⏱ Time Complexity</td><td>O(N) — linear scan</td></tr>
+                            <tr><td>💾 Space Complexity</td><td>O(1) — constant extra</td></tr>
+                            <tr><td>🏆 Optimal?</td><td>Yes — single pass</td></tr>
+                        </table>
+                        <p class="text-xs text-muted mt-sm" style="margin-top: 10px; line-height: 1.5;">Actual complexity may vary by approach. The above represents the optimal solution.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Common Mistakes -->
+            <div class="prem-card" :class="openCards.mistakes && 'expanded'">
+                <button class="prem-card-header" @click="openCards.mistakes = !openCards.mistakes" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon rose">⚡</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Common Mistakes</div>
+                            <div class="prem-card-subtitle">Pitfalls to avoid</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~2 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.mistakes" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <div class="prem-tip-list">
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#ef4444;"></div><span>Off-by-one errors at boundary conditions and edge cases.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#ef4444;"></div><span>Not handling empty arrays or single-element inputs.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#ef4444;"></div><span>Integer overflow — use 64-bit integers when required.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#ef4444;"></div><span>Forgetting to reset state between test cases.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Interview Tips -->
+            <div class="prem-card" :class="openCards.tips && 'expanded'">
+                <button class="prem-card-header" @click="openCards.tips = !openCards.tips" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon blue">🎯</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Interview Tips</div>
+                            <div class="prem-card-subtitle">FAANG-proven strategies</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~2 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.tips" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <div class="prem-tip-list">
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#818cf8;"></div><span>Clarify constraints and ask about edge cases before coding.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#818cf8;"></div><span>Start with a brute-force and then optimize — show your thinking.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#818cf8;"></div><span>Walk through your example step-by-step out loud.</span></div>
+                            <div class="prem-tip-item"><div class="prem-tip-dot" style="background:#818cf8;"></div><span>State time and space complexity after each approach.</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div class="sidebar-section-divider"></div>
+
+        <!-- ══════════════════════════════════════
+             🧪 SECTION 3: PRACTICE
+             ══════════════════════════════════════ -->
+        <div class="sidebar-section-group" x-data="{ openCards: { cases: false, hints: false, editorial: false, explain: false, submissions: false } }">
+            <div class="sidebar-section-label">
+                <span class="section-icon">🧪</span> Practice
+            </div>
+
+            {% if sample_cases %}
+            <!-- Card: Sample Test Cases -->
+            <div class="prem-card" :class="openCards.cases && 'expanded'">
+                <button class="prem-card-header" @click="openCards.cases = !openCards.cases" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon green">🧮</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Sample Test Cases</div>
+                            <div class="prem-card-subtitle">Verify your solution manually</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time" style="background: rgba(16,185,129,0.1); color:#10b981; padding: 2px 7px; border-radius:9999px;">{{ sample_cases|length }} cases</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.cases" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        {% for tc in sample_cases %}
+                        <div class="sample-test-case">
+                            <div class="sample-tc-label">Case {{ forloop.counter }}</div>
+                            <div class="sample-tc-label">Input</div>
+                            <div class="sample-tc-value">{{ tc.input_data }}</div>
+                            <div class="sample-tc-label">Expected Output</div>
+                            <div class="sample-tc-value" style="color:#10b981;">{{ tc.expected_output }}</div>
+                            {% if tc.explanation %}
+                            <div class="text-xs text-muted" style="margin-top:4px; line-height:1.5;">{{ tc.explanation }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Card: Progressive Hints -->
+            <div class="prem-card" :class="openCards.hints && 'expanded'">
+                <button class="prem-card-header" @click="openCards.hints = !openCards.hints" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon purple">🤖</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">AI Hints</div>
+                            <div class="prem-card-subtitle">Progressive unlock — 3 levels</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time" style="background: rgba(99,102,241,0.1); color:var(--primary-light); padding:2px 7px; border-radius:9999px;">3 hints</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.hints" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner" style="padding-top: 10px;">
+                        <template x-for="hint in hints" :key="hint.id">
+                            <div style="margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden;"
+                                 :style="hint.isOpen ? 'border-color: rgba(99,102,241,0.35);' : ''">
+                                <!-- Hint Row Header -->
+                                <button type="button"
+                                    @click="toggleHint(hint.level)"
+                                    :disabled="hint.loading"
+                                    style="width:100%; display:flex; align-items:center; justify-content:space-between; padding: 9px 12px; background:transparent; border:none; cursor:pointer; text-align:left;"
+                                    :style="hint.isOpen ? 'background: rgba(99,102,241,0.04);' : ''">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div style="width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.75rem;"
+                                             :style="hint.isLoaded ? 'background: rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.25);' : 'background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);'"
+                                             x-text="hint.icon"></div>
+                                        <div>
+                                            <div style="font-size:0.8rem; font-weight:700; color: var(--text-bright);" x-text="hint.title"></div>
+                                            <div style="font-size:0.68rem; color: var(--text-muted);" x-text="hint.subtitle"></div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <template x-if="hint.loading">
+                                            <span style="font-size:0.72rem; color: var(--text-muted);">⏳ Loading…</span>
+                                        </template>
+                                        <template x-if="!hint.isLoaded && !hint.loading">
+                                            <span style="font-size:0.68rem; color: var(--primary-light); background: rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); padding:2px 8px; border-radius:9999px;">Click to unlock</span>
+                                        </template>
+                                        <template x-if="hint.isLoaded">
+                                            <svg style="width:14px; height:14px; transition: transform 0.25s ease;" :style="hint.isOpen ? 'transform:rotate(180deg); color:var(--primary-light)' : 'color:var(--text-muted)'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </template>
+                                    </div>
+                                </button>
+                                <!-- Hint Content -->
+                                <div x-show="hint.isOpen && hint.isLoaded"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     style="padding: 10px 12px 12px; border-top:1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2);">
+                                    <div class="hint-content-block" x-text="hint.content"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Explain It Back (Feynman) -->
+            <div class="prem-card" :class="openCards.explain && 'expanded'">
+                <button class="prem-card-header" @click="openCards.explain = !openCards.explain" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon violet">📝</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Explain It Back</div>
+                            <div class="prem-card-subtitle">Unlock editorial via Feynman technique</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time">~3 min</span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.explain" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        <p class="text-muted text-sm mb-md" style="line-height:1.6;">
+                            Explain the solution in your own words to unlock the editorial. Teaching deepens understanding.
+                        </p>
+                        <textarea class="explain-textarea" x-model="explanation"
+                            placeholder="This problem uses… because… The time complexity is… because…"></textarea>
+                        <div class="d-flex gap-sm mt-md">
+                            <button class="btn btn-primary" @click="submitExplanation()" :disabled="explanationLoading || !explanation.trim()">
+                                <span x-text="explanationLoading ? '⏳ Checking...' : '🧠 Submit Explanation'"></span>
+                            </button>
+                        </div>
+                        <template x-if="explanationFeedback">
+                            <div class="ai-feedback" :class="explanationApproved ? 'approved' : 'rejected'">
+                                <div x-text="explanationFeedback"></div>
+                                <div class="mt-sm text-sm" x-show="explanationScore > 0">
+                                    Score: <strong x-text="explanationScore + '%'"></strong>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Editorial -->
+            <div class="prem-card" :class="openCards.editorial && 'expanded'">
+                <button class="prem-card-header" @click="openCards.editorial = !openCards.editorial" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon slate">📖</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Editorial</div>
+                            <div class="prem-card-subtitle">
+                                {% if editorial_unlocked %}Official solution walkthrough{% else %}Unlock by submitting explanation{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        {% if editorial_unlocked %}
+                        <span class="prem-card-read-time" style="color:#10b981; background:rgba(16,185,129,0.1); padding:2px 7px; border-radius:9999px;">🔓 Unlocked</span>
+                        {% else %}
+                        <span class="prem-card-read-time" style="color:var(--text-muted);">🔒 Locked</span>
+                        {% endif %}
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.editorial" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner">
+                        {% if editorial_unlocked %}
+                        <div class="prem-description">{{ problem.editorial|linebreaksbr }}</div>
+                        {% else %}
+                        <div class="editorial-locked" x-show="!editorialContent">
+                            <div class="hint-lock-icon">🔒</div>
+                            <p style="font-size:0.82rem; text-align:center; color:var(--text-muted);">Submit a valid explanation above to unlock the editorial.</p>
+                        </div>
+                        <template x-if="editorialContent">
+                            <div class="prem-description" x-text="editorialContent"></div>
+                        </template>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Your Submissions -->
+            <div class="prem-card" :class="openCards.submissions && 'expanded'" id="submissions-history-section">
+                <button class="prem-card-header" @click="openCards.submissions = !openCards.submissions" type="button">
+                    <div class="prem-card-header-left">
+                        <div class="prem-card-icon cyan">📋</div>
+                        <div class="prem-card-meta">
+                            <div class="prem-card-title">Your Submissions</div>
+                            <div class="prem-card-subtitle">View past attempts & results</div>
+                        </div>
+                    </div>
+                    <div class="prem-card-header-right">
+                        <span class="prem-card-read-time" x-show="userSubmissions.length > 0" x-text="userSubmissions.length + ' total'" style="background:rgba(6,182,212,0.1); color:#06b6d4; padding:2px 7px; border-radius:9999px;"></span>
+                        <svg class="prem-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </button>
+                <div class="prem-card-body" x-show="openCards.submissions" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="prem-card-body-inner" style="padding-top: 10px;">
+                        <div x-show="userSubmissions.length > 0">
+                            <template x-for="sub in userSubmissions" :key="sub.id">
+                                <div class="submission-item clickable-submission-row"
+                                     @click="openSubmissionModal(sub.id)"
+                                     style="grid-template-columns: auto 1fr auto auto; cursor:pointer; margin-bottom:5px;">
+                                    <span><span x-text="sub.status_icon"></span></span>
+                                    <div class="d-flex align-center gap-xs">
+                                        <span class="text-sm font-bold" :style="'color:'+sub.status_color" x-text="sub.status_display"></span>
+                                        <span class="badge badge-pattern" style="font-size:0.65rem; padding:1px 6px;" x-text="sub.language_display"></span>
+                                    </div>
+                                    <span class="text-muted text-sm font-mono" x-text="sub.runtime_ms !== null && sub.runtime_ms !== undefined ? sub.runtime_ms.toFixed(0)+'ms' : ''"></span>
+                                    <div class="d-flex align-center gap-xs">
+                                        <span class="text-muted text-xs" x-text="sub.created_at_relative"></span>
+                                        <span style="color:var(--primary-light); font-size:0.75rem; font-weight:600;">🔍</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="userSubmissions.length === 0" style="padding:1rem; text-align:center; border:1px dashed var(--border-color); border-radius:8px;">
+                            <p class="text-muted text-xs" style="margin:0;">No submissions yet. Write your code and click Submit!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /Practice section -->
+
+    </div><!-- /split-left -->
 
     <!-- Right Panel: Code Editor -->
     <div class="split-right">
