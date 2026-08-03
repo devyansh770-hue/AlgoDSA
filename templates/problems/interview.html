@@ -61,6 +61,24 @@
         flex-wrap: wrap;
     }
 
+    /* Sidebar toggle button (mobile) */
+    .sidebar-toggle {
+        display: none;
+        background: var(--ws-panel);
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 0.85rem;
+        color: var(--ws-text-main);
+        cursor: pointer;
+    }
+
+    @media (max-width: 1200px) {
+        .sidebar-toggle {
+            display: inline-block;
+        }
+    }
+
     .problem-select-dropdown {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--ws-border);
@@ -130,7 +148,7 @@
     }
 
     /* SPLIT 30/70 WORKSPACE GRID */
-    .simulator-grid {
+    .ide-workspace {
         display: grid;
         grid-template-columns: 28% 70%;
         gap: 2%;
@@ -138,7 +156,7 @@
     }
 
     @media (max-width: 1200px) {
-        .simulator-grid {
+        .ide-workspace {
             grid-template-columns: 1fr;
             gap: 1rem;
         }
@@ -551,6 +569,7 @@
     <!-- TOP SIMULATOR NAVBAR HEADER -->
     <!-- ========================================================= -->
     <div class="glass-panel simulator-navbar">
+        <button class="sidebar-toggle" @click="sidebarVisible = !sidebarVisible">☰</button>
         <div class="d-flex align-center gap-md">
             <select class="problem-select-dropdown" @change="switchProblem($event.target.value)">
                 {% for prob in all_problems %}
@@ -593,12 +612,10 @@
     <!-- ========================================================= -->
     <!-- MAIN 30/70 SPLIT WORKSPACE GRID -->
     <!-- ========================================================= -->
-    <div class="simulator-grid">
+    <div class="ide-workspace">
 
-        <!-- ========================================================= -->
-        <!-- LEFT PANEL (30%): 8 ACCORDION CARDS + ALEX CHAT MENTOR -->
-        <!-- ========================================================= -->
-        <div class="left-panel">
+        <!-- LEFT PANEL (30%): 8 ACCORDION CARDS -->
+        <div class="left-panel" x-show="sidebarVisible" x-transition>
 
             <!-- CARD 1: 📝 SUMMARY (OPEN BY DEFAULT) -->
             <div class="accordion-card">
@@ -713,60 +730,60 @@
                     </ul>
                 </div>
             </div>
+            <!-- End of left panel -->
+        </div>
 
-            <!-- CHATGPT-LIKE AI MENTOR ALEX PANEL -->
-            <div class="alex-mentor-card">
-                <div class="alex-header">
-                    <div class="alex-avatar">👨‍💻</div>
-                    <div>
-                        <strong class="text-sm text-bright d-block">Alex (Google Staff)</strong>
-                        <span class="text-2xs text-primary" x-text="alexMoodText">🙂 Great Progress</span>
-                    </div>
-                </div>
-
-                <div class="alex-chat-stream">
-                    <template x-for="msg in chatHistory" :key="msg.id">
-                        <div class="text-2xs" :class="msg.sender === 'alex' ? 'text-bright' : 'text-primary'">
-                            <strong x-text="msg.sender === 'alex' ? 'Alex: ' : 'You: '"></strong>
-                            <span x-text="msg.text"></span>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="alex-chat-input-row">
-                    <input type="text" class="alex-chat-input" id="alex-chat-input-field" placeholder="Ask Alex a question..." x-model="userMsg" @keydown.enter="sendMsgToAlex()">
-                    <button type="button" class="btn-ws btn-ws-primary text-2xs" @click="sendMsgToAlex()">Send</button>
+        <!-- AI MENTOR PANEL (right column) -->
+        <div class="alex-mentor-card" style="grid-column: 2;">
+            <div class="alex-header">
+                <div class="alex-avatar">👨‍💻</div>
+                <div>
+                    <strong class="text-sm text-bright d-block">Alex (Google Staff)</strong>
+                    <span class="text-2xs text-primary" x-text="alexMoodText">🙂 Great Progress</span>
                 </div>
             </div>
 
-            <!-- COLLAPSIBLE CANDIDATE SCORE DRAWER -->
-            <div class="score-drawer">
-                <div class="score-drawer-header" @click="showScoreDrawer = !showScoreDrawer">
-                    <span>📊 Candidate Evaluation Metrics</span>
-                    <i data-lucide="chevron-down" class="icon-xs" :style="showScoreDrawer ? 'transform: rotate(180deg)' : ''"></i>
-                </div>
-                <div x-show="showScoreDrawer" x-transition class="pt-sm">
-                    <div class="d-flex justify-between text-2xs font-mono mb-2xs">
-                        <span>Communication:</span> <strong class="text-bright">94%</strong>
+            <div class="alex-chat-stream">
+                <template x-for="msg in chatHistory" :key="msg.id">
+                    <div class="text-2xs" :class="msg.sender === 'alex' ? 'text-bright' : 'text-primary'">
+                        <strong x-text="msg.sender === 'alex' ? 'Alex: ' : 'You: '"></strong>
+                        <span x-text="msg.text"></span>
                     </div>
-                    <div class="d-flex justify-between text-2xs font-mono mb-2xs">
-                        <span>Problem Solving:</span> <strong class="text-bright">90%</strong>
-                    </div>
-                    <div class="d-flex justify-between text-2xs font-mono mb-2xs">
-                        <span>Optimization:</span> <strong class="text-bright">88%</strong>
-                    </div>
-                    <div class="d-flex justify-between text-2xs font-mono">
-                        <span>Overall Rating:</span> <strong class="text-success">92% (Strong Hire)</strong>
-                    </div>
-                </div>
+                </template>
             </div>
 
+            <div class="alex-chat-input-row">
+                <input type="text" class="alex-chat-input" id="alex-chat-input-field" placeholder="Ask Alex a question..." x-model="userMsg" @keydown.enter="sendMsgToAlex()">
+                <button type="button" class="btn-ws btn-ws-primary text-2xs" @click="sendMsgToAlex()">Send</button>
+            </div>
+        </div>
+
+        <!-- COLLAPSIBLE CANDIDATE SCORE DRAWER -->
+        <div class="score-drawer" style="grid-column: 2;">
+            <div class="score-drawer-header" @click="showScoreDrawer = !showScoreDrawer">
+                <span>📊 Candidate Evaluation Metrics</span>
+                <i data-lucide="chevron-down" class="icon-xs" :style="showScoreDrawer ? 'transform: rotate(180deg)' : ''"></i>
+            </div>
+            <div x-show="showScoreDrawer" x-transition class="pt-sm">
+                <div class="d-flex justify-between text-2xs font-mono mb-2xs">
+                    <span>Communication:</span> <strong class="text-bright">94%</strong>
+                </div>
+                <div class="d-flex justify-between text-2xs font-mono mb-2xs">
+                    <span>Problem Solving:</span> <strong class="text-bright">90%</strong>
+                </div>
+                <div class="d-flex justify-between text-2xs font-mono mb-2xs">
+                    <span>Optimization:</span> <strong class="text-bright">88%</strong>
+                </div>
+                <div class="d-flex justify-between text-2xs font-mono">
+                    <span>Overall Rating:</span> <strong class="text-success">92% (Strong Hire)</strong>
+                </div>
+            </div>
         </div>
 
         <!-- ========================================================= -->
         <!-- RIGHT PANEL (70%): HERO MONACO EDITOR + BOTTOM TABS -->
         <!-- ========================================================= -->
-        <div class="hero-editor-card">
+        <div class="hero-editor-card" style="grid-column: 1;">
             
             <!-- STICKY TOOLBAR -->
             <div class="editor-toolbar">
@@ -1143,6 +1160,7 @@
         return {
             problemId: {{ problem.id|default:1 }},
             userId: "{{ user.id|default:'guest' }}",
+            sidebarVisible: true,
             secondsLeft: 2700,
             timer: null,
             currentPhase: 4, // 4 = Start Coding
@@ -1208,6 +1226,7 @@
             },
 
             init() {
+                this.sidebarVisible = true;
                 this.startTimer();
                 this.initMonaco();
                 
