@@ -512,10 +512,12 @@
         <div class="inspector-tabs">
             <button type="button" class="inspector-tab-btn" :class="activeTab === 'variables' && 'active'" @click="activeTab = 'variables'">📊 Variables</button>
             <button type="button" class="inspector-tab-btn" :class="activeTab === 'breakdown' && 'active'" @click="activeTab = 'breakdown'">🔍 Expression</button>
+            <button type="button" class="inspector-tab-btn" :class="activeTab === 'metrics' && 'active'" @click="activeTab = 'metrics'">⚡ Metrics</button>
             <button type="button" class="inspector-tab-btn" :class="activeTab === 'stack' && 'active'" @click="activeTab = 'stack'">🥞 Call Stack</button>
             <button type="button" class="inspector-tab-btn" :class="activeTab === 'edge_cases' && 'active'" @click="activeTab = 'edge_cases'">🧪 Edge Cases</button>
             <button type="button" class="inspector-tab-btn" :class="activeTab === 'ai_teacher' && 'active'" @click="activeTab = 'ai_teacher'">🤖 AI Teacher</button>
         </div>
+
 
         <div class="inspector-body">
             <!-- TAB 1: VARIABLES WATCH -->
@@ -573,6 +575,30 @@
                     No complex expression breakdown for this line.
                 </div>
             </div>
+
+            <!-- TAB: METRICS -->
+            <div x-show="activeTab === 'metrics'">
+                <div class="section-title">Live Complexity & Operations</div>
+                <div class="d-flex flex-col gap-sm" x-show="currentStep">
+                    <div class="p-sm" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 8px;">
+                        <div class="text-2xs text-muted">TOTAL OPERATION COUNT</div>
+                        <div class="font-mono text-xl font-bold text-bright" x-text="currentStep.complexity.opCount"></div>
+                    </div>
+                    <div class="p-sm" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 8px;">
+                        <div class="text-2xs text-muted">COMPARISONS EVALUATED</div>
+                        <div class="font-mono text-xl font-bold text-warning" x-text="currentStep.complexity.comparisons"></div>
+                    </div>
+                    <div class="p-sm" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 8px;">
+                        <div class="text-2xs text-muted">ELEMENT SWAPS / WRITES</div>
+                        <div class="font-mono text-xl font-bold text-success" x-text="currentStep.complexity.swaps"></div>
+                    </div>
+                    <div class="p-sm" style="background: rgba(255,255,255,0.03); border: 1px solid var(--lab-border); border-radius: 8px;">
+                        <div class="text-2xs text-muted">MAX RECURSION DEPTH</div>
+                        <div class="font-mono text-xl font-bold text-primary" x-text="currentStep.complexity.depth"></div>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- TAB 3: CALL STACK -->
             <div x-show="activeTab === 'stack'">

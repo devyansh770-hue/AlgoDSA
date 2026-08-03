@@ -1,6 +1,11 @@
 /**
- * AI Visual Code Execution Lab — Alpine.js Controller
- * Coordinates Monaco Editor, Step Engine, Renderers, Timeline, Inspector, and AI Teacher.
+ * AlgoDSA — Educational Visual Code Execution Lab Controller v4.0
+ * 
+ * Manages:
+ * - Monaco Editor integration with multi-line execution highlights & error callouts
+ * - Execution Inspector tabs: Variables (with Old vs New value glow), Sub-expression evaluation breakdown, Call stack depth, Metrics & Operation Counter, Edge Cases, AI Teacher
+ * - Timeline Scrubber & Speed Controls (0.25x, 0.5x, 1x, 2x, 4x)
+ * - Keyboard shortcuts (Space = Play/Pause, Left = Prev, Right = Next)
  */
 
 function visualLabController() {
@@ -13,34 +18,32 @@ function visualLabController() {
         monacoEditor: null,
         deltaDecorations: [],
 
-        // Execution Engine
+        // Execution Engine & Renderers
         engine: null,
         renderers: null,
         traceSteps: [],
-        currentStepIndex: 0, // 0-indexed internally
+        currentStepIndex: 0,
         isPlaying: false,
         playInterval: null,
-        playbackSpeed: 1, // 0.25x, 0.5x, 1x, 2x, 4x
+        playbackSpeed: 1,
 
         // Inspector & UI Tabs
-        activeTab: 'variables', // 'variables', 'breakdown', 'stack', 'edge_cases', 'ai_teacher'
+        activeTab: 'variables', // 'variables', 'breakdown', 'stack', 'metrics', 'edge_cases', 'ai_teacher'
         currentStep: null,
         edgeCaseReport: [],
         aiReport: null,
 
-        // Lifecycle Init
+        // Init Lifecycle
         init() {
             this.engine = new CodeExecutionEngine();
             this.loadPresetCode();
             this.initMonaco();
             this.$nextTick(() => {
                 this.renderers = new VisualLabRenderers('visualization-canvas');
+                this.setupKeyboardShortcuts();
             });
         },
 
-        /**
-         * Preset loader
-         */
         loadPresetCode() {
             const presets = this.engine.presetTemplates[this.selectedLanguage] || {};
             this.code = presets[this.selectedPreset] || presets['binary_search'] || '# Write code here\n';
@@ -63,7 +66,7 @@ function visualLabController() {
         },
 
         /**
-         * Initialize Monaco Editor
+         * Initialize Monaco Editor with Custom Execution Highlight Theme
          */
         initMonaco() {
             if (typeof require === 'undefined') return;
@@ -113,13 +116,13 @@ function visualLabController() {
         },
 
         /**
-         * Primary Action: Run Visual Execution
+         * Action: Execute Visual Code
          */
         executeVisualCode() {
             this.pausePlayback();
             const currentCode = this.monacoEditor ? this.monacoEditor.getValue() : this.code;
-            
-            // Generate full trace
+
+            // Generate trace steps
             this.traceSteps = this.engine.generateTrace(currentCode, this.selectedLanguage, this.customInput);
             this.edgeCaseReport = this.engine.analyzeEdgeCases(currentCode, this.selectedLanguage);
             this.aiReport = this.engine.generateAITeacherReport(currentCode, this.selectedLanguage, this.traceSteps);
@@ -129,7 +132,7 @@ function visualLabController() {
         },
 
         /**
-         * Timeline & Step Navigation Controls
+         * Timeline & Navigation Controls
          */
         jumpToStep(index) {
             if (this.traceSteps.length === 0) return;
@@ -139,15 +142,14 @@ function visualLabController() {
             this.currentStepIndex = index;
             this.currentStep = this.traceSteps[index];
 
-            // 1. Highlight line in Monaco Editor
-            this.highlightLineInEditor(this.currentStep.line);
+            // 1. Line Highlight in Monaco
+            this.highlightLineInEditor(this.currentStep.currentLine);
 
-            // 2. Render Data Structure Visualization
+            // 2. Render Visualization Canvas
             if (this.renderers) {
                 this.renderers.render(this.currentStep);
             }
 
-            // Refresh icons if lucide available
             this.$nextTick(() => {
                 if (window.lucide) lucide.createIcons();
             });
@@ -183,7 +185,7 @@ function visualLabController() {
                 this.currentStepIndex = 0;
             }
             this.isPlaying = true;
-            const delayMs = Math.round(1000 / this.playbackSpeed);
+            const delayMs = Math.round(900 / this.playbackSpeed);
 
             this.playInterval = setInterval(() => {
                 if (this.currentStepIndex < this.traceSteps.length - 1) {
@@ -210,11 +212,8 @@ function visualLabController() {
             }
         },
 
-        /**
-         * Highlight executing line in Monaco
-         */
         highlightLineInEditor(lineNum) {
-            if (!this.monacoEditor) return;
+            if (!this.monacoEditor || !lineNum) return;
             this.deltaDecorations = this.monacoEditor.deltaDecorations(this.deltaDecorations, [
                 {
                     range: new monaco.Range(lineNum, 1, lineNum, 1),
@@ -228,9 +227,24 @@ function visualLabController() {
             this.monacoEditor.revealLineInCenter(lineNum);
         },
 
-        /**
-         * Export Features
-         */
+        setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                // Ignore if user typing inside editor/input
+                if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    this.togglePlayPause();
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    this.stepForward();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    this.stepBackward();
+                }
+            });
+        },
+
         exportReport() {
             const jsonStr = JSON.stringify({
                 code: this.code,
